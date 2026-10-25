@@ -1,0 +1,262 @@
+/* Caderno R1 — simulados cronometrados */
+(function (MQ) {
+  'use strict';
+  const { esc, $, $$, icon } = MQ;
+  const MAX_Q = 1000;
+
+  MQ.activeRun = function (listId) {
+    return MQ.alive('runs').filter(r => r.listId === listId && r.status === 'andamento').sort((a, b) => b.startedAt - a.startedAt)[0] || null;
+  };
+  MQ.lastRun = function (listId) {
+    return MQ.alive('runs').filter(r => r.listId === listId && r.status === 'concluido').sort((a, b) => b.finishedAt - a.finishedAt)[0] || null;
+  };
+  MQ.runScore = function (run) {
+    const out = { total: run.qids.length, resp: 0, ok: 0, byArea: {} };
+    run.qids.forEach(id => {
+      const q = MQ.get('questions', id);
+      const area = (q && q.area) || 'Sem área';
+      const b = out.byArea[area] || (out.byArea[area] = { total: 0, resp: 0, ok: 0 });
+      b.total++;
+      const c = run.answers[id];
+      if (c) { out.resp++; b.resp++; if (q && c === q.gabarito) { out.ok++; b.ok++; } }
+    });
+    return out;
+  };
+
+  MQ.simCreateModal = function (qids, defaultName) {
+    const pool = qids.map(id => MQ.get('questions', id)).filter(Boolean);
+    const byArea = {};
+    pool.forEach(q => { const a = q.area || 'Sem área'; (byArea[a] = byArea[a] || []).push(q.id); });
+    const areas = Object.keys(byArea).sort((a, b) => {
+      const ia = MQ.AREAS.indexOf(a), ib = MQ.AREAS.indexOf(b);
+      return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib) || a.localeCompare(b, 'pt-BR');
+    });
+    // cota inicial: tudo, limitado a 1000 proporcionalmente
+    const quota = {};
+    const scale = pool.length > MAX_Q ? MAX_Q / pool.length : 1;
+    areas.forEach(a => { quota[a] = Math.floor(byArea[a].length * scale); });
+
+    function total() { return areas.reduce((s, a) => s + (quota[a] || 0), 0); }
+    function rowsHtml() {
+      return areas.map(a =>
+        '<div class="opt" style="cursor:default"><span>' + esc(a) + ' <span class="muted small">(' + byArea[a].length + ' disponíveis)</span></span>' +
+        '<span style="margin-left:auto;display:inline-flex;gap:4px;align-items:center">' +
+        '<button class="icon-btn" data-dec="' + esc(a) + '" aria-label="Menos questões de ' + esc(a) + '">−</button>' +
+        '<input type="number" min="0" max="' + byArea[a].length + '" value="' + quota[a] + '" data-q="' + esc(a) + '" style="width:76px;text-align:center" aria-label="Questões de ' + esc(a) + '">' +
+        '<button class="icon-btn" data-inc="' + esc(a) + '" aria-label="Mais questões de ' + esc(a) + '">+</button></span></div>').join('');
+    }
+
+    MQ.modal({
+      title: 'Criar simulado',
+      wide: true,
+      body:
+        '<label class="field"><span>Nome do simulado</span><input type="text" id="s-name" maxlength="100" value="' + esc(defaultName || ('Simulado ' + MQ.fmtDate(Date.now()))) + '"></label>' +
+        '<div class="row"><label class="field"><span>Salvar em</span><select id="s-folder">' + MQ.folderOptions(MQ.currentFolder) + '</select></label>' +
+        '<label class="field"><span>Minutos por questão</span><input type="number" id="s-mpq" min="0.5" max="10" step="0.5" value="3"><small>Provas de residência costumam dar de 2,5 a 3,5 min.</small></label>' +
+        '<label class="field"><span>Tempo total (minutos)</span><input type="number" id="s-total-min" min="1" max="6000"></label></div>' +
+        '<h3 class="small" style="margin:4px 0 6px">Questões por grande área</h3><div id="s-rows">' + rowsHtml() + '</div>' +
+        '<p class="small" style="margin-top:10px"><b id="s-total">' + total() + '</b> questões no simulado (máximo ' + MAX_Q + '). As questões de cada área são sorteadas.</p>',
+      onOpen: box => {
+        const mpq = $('#s-mpq', box), tmin = $('#s-total-min', box);
+        let manualTime = false;
+        function sync() {
+          const t = total();
+          $('#s-total', box).textContent = t;
+          if (!manualTime) tmin.value = Math.max(1, Math.round(t * (parseFloat(mpq.value) || 3)));
+        }
+        sync();
+        mpq.addEventListener('input', () => { manualTime = false; sync(); });
+        tmin.addEventListener('input', () => { manualTime = true; });
+        box.addEventListener('click', e => {
+          const d = e.target.closest('[data-dec]'), i = e.target.closest('[data-inc]');
+          const a = d ? d.dataset.dec : i ? i.dataset.inc : null;
+          if (!a) return;
+          quota[a] = Math.max(0, Math.min(byArea[a].length, (quota[a] || 0) + (d ? -1 : 1)));
+          box.querySelector('[data-q="' + CSS.escape(a) + '"]').value = quota[a];
+          sync();
+        });
+        box.addEventListener('input', e => {
+          const a = e.target.dataset.q;
+          if (!a) return;
+          quota[a] = Math.max(0, Math.min(byArea[a].length, parseInt(e.target.value, 10) || 0));
+          sync();
+        });
+      },
+      actions: [
+        { label: 'Cancelar', kind: 'ghost' },
+        { label: 'Criar simulado', kind: 'primary', onClick: (close, box) => {
+          const name = $('#s-name', box).value.trim();
+          const t = total();
+          if (!name) { MQ.toast('Dê um nome ao simulado.'); return false; }
+          if (!t) { MQ.toast('Escolha pelo menos uma questão.'); return false; }
+          if (t > MAX_Q) { MQ.toast('O simulado pode ter no máximo ' + MAX_Q + ' questões.'); return false; }
+          let chosen = [];
+          areas.forEach(a => { chosen = chosen.concat(MQ.shuffle(byArea[a]).slice(0, quota[a] || 0)); });
+          chosen = MQ.shuffle(chosen);
+          const durationMin = Math.max(1, parseInt($('#s-total-min', box).value, 10) || t * 3);
+          const l = MQ.put('lists', { id: MQ.uid(), kind: 'simulado', name, folderId: $('#s-folder', box).value || null, qids: chosen, durationMin });
+          setTimeout(() => {
+            MQ.confirm('Simulado criado', name + ': ' + chosen.length + ' questões, ' + durationMin + ' minutos. Começar agora? O cronômetro dispara assim que você começar.', 'Começar agora')
+              .then(ok => { if (ok) MQ.startOrResume(l.id); else { MQ.currentFolder = l.folderId; location.hash = '#/listas'; } });
+          }, 50);
+        } }
+      ]
+    });
+  };
+
+  MQ.startOrResume = function (listId) {
+    const l = MQ.get('lists', listId);
+    if (!l) return;
+    let run = MQ.activeRun(listId);
+    if (!run) {
+      const qids = l.qids.filter(id => MQ.get('questions', id));
+      if (!qids.length) { MQ.toast('Este simulado não tem questões válidas.'); return; }
+      run = MQ.put('runs', { id: MQ.uid(), listId, qids, startedAt: MQ.now(), durationMin: l.durationMin || qids.length * 3, answers: {}, flags: [], status: 'andamento', idx: 0 });
+    }
+    location.hash = '#/simulado/' + run.id;
+  };
+
+  function remainingMs(run) { return run.startedAt + run.durationMin * 60000 - Date.now(); }
+
+  MQ.finishRun = function (run) {
+    if (run.status !== 'andamento') return;
+    run.status = 'concluido';
+    run.finishedAt = Math.min(Date.now(), run.startedAt + run.durationMin * 60000);
+    MQ.put('runs', run);
+    const ctx = 'sim:' + run.listId;
+    Object.keys(run.answers).forEach(qid => {
+      const q = MQ.get('questions', qid);
+      if (!q || !run.answers[qid]) return;
+      MQ.put('attempts', { id: MQ.uid(), qid, choice: run.answers[qid], correct: run.answers[qid] === q.gabarito, ctx, ts: run.finishedAt, runId: run.id, device: MQ.local.deviceId });
+    });
+  };
+
+  MQ.views.simulado = function (root, runId) {
+    const run = MQ.get('runs', runId);
+    if (!run) { root.innerHTML = '<div class="empty"><h2>Simulado não encontrado</h2><a class="btn" href="#/listas">Voltar às listas</a></div>'; return; }
+    if (run.status !== 'andamento') { location.hash = '#/resultado/' + run.id; return; }
+    if (remainingMs(run) <= 0) { MQ.finishRun(run); MQ.toast('O tempo do simulado acabou.'); location.hash = '#/resultado/' + run.id; return; }
+    const l = MQ.data.lists[run.listId] || {};
+    const n = run.qids.length;
+    const idx = Math.min(run.idx || 0, n - 1);
+    const qid = run.qids[idx];
+    const q = MQ.get('questions', qid);
+    const chosen = run.answers[qid];
+    const flagged = run.flags.includes(qid);
+    const answered = Object.keys(run.answers).filter(k => run.answers[k]).length;
+
+    root.innerHTML =
+      '<div class="solve-bar"><div style="display:flex;align-items:center;gap:8px;min-width:0"><span class="title">' + esc(l.name || 'Simulado') + '</span></div>' +
+      '<div class="toolbar"><span class="timer" id="sim-timer" role="timer" aria-live="off">' + icon('clock') + '<span>' + MQ.fmtDuration(remainingMs(run) / 1000) + '</span></span>' +
+      '<span class="muted small">' + answered + '/' + n + ' respondidas</span>' +
+      '<button class="icon-btn" id="q-fminus" aria-label="Diminuir letra">' + icon('textdown') + '</button><button class="icon-btn" id="q-fplus" aria-label="Aumentar letra">' + icon('textup') + '</button>' +
+      '<button class="btn primary" id="sim-finish">Finalizar</button></div></div>' +
+      '<div class="solve-wrap with-index"><div>' +
+      (q ? '<article class="qcard"><div class="qmeta"><span class="num">Questão ' + (idx + 1) + ' de ' + n + '</span>' +
+        [q.instituicao, q.ano].filter(Boolean).map(t => '<span class="tag">' + esc(t) + '</span>').join('') +
+        '<div class="qtools"><button class="icon-btn" id="sim-flag" aria-pressed="' + flagged + '" title="Marcar para revisar" aria-label="Marcar para revisar">' + icon('flag') + '</button></div></div>' +
+        '<div class="stem" style="margin-top:12px">' + MQ.para(q.enunciado) + (q.imagens || []).map(id => MQ.imgHtml(id)).join('') + '</div>' +
+        '<div class="alts" role="radiogroup" aria-label="Alternativas">' + (q.alternativas || []).map(a =>
+          '<div class="alt' + (a.l === chosen ? ' sel' : '') + '" role="radio" tabindex="0" aria-checked="' + (a.l === chosen) + '" data-alt="' + esc(a.l) + '"><span class="letter">' + esc(a.l) + '</span><span class="txt">' + MQ.para(a.t) + (a.img ? MQ.imgHtml(a.img, 'Imagem da alternativa ' + a.l) : '') + '</span><span></span></div>').join('') +
+        '</div>' + (chosen ? '<button class="btn ghost sm" id="sim-clear">Limpar resposta</button>' : '<span class="muted small">Sem correção até finalizar. Teclas A–E para marcar.</span>') + '</article>'
+        : '<div class="qcard"><p class="muted">Questão excluída.</p></div>') +
+      '<div class="qnav"><button class="btn" id="sim-prev"' + (idx === 0 ? ' disabled' : '') + '>' + icon('left') + ' Anterior</button><button class="btn" id="sim-next"' + (idx >= n - 1 ? ' disabled' : '') + '>Próxima ' + icon('right') + '</button></div></div>' +
+      '<aside class="qindex" aria-label="Mapa do simulado"><h3>Mapa do simulado</h3><div class="qindex-grid">' +
+      run.qids.map((id, i) => '<button class="' + (i === idx ? 'cur' : '') + (run.answers[id] ? ' ans' : '') + (run.flags.includes(id) ? ' flag' : '') + '" data-go="' + i + '" aria-label="Questão ' + (i + 1) + (run.answers[id] ? ', respondida' : '') + (run.flags.includes(id) ? ', marcada' : '') + '">' + (i + 1) + '</button>').join('') +
+      '</div><div class="legend"><span><i style="background:var(--accent-soft);border-color:var(--accent)"></i>respondida</span><span><i style="background:var(--warn)"></i>marcada para revisar</span></div></aside></div>';
+
+    function save() { MQ.put('runs', run); }
+    function go(i) { if (i < 0 || i >= n) return; run.idx = i; save(); MQ.render(); window.scrollTo(0, 0); }
+    function pick(l) { run.answers[qid] = run.answers[qid] === l ? undefined : l; if (!run.answers[qid]) delete run.answers[qid]; save(); MQ.render(); }
+    $$('[data-alt]', root).forEach(el => {
+      el.onclick = () => pick(el.dataset.alt);
+      el.onkeydown = e => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); pick(el.dataset.alt); } };
+    });
+    $$('[data-go]', root).forEach(b => b.onclick = () => go(parseInt(b.dataset.go, 10)));
+    $('#sim-prev', root).onclick = () => go(idx - 1);
+    $('#sim-next', root).onclick = () => go(idx + 1);
+    $('#q-fplus', root).onclick = () => MQ.setFontScale((MQ.local.fontScale || 1) + 0.08);
+    $('#q-fminus', root).onclick = () => MQ.setFontScale((MQ.local.fontScale || 1) - 0.08);
+    if ($('#sim-flag', root)) $('#sim-flag', root).onclick = () => {
+      const i = run.flags.indexOf(qid);
+      if (i >= 0) run.flags.splice(i, 1); else run.flags.push(qid);
+      save(); MQ.render();
+    };
+    if ($('#sim-clear', root)) $('#sim-clear', root).onclick = () => { delete run.answers[qid]; save(); MQ.render(); };
+    $('#sim-finish', root).onclick = async () => {
+      const blank = n - Object.keys(run.answers).filter(k => run.answers[k]).length;
+      const ok = await MQ.confirm('Finalizar simulado', blank ? 'Ainda há ' + blank + ' questões em branco. Finalizar mesmo assim?' : 'Todas as questões foram respondidas. Finalizar e ver o resultado?', 'Finalizar');
+      if (!ok) return;
+      MQ.finishRun(run);
+      location.hash = '#/resultado/' + run.id;
+    };
+
+    const tEl = $('#sim-timer span', root);
+    MQ.tick = setInterval(() => {
+      const ms = remainingMs(run);
+      if (ms <= 0) {
+        clearInterval(MQ.tick);
+        MQ.finishRun(run); MQ.toast('O tempo do simulado acabou.');
+        location.hash = '#/resultado/' + run.id;
+        return;
+      }
+      tEl.textContent = MQ.fmtDuration(ms / 1000);
+      $('#sim-timer', root).classList.toggle('low', ms < 5 * 60000);
+    }, 1000);
+
+    MQ.keyHandler = function (e) {
+      if (e.target.matches('input, textarea, select') || e.ctrlKey || e.metaKey || e.altKey) return;
+      if (document.querySelector('.modal-back, .popmenu')) return;
+      const k = e.key.toUpperCase();
+      if (q && /^[A-E]$/.test(k) && (q.alternativas || []).some(a => a.l === k)) pick(k);
+      else if (e.key === 'ArrowRight') go(idx + 1);
+      else if (e.key === 'ArrowLeft') go(idx - 1);
+    };
+  };
+
+  MQ.views.resultado = function (root, runId) {
+    const run = MQ.get('runs', runId);
+    if (!run) { root.innerHTML = '<div class="empty"><h2>Resultado não encontrado</h2><a class="btn" href="#/listas">Voltar às listas</a></div>'; return; }
+    const l = MQ.data.lists[run.listId] || {};
+    const sc = MQ.runScore(run);
+    const used = ((run.finishedAt || Date.now()) - run.startedAt) / 1000;
+    const p = MQ.pct(sc.ok, sc.total);
+    const areas = Object.keys(sc.byArea).sort((a, b) => {
+      const ia = MQ.AREAS.indexOf(a), ib = MQ.AREAS.indexOf(b);
+      return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib);
+    });
+    const runs = MQ.alive('runs').filter(r => r.listId === run.listId && r.status === 'concluido').sort((a, b) => a.finishedAt - b.finishedAt);
+    root.innerHTML =
+      '<div class="page-head"><div><h1>' + esc(l.name || 'Simulado') + '</h1><p>Finalizado em ' + MQ.fmtDateTime(run.finishedAt) + '</p></div>' +
+      '<div class="toolbar"><a class="btn ghost" href="#/listas">' + icon('left') + ' Listas</a><button class="btn" id="r-errs">Criar lista com os erros</button><button class="btn" id="r-redo">Refazer simulado</button><button class="btn primary" id="r-review">Revisar questões</button></div></div>' +
+      '<div class="perf-grid">' +
+      '<section class="panel span-5"><h2>Resultado</h2><div class="sub">' + sc.total + ' questões</div><div class="totals"><div class="big-pct">' + p + '%</div>' +
+      '<dl><dt>Certas</dt><dd style="color:var(--ok)">' + sc.ok + '</dd><dt>Erradas</dt><dd style="color:var(--err)">' + (sc.resp - sc.ok) + '</dd><dt>Em branco</dt><dd>' + (sc.total - sc.resp) + '</dd><dt>Tempo usado</dt><dd>' + MQ.fmtDuration(used) + ' de ' + run.durationMin + ' min</dd></dl></div></section>' +
+      '<section class="panel span-7"><h2>Por grande área</h2><div class="sub">Percentual de acerto sobre o total de questões da área</div><div class="bars">' +
+      areas.map(a => {
+        const b = sc.byArea[a]; const pp = MQ.pct(b.ok, b.total);
+        return '<div class="bar-row"><span class="lbl">' + esc(a) + '</span><span class="bar-track"><span class="bar-fill" style="display:block;width:' + pp + '%"></span></span><span class="val">' + b.ok + '/' + b.total + ' · ' + pp + '%</span></div>';
+      }).join('') + '</div></section>' +
+      (runs.length > 1 ? '<section class="panel span-12"><h2>Tentativas deste simulado</h2><div class="table-wrap" style="border:0"><table class="tbl"><thead><tr><th>Data</th><th class="num">Acertos</th><th class="num">%</th></tr></thead><tbody>' +
+        runs.map(r => { const s = MQ.runScore(r); return '<tr class="clickable" data-run="' + r.id + '"><td>' + MQ.fmtDateTime(r.finishedAt) + (r.id === run.id ? ' <span class="badge">esta</span>' : '') + '</td><td class="num">' + s.ok + '/' + s.total + '</td><td class="num">' + MQ.pct(s.ok, s.total) + '%</td></tr>'; }).join('') +
+        '</tbody></table></div></section>' : '') +
+      '</div>';
+    $$('[data-run]', root).forEach(tr => tr.onclick = () => { location.hash = '#/resultado/' + tr.dataset.run; });
+    $('#r-review', root).onclick = () => {
+      MQ.openSolve({ title: (l.name || 'Simulado') + ' — revisão', qids: run.qids, ctx: 'revisao' });
+      const s = MQ.session;
+      run.qids.forEach(id => { s.sel[id] = run.answers[id]; s.revealed[id] = true; });
+      MQ.render();
+    };
+    $('#r-errs', root).onclick = () => {
+      const ids = run.qids.filter(id => { const q = MQ.get('questions', id); return q && run.answers[id] && run.answers[id] !== q.gabarito; });
+      const blank = run.qids.filter(id => !run.answers[id]);
+      if (!ids.length && !blank.length) { MQ.toast('Você não errou nenhuma questão.'); return; }
+      MQ.createListModal(ids.concat(blank), (l.name || 'Simulado') + ' — erros e brancos');
+    };
+    $('#r-redo', root).onclick = async () => {
+      const ok = await MQ.confirm('Refazer simulado', 'Começa uma nova tentativa com as mesmas questões e o mesmo tempo. O resultado atual fica guardado.', 'Começar');
+      if (ok) MQ.startOrResume(run.listId);
+    };
+  };
+})(window.MQ);

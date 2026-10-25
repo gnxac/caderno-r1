@@ -1,0 +1,13 @@
+{
+  "appId": "br.cadernor1.app",
+  "appName": "Caderno R1",
+  "webDir": "www",
+  "android": {
+    "allowMixedContent": false
+  },
+  "plugins": {
+    "CapacitorHttp": {
+      "enabled": true
+    }
+  }
+}

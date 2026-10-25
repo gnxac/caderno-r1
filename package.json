@@ -1,0 +1,52 @@
+{
+  "name": "caderno-r1",
+  "productName": "Caderno R1",
+  "version": "1.0.0",
+  "description": "Banco de questões, listas, simulados e desempenho para residência médica, com sincronização pela conta Google.",
+  "author": "Guilherme",
+  "license": "UNLICENSED",
+  "private": true,
+  "main": "electron/main.js",
+  "scripts": {
+    "start": "electron .",
+    "dist:win": "electron-builder --win nsis portable --publish never",
+    "android:add": "cap add android",
+    "android:icons": "capacitor-assets generate --android --iconBackgroundColor #7A2E5E --iconBackgroundColorDark #7A2E5E --splashBackgroundColor #F5F6F8 --splashBackgroundColorDark #15181F",
+    "android:sync": "cap sync android",
+    "android:open": "cap open android"
+  },
+  "dependencies": {
+    "@capacitor/android": "^7.0.0",
+    "@capacitor/app": "^7.0.0",
+    "@capacitor/browser": "^7.0.0",
+    "@capacitor/core": "^7.0.0",
+    "@capacitor/filesystem": "^7.0.0",
+    "@capacitor/share": "^7.0.0"
+  },
+  "devDependencies": {
+    "@capacitor/assets": "^3.0.5",
+    "@capacitor/cli": "^7.0.0",
+    "electron": "^36.0.0",
+    "electron-builder": "^26.0.0"
+  },
+  "build": {
+    "appId": "br.cadernor1.app",
+    "productName": "Caderno R1",
+    "directories": { "output": "dist" },
+    "files": ["electron/**/*", "www/**/*", "package.json"],
+    "win": {
+      "target": ["nsis", "portable"],
+      "icon": "icon-1024.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "shortcutName": "Caderno R1",
+      "artifactName": "Caderno-R1-Instalador-${version}.${ext}"
+    },
+    "portable": {
+      "artifactName": "Caderno-R1-Portatil-${version}.${ext}"
+    }
+  }
+}

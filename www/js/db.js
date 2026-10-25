@@ -1,0 +1,190 @@
+/* Caderno R1 — dados locais (IndexedDB) e regras de mesclagem para sincronizar */
+(function (MQ) {
+  'use strict';
+
+  const DB_NAME = 'caderno-r1';
+  const STORE = 'kv';
+  const KEY_DATA = 'dados';
+  const KEY_LOCAL = 'local';
+  const KEY_MEDIA = 'midia';
+  const COLLECTIONS = ['questions', 'attempts', 'folders', 'lists', 'runs'];
+
+  function emptyData() {
+    return { version: 1, questions: {}, attempts: {}, folders: {}, lists: {}, runs: {}, counter: 0 };
+  }
+
+  MQ.data = emptyData();
+  /* Configurações só deste aparelho (não sincronizam) */
+  MQ.local = { fontScale: 1, theme: 'auto', sync: {}, deviceId: null, lastSync: 0, seeded: false };
+
+  let idb = null;
+  function openIDB() {
+    return new Promise((resolve, reject) => {
+      if (!('indexedDB' in window)) return resolve(null);
+      const req = indexedDB.open(DB_NAME, 1);
+      req.onupgradeneeded = () => req.result.createObjectStore(STORE);
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+  }
+  function idbGet(key) {
+    return new Promise((resolve, reject) => {
+      if (!idb) return resolve(JSON.parse(localStorage.getItem('mq:' + key) || 'null'));
+      const tx = idb.transaction(STORE, 'readonly');
+      const r = tx.objectStore(STORE).get(key);
+      r.onsuccess = () => resolve(r.result || null);
+      r.onerror = () => reject(r.error);
+    });
+  }
+  function idbSet(key, val) {
+    return new Promise((resolve, reject) => {
+      if (!idb) { localStorage.setItem('mq:' + key, JSON.stringify(val)); return resolve(); }
+      const tx = idb.transaction(STORE, 'readwrite');
+      tx.objectStore(STORE).put(val, key);
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
+  }
+
+  MQ.loadData = async function () {
+    try { idb = await openIDB(); } catch (e) { idb = null; }
+    const d = await idbGet(KEY_DATA);
+    const l = await idbGet(KEY_LOCAL);
+    if (d) {
+      MQ.data = Object.assign(emptyData(), d);
+      COLLECTIONS.forEach(c => { if (!MQ.data[c]) MQ.data[c] = {}; });
+    }
+    if (l) MQ.local = Object.assign(MQ.local, l);
+    MQ.media = (await idbGet(KEY_MEDIA)) || {};
+    if (!MQ.local.deviceId) { MQ.local.deviceId = MQ.uid(); await MQ.saveLocal(); }
+  };
+
+  /* ---------- Imagens (ficam separadas dos dados para a sincronização não pesar) ---------- */
+  MQ.media = {};
+  MQ.saveMedia = function () { return idbSet(KEY_MEDIA, MQ.media); };
+  /* Junta imagens recebidas; devolve quantas eram novas */
+  MQ.mergeMedia = function (incoming, markDirty) {
+    let n = 0;
+    Object.keys(incoming || {}).forEach(id => { if (!MQ.media[id]) { MQ.media[id] = incoming[id]; n++; } });
+    if (n) {
+      MQ.saveMedia();
+      if (markDirty) { MQ.local.mediaDirty = true; MQ.saveLocal(); }
+    }
+    return n;
+  };
+  MQ.imgHtml = function (id, alt) {
+    const src = MQ.media[id];
+    if (!src) return '<div class="qimg missing">Imagem ainda não baixada. Sincronize para carregar.</div>';
+    return '<figure class="qimg"><img src="' + src + '" alt="' + MQ.esc(alt || 'Imagem da questão') + '" loading="lazy" data-zoom="' + MQ.esc(id) + '"></figure>';
+  };
+
+  let saveTimer = null;
+  const changeListeners = [];
+  MQ.onChange = fn => changeListeners.push(fn);
+
+  /* Marca alteração: salva em seguida e avisa a sincronização */
+  MQ.touch = function () {
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(() => { idbSet(KEY_DATA, MQ.data).catch(e => console.error(e)); }, 250);
+    changeListeners.forEach(fn => { try { fn(); } catch (e) { console.error(e); } });
+  };
+  MQ.saveNow = function () {
+    clearTimeout(saveTimer);
+    return idbSet(KEY_DATA, MQ.data);
+  };
+  MQ.saveLocal = function () { return idbSet(KEY_LOCAL, MQ.local); };
+
+  /* Registra/atualiza um item numa coleção */
+  MQ.put = function (coll, obj) {
+    obj.updatedAt = MQ.now();
+    if (!obj.createdAt) obj.createdAt = obj.updatedAt;
+    MQ.data[coll][obj.id] = obj;
+    MQ.touch();
+    return obj;
+  };
+  /* Exclusão vira "lápide" para que a sincronização propague a remoção */
+  MQ.remove = function (coll, id) {
+    const o = MQ.data[coll][id];
+    if (!o) return;
+    MQ.data[coll][id] = { id, deleted: true, updatedAt: MQ.now(), createdAt: o.createdAt };
+    MQ.touch();
+  };
+  MQ.alive = function (coll) {
+    return Object.values(MQ.data[coll]).filter(o => o && !o.deleted);
+  };
+  MQ.get = function (coll, id) {
+    const o = MQ.data[coll][id];
+    return o && !o.deleted ? o : null;
+  };
+
+  MQ.nextCode = function () {
+    let max = MQ.data.counter || 0;
+    Object.values(MQ.data.questions).forEach(q => {
+      const m = q && q.codigo && /^R1-(\d+)$/.exec(q.codigo);
+      if (m) max = Math.max(max, parseInt(m[1], 10));
+    });
+    MQ.data.counter = max + 1;
+    return 'R1-' + String(max + 1).padStart(5, '0');
+  };
+
+  /* Mescla dados remotos nos locais: em cada item vence a edição mais recente */
+  MQ.mergeData = function (remote) {
+    let changed = 0;
+    if (!remote) return 0;
+    COLLECTIONS.forEach(c => {
+      const r = remote[c] || {};
+      const l = MQ.data[c];
+      Object.keys(r).forEach(id => {
+        const ro = r[id];
+        const lo = l[id];
+        if (!ro) return;
+        if (!lo || (ro.updatedAt || 0) > (lo.updatedAt || 0)) { l[id] = ro; changed++; }
+      });
+    });
+    MQ.data.counter = Math.max(MQ.data.counter || 0, remote.counter || 0);
+    if (changed) { idbSet(KEY_DATA, MQ.data).catch(e => console.error(e)); }
+    return changed;
+  };
+
+  /* ---------- Consultas sobre respostas ---------- */
+  MQ.attemptsByQ = function (filterFn) {
+    const map = {};
+    MQ.alive('attempts').forEach(a => {
+      if (filterFn && !filterFn(a)) return;
+      (map[a.qid] = map[a.qid] || []).push(a);
+    });
+    Object.values(map).forEach(arr => arr.sort((x, y) => x.ts - y.ts));
+    return map;
+  };
+
+  /* Última resposta de cada questão (opcionalmente só num contexto, ex.: 'lista:ID') */
+  MQ.latestByQ = function (ctx) {
+    const map = {};
+    MQ.alive('attempts').forEach(a => {
+      if (ctx && a.ctx !== ctx) return;
+      const cur = map[a.qid];
+      if (!cur || a.ts > cur.ts) map[a.qid] = a;
+    });
+    return map;
+  };
+
+  MQ.recordAttempt = function (qid, choice, ctx, timeSec) {
+    const q = MQ.get('questions', qid);
+    if (!q) return null;
+    const a = {
+      id: MQ.uid(), qid, choice, correct: choice === q.gabarito,
+      ctx: ctx || 'banco', ts: MQ.now(), timeSec: timeSec || null,
+      device: MQ.local.deviceId
+    };
+    return MQ.put('attempts', a);
+  };
+
+  /* Caminho de assunto da questão: [área, especialidade, tema, subtema] sem vazios */
+  MQ.qPath = function (q) {
+    return [q.area, q.especialidade, q.tema, q.subtema].map(s => (s || '').trim()).filter(Boolean);
+  };
+
+  MQ.views = MQ.views || {};
+
+  MQ.AREAS = ['Clínica Médica', 'Cirurgia', 'Pediatria', 'Ginecologia', 'Obstetrícia', 'Medicina Preventiva', 'Outros'];
+})(window.MQ);
