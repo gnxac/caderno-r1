@@ -16,6 +16,7 @@ App de banco de questões para residência médica: resolver questões, listas, 
 - IDs de questões nunca mudam. Questão removida vira `deleted: true` (lápide), nunca some, para não quebrar histórico, listas e simulados.
 - Banco publicado: manifesto com versão + arquivo do banco, públicos no Drive do admin; o app só baixa quando a versão muda (`MQ.local.bank`). O aparelho do admin não baixa o próprio banco.
 - Não publicar questões do Estratégia (nem de outros cursos). Por padrão só provas oficiais (INEP/Ebserh); questões de cursos ficam só no Drive do admin.
+- Versão Windows Admin: `npm run dist:win:admin` gera `Caderno-R1-Admin-<versão>.exe` (`electron-builder.admin.json`; painel de administrador sempre ligado e dados em `%APPDATA%\Caderno R1 Admin`, separados do app comum). É nela que se importa e se publica o banco; os outros apps só baixam, com `bankManifestId` no `config.js`.
 - Antes de commitar: `revisor-codigo` e `testador-navegador`.
 
 ## Subagentes

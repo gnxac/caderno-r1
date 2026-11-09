@@ -23,10 +23,16 @@ jobs:
         run: npm run dist:win
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: false
+      - name: Gerar versão Windows Admin
+        run: npm run dist:win:admin
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: false
       - uses: actions/upload-artifact@v4
         with:
           name: Caderno-R1-Windows
-          path: dist/*.exe
+          path: |
+            dist/*.exe
+            dist-admin/*.exe
           if-no-files-found: error
 
   android:

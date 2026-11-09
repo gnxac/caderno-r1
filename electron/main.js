@@ -5,6 +5,12 @@ const path = require('path');
 /* Só estes servidores do Google podem ser chamados pelo app */
 const ALLOWED_HOSTS = new Set(['oauth2.googleapis.com', 'www.googleapis.com', 'openidconnect.googleapis.com', 'drive.usercontent.google.com']);
 
+/* Build "Caderno R1 Admin" (npm run dist:win:admin): extraMetadata.mqAdmin no package.json empacotado */
+let IS_ADMIN = false;
+try { IS_ADMIN = !!require('../package.json').mqAdmin; } catch (e) { /* app comum */ }
+// dados separados do app comum (outra pasta, outra instância permitida ao mesmo tempo)
+if (IS_ADMIN) app.setPath('userData', path.join(app.getPath('appData'), 'Caderno R1 Admin'));
+
 if (!app.requestSingleInstanceLock()) {
   app.quit();
 }
@@ -18,7 +24,7 @@ function createWindow() {
     minWidth: 380,
     minHeight: 560,
     backgroundColor: '#F5F6F8',
-    title: 'Caderno R1',
+    title: IS_ADMIN ? 'Caderno R1 Admin' : 'Caderno R1',
     icon: path.join(__dirname, 'icon.png'),
     autoHideMenuBar: true,
     show: false,
@@ -27,6 +33,7 @@ function createWindow() {
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: true,
+      additionalArguments: IS_ADMIN ? ['--mq-admin'] : [],
       spellcheck: true
     }
   });

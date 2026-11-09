@@ -12,6 +12,7 @@
   const NAV_FOR = { questoes: 'questoes', resolver: 'questoes', listas: 'listas', simulado: 'listas', resultado: 'listas', desempenho: 'desempenho', configuracoes: 'configuracoes', cadastrar: 'configuracoes', sincronizar: 'configuracoes' };
 
   MQ.isAdmin = function () {
+    if (window.mqNative && window.mqNative.admin) return true; // versão Windows Admin
     const email = ((MQ.local.sync && MQ.local.sync.email) || '').trim().toLowerCase();
     const admins = ((window.MQ_CONFIG || {}).adminEmails || []).map(e => String(e).trim().toLowerCase());
     return !!email && admins.includes(email);

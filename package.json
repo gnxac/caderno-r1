@@ -10,6 +10,7 @@
   "scripts": {
     "start": "electron .",
     "dist:win": "electron-builder --win portable --publish never",
+    "dist:win:admin": "electron-builder --win portable --publish never --config electron-builder.admin.json",
     "android:add": "cap add android",
     "android:icons": "capacitor-assets generate --android --iconBackgroundColor #1F3A4D --iconBackgroundColorDark #1F3A4D --splashBackgroundColor #F1F5F7 --splashBackgroundColorDark #12191E",
     "android:sync": "cap sync android",
