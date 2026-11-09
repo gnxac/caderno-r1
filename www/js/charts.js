@@ -134,4 +134,47 @@
     container.innerHTML = '';
     container.appendChild(svg);
   };
+
+  /* Linha: evolução do % de acerto por semana */
+  MQ.lineChart = function (container, points, opts) {
+    opts = opts || {};
+    const W = 640, H = 220, m = { l: 40, r: 40, t: 14, b: 30 };
+    const iw = W - m.l - m.r, ih = H - m.t - m.b;
+    const n = points.length;
+    const sx = i => m.l + (n <= 1 ? iw / 2 : (i / (n - 1)) * iw);
+    const sy = v => m.t + ih - (v / 100) * ih;
+    const svg = el('svg', { viewBox: '0 0 ' + W + ' ' + H, class: 'chart-svg', role: 'img', 'aria-label': opts.label || 'Evolução' });
+    [0, 25, 50, 75, 100].forEach(v => {
+      svg.appendChild(el('line', { x1: m.l, x2: m.l + iw, y1: sy(v), y2: sy(v), class: 'grid' }));
+      svg.appendChild(el('text', { x: m.l - 8, y: sy(v) + 4, 'text-anchor': 'end' }, v + '%'));
+    });
+    const step = Math.max(1, Math.ceil(n / 6));
+    points.forEach((p, i) => {
+      if (i % step === 0 || i === n - 1) svg.appendChild(el('text', { x: sx(i), y: H - 8, 'text-anchor': 'middle' }, p.label));
+    });
+    const valid = points.map((p, i) => ({ p, i })).filter(o => o.p.value != null);
+    if (valid.length) {
+      const d = valid.map((o, k) => (k ? 'L' : 'M') + sx(o.i).toFixed(1) + ' ' + sy(o.p.value).toFixed(1)).join(' ');
+      svg.appendChild(el('path', { d, class: 'line', 'stroke-linejoin': 'round', 'stroke-linecap': 'round' }));
+      valid.forEach(o => svg.appendChild(el('circle', { cx: sx(o.i), cy: sy(o.p.value), r: 4.5, class: 'dot' })));
+      const last = valid[valid.length - 1];
+      svg.appendChild(el('text', { x: sx(last.i) + 8, y: sy(last.p.value) + 4, style: 'fill:var(--ink);font-weight:600' }, last.p.value + '%'));
+    }
+    const cross = el('line', { x1: 0, x2: 0, y1: m.t, y2: m.t + ih, class: 'axis', visibility: 'hidden' });
+    svg.appendChild(cross);
+    const hit = el('rect', { x: m.l - 10, y: m.t, width: iw + 20, height: ih, fill: 'transparent' });
+    svg.appendChild(hit);
+    hit.addEventListener('mousemove', e => {
+      const r = svg.getBoundingClientRect();
+      const x = ((e.clientX - r.left) / r.width) * W;
+      let best = 0, bd = Infinity;
+      points.forEach((p, i) => { const dd = Math.abs(sx(i) - x); if (dd < bd) { bd = dd; best = i; } });
+      const p = points[best];
+      cross.setAttribute('x1', sx(best)); cross.setAttribute('x2', sx(best)); cross.setAttribute('visibility', 'visible');
+      MQ.showTip(e.clientX, e.clientY, '<b>' + esc(p.tipLabel || p.label) + '</b><br>' + (p.value == null ? 'Sem questões' : p.value + '% de acerto · ' + p.n + ' questões'));
+    });
+    hit.addEventListener('mouseleave', () => { cross.setAttribute('visibility', 'hidden'); MQ.hideTip(); });
+    container.innerHTML = '';
+    container.appendChild(svg);
+  };
 })(window.MQ);

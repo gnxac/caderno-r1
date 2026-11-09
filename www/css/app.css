@@ -533,3 +533,9 @@ details.quad ul { margin: 6px 0 0; padding-left: 1.1em; font-size: .9rem; }
 
 .pub-row { display: flex; align-items: center; gap: 10px; min-height: 44px; }
 .pub-row span:nth-of-type(1) { flex: 1; }
+
+.perf-layout { display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: 16px; align-items: start; }
+.perf-side { position: sticky; top: 16px; display: flex; flex-direction: column; gap: 10px; }
+.perf-side h2 { margin: 0; }
+.perf-main { min-width: 0; }
+@media (max-width: 860px) { .perf-layout { grid-template-columns: minmax(0, 1fr); } .perf-side { position: static; } .perf-side select, .perf-side input { min-height: 44px; } }
