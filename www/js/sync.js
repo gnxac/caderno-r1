@@ -4,7 +4,7 @@
   'use strict';
   const { esc, $, icon } = MQ;
 
-  const SCOPE = 'https://www.googleapis.com/auth/drive.appdata openid email';
+  const SCOPE = 'https://www.googleapis.com/auth/drive.appdata https://www.googleapis.com/auth/drive.file openid email';
   const FILE_NAME = 'caderno-r1-dados.json';
   const MEDIA_NAME = 'caderno-r1-imagens.json';
   const OAUTH = 'https://oauth2.googleapis.com';
@@ -86,7 +86,8 @@
     if (res.status !== 200) throw new Error('Google Drive respondeu ' + res.status + ' ao baixar seus dados.');
     return JSON.parse(res.body);
   }
-  async function driveUpload(tk, id, content, name) {
+  /* pub=true: arquivo comum no Drive do administrador, legível por qualquer pessoa com o link (banco publicado) */
+  async function driveUpload(tk, id, content, name, pub) {
     if (id) {
       const res = await http(UPLOAD + '/files/' + id + '?uploadType=media&fields=id', {
         method: 'PATCH', headers: { Authorization: 'Bearer ' + tk, 'Content-Type': 'application/json; charset=UTF-8' }, body: content
@@ -95,15 +96,126 @@
       return id;
     }
     const boundary = 'cadernoR1' + Date.now();
-    const meta = JSON.stringify({ name: name || FILE_NAME, parents: ['appDataFolder'], mimeType: 'application/json' });
+    const meta = JSON.stringify({ name: name || FILE_NAME, parents: pub ? undefined : ['appDataFolder'], mimeType: 'application/json' });
     const body = '--' + boundary + '\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n' + meta + '\r\n--' + boundary +
       '\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n' + content + '\r\n--' + boundary + '--';
     const res = await http(UPLOAD + '/files?uploadType=multipart&fields=id', {
       method: 'POST', headers: { Authorization: 'Bearer ' + tk, 'Content-Type': 'multipart/related; boundary=' + boundary }, body
     });
     if (res.status !== 200) throw new Error('Google Drive respondeu ' + res.status + ' ao criar o arquivo de dados.');
-    return json(res).id;
+    const newId = json(res).id;
+    if (pub) {
+      const pr = await http(DRIVE + '/files/' + newId + '/permissions', { method: 'POST', headers: { Authorization: 'Bearer ' + tk, 'Content-Type': 'application/json' }, body: JSON.stringify({ role: 'reader', type: 'anyone' }) });
+      if (pr.status !== 200) throw new Error('Google Drive respondeu ' + pr.status + ' ao tornar o arquivo público.');
+    }
+    return newId;
   }
+
+  /* ---------- Banco publicado (admin publica; os outros só baixam) ---------- */
+  const PUBLIC_URL = 'https://drive.usercontent.google.com/download?export=download&confirm=t&id=';
+  const bankManifestId = () => (MQ.local.sync && MQ.local.sync.bankManifestId) || (window.MQ_CONFIG || {}).bankManifestId || '';
+  async function publicGet(id) {
+    const res = await http(PUBLIC_URL + encodeURIComponent(id) + '&t=' + Date.now());
+    if (res.status !== 200) throw new Error('Não foi possível baixar o banco publicado (' + res.status + ').');
+    return JSON.parse(res.body);
+  }
+
+  /* Baixa o banco só quando a versão do manifesto difere da guardada neste aparelho */
+  let bankRunning = false;
+  MQ.syncBank = async function (manual) {
+    const id = bankManifestId();
+    if (bankRunning || MQ.isAdmin()) return; // o administrador é a fonte do banco: aplicar as lápides publicadas apagaria questões dele
+    bankRunning = true;
+    if (!id || !navigator.onLine) { if (manual) MQ.toast('Banco publicado não configurado ou sem internet.', 'err'); return; }
+    try {
+      const m = await publicGet(id);
+      if (MQ.local.bank && MQ.local.bank.version === m.version) { if (manual) MQ.toast('O banco já está na versão mais recente.'); return; }
+      const bank = await publicGet(m.bankFileId);
+      const changed = MQ.mergeData({ questions: bank.questions });
+      MQ.local.bank = { version: m.version, count: m.count, updatedAt: m.updatedAt };
+      await MQ.saveLocal();
+      if (manual || changed) MQ.toast('Banco atualizado: versão ' + m.version + ', ' + m.count + ' questões.');
+      if (['questoes', 'listas', 'desempenho', 'configuracoes'].includes(MQ.route().name)) MQ.render();
+    } catch (e) { console.error(e); if (manual) MQ.toast(e.message || String(e), 'err'); } finally { bankRunning = false; }
+  };
+
+  /* sel: { insts: Set (instituição), lists: Set (ids de listas) }. IDs nunca mudam; o que sai do banco vira deleted:true. */
+  async function publishBank(sel) {
+    const tk = await token();
+    const s = MQ.local.sync;
+    if (!s.bankManifestId) s.bankManifestId = (window.MQ_CONFIG || {}).bankManifestId || ''; // outro aparelho do administrador: continua o mesmo banco
+    let prevM = null, prev = { questions: {} };
+    if (s.bankManifestId) { prevM = await driveDownload(tk, s.bankManifestId); prev = await driveDownload(tk, prevM.bankFileId); }
+    const ids = new Set();
+    sel.lists.forEach(l => (MQ.get('lists', l) || { qids: [] }).qids.forEach(q => ids.add(q)));
+    const now = MQ.now(), out = {};
+    MQ.alive('questions').forEach(q => {
+      if (q.exemplo || !(sel.insts.has((q.instituicao || '').trim()) || ids.has(q.id))) return;
+      const p = prev.questions[q.id];
+      out[q.id] = p && p.deleted ? Object.assign({}, q, { updatedAt: now }) : q; // volta ao banco: precisa vencer a lápide
+    });
+    Object.keys(prev.questions).forEach(id => {
+      if (out[id]) return;
+      const p = prev.questions[id];
+      out[id] = p.deleted ? p : { id, deleted: true, createdAt: p.createdAt, updatedAt: now };
+    });
+    const count = Object.values(out).filter(q => !q.deleted).length;
+    const version = (prevM ? prevM.version : 0) + 1;
+    // banco primeiro, manifesto depois: ninguém vê uma versão cujo arquivo ainda não existe
+    const bankFileId = await driveUpload(tk, prevM && prevM.bankFileId, JSON.stringify({ version, questions: out }), 'caderno-r1-banco.json', true);
+    const isNew = !s.bankManifestId;
+    s.bankManifestId = await driveUpload(tk, s.bankManifestId, JSON.stringify({ version, count, updatedAt: now, bankFileId }), 'caderno-r1-banco-versao.json', true);
+    MQ.local.bank = { version, count, updatedAt: now };
+    await MQ.saveLocal();
+    return { version, count, isNew, manifestId: s.bankManifestId };
+  }
+
+  MQ.publishDialog = function () {
+    if (!MQ.syncLoggedIn()) { MQ.toast('Entre com o Google em Configurações antes de publicar.', 'err'); return; }
+    const qs = MQ.alive('questions').filter(q => !q.exemplo);
+    const cnt = {};
+    qs.forEach(q => { const k = (q.instituicao || '').trim(); cnt[k] = (cnt[k] || 0) + 1; });
+    const official = /\b(inep|ebserh|enare|enamed|revalida)\b/i; // provas oficiais marcadas por padrão
+    const lists = MQ.alive('lists').sort((a, b) => (a.name || '').localeCompare(b.name || '', 'pt-BR'));
+    const folders = MQ.alive('folders').sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
+    const under = fid => lists.filter(l => l.folderId === fid).map(l => l.id).concat(...folders.filter(f => f.parentId === fid).map(f => under(f.id)));
+    const row = (attrs, label, n) => '<label class="pub-row"><input type="checkbox" ' + attrs + '> <span>' + esc(label) + '</span> <span class="muted small">' + n + '</span></label>';
+    const body = '<p class="muted small">Todos os aparelhos com o app baixam o que você publicar aqui. Questões de exemplo e as que você não marcar ficam só no seu Drive. Uma questão que sair da seleção é marcada como removida, sem apagar o histórico de ninguém.</p>' +
+      '<h3>Por instituição</h3>' + Object.keys(cnt).sort().map(k => row('data-inst="' + esc(k) + '"' + (official.test(k) ? ' checked' : ''), k || '(sem instituição)', cnt[k])).join('') +
+      (lists.length ? '<h3>Por pasta ou lista</h3>' + folders.map(f => row('data-fl="' + under(f.id).join(',') + '"', 'Pasta: ' + f.name, under(f.id).length + ' listas')).join('') +
+        lists.map(l => row('data-list="' + l.id + '"', l.name || 'Lista', l.qids.length)).join('') : '') +
+      '<p id="pub-n" class="small"></p>';
+    const selection = box => ({
+      insts: new Set(MQ.$$('[data-inst]:checked', box).map(x => x.dataset.inst)),
+      lists: new Set(MQ.$$('[data-list]:checked', box).map(x => x.dataset.list))
+    });
+    MQ.modal({
+      title: 'Publicar banco para todos', body, wide: true,
+      onOpen: box => {
+        const recount = () => {
+          const x = selection(box), ids = new Set();
+          x.lists.forEach(l => (MQ.get('lists', l) || { qids: [] }).qids.forEach(q => ids.add(q)));
+          MQ.$('#pub-n', box).textContent = qs.filter(q => x.insts.has((q.instituicao || '').trim()) || ids.has(q.id)).length + ' questões selecionadas.';
+        };
+        box.addEventListener('change', e => {
+          if (e.target.dataset.fl) e.target.dataset.fl.split(',').filter(Boolean).forEach(id => { const c = MQ.$('[data-list="' + id + '"]', box); if (c) c.checked = e.target.checked; });
+          recount();
+        });
+        recount();
+      },
+      actions: [{ label: 'Cancelar' }, {
+        label: 'Publicar', kind: 'primary',
+        onClick: (close, box) => {
+          MQ.toast('Publicando…');
+          publishBank(selection(box)).then(r => {
+            MQ.toast('Banco publicado: versão ' + r.version + ', ' + r.count + ' questões.');
+            if (r.isNew) MQ.modal({ title: 'Primeira publicação', body: '<p>Para os outros aparelhos baixarem o banco, copie este código para <b>bankManifestId</b> em <code>www/js/config.js</code> e gere os instaladores de novo:</p><div class="code-box">' + esc(r.manifestId) + '</div>' });
+            MQ.render();
+          }).catch(e => MQ.toast(/\b403\b/.test(e.message) ? 'O Google negou o acesso. Desconecte e entre de novo para autorizar a publicação.' : (e.message || String(e)), 'err'));
+        }
+      }]
+    });
+  };
 
   let running = null;
   MQ.syncNow = function (opts) {
@@ -157,6 +269,7 @@
   /* Sincroniza automaticamente: ao abrir, após mudanças e periodicamente */
   let debounce = null;
   MQ.initSync = function () {
+    MQ.syncBank();
     if (MQ.syncLoggedIn()) { setStatus('idle', 'Conectado'); MQ.syncNow(); }
     else setStatus('off', MQ.syncConfigured() ? 'Não conectado' : 'Sem sincronização');
     MQ.onChange(() => {
@@ -164,7 +277,7 @@
       clearTimeout(debounce);
       debounce = setTimeout(() => MQ.syncNow(), 15000);
     });
-    setInterval(() => { if (MQ.syncLoggedIn()) MQ.syncNow(); }, 5 * 60000);
+    setInterval(() => { MQ.syncBank(); if (MQ.syncLoggedIn()) MQ.syncNow(); }, 5 * 60000);
     document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden' && MQ.syncLoggedIn()) { clearTimeout(debounce); MQ.syncNow(); } });
     window.addEventListener('online', () => { if (MQ.syncLoggedIn()) MQ.syncNow(); });
   };

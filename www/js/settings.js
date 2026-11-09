@@ -12,6 +12,8 @@
       '<p class="muted small">Seus dados ficam numa pasta oculta do app no seu Google Drive. Conecte a mesma conta Google no Windows e no Android.</p>' +
       '<div class="sync-pill set-pill"><span class="sync-dot ' + ({ idle: 'on', busy: 'busy', error: 'err' }[st.state] || '') + '"></span><span class="sync-label">' + MQ.esc(st.msg) + '</span></div>' +
       '<div id="set-sync"></div></section>' +
+      '<section class="set-sec"><h2>Banco de questões</h2><p id="bank-info">' + (MQ.local.bank ? 'Banco: versão ' + Number(MQ.local.bank.version) + ', ' + Number(MQ.local.bank.count) + ' questões, atualizado em ' + MQ.fmtDate(MQ.local.bank.updatedAt) : 'Banco: nenhum banco publicado baixado ainda') + '</p>' +
+      (MQ.isAdmin() ? '<button class="btn" id="bank-pub">Publicar banco para todos</button>' : '') + '</section>' +
       '<section class="set-sec"><h2>Aparência</h2>' +
       '<div class="set-row"><span>Tema</span><div class="seg" role="group" aria-label="Tema">' +
       [['auto', 'Automático'], ['light', 'Claro'], ['dark', 'Escuro']].map(([v, l]) => '<button data-theme-set="' + v + '" aria-pressed="' + (theme === v) + '">' + l + '</button>').join('') + '</div></div>' +
@@ -20,6 +22,7 @@
       (MQ.isAdmin() ? '<section class="set-sec"><h2>Administrador</h2><a class="set-link" href="#/cadastrar"><span>Cadastrar questões</span>' + icon('right') + '</a></section>' : '') +
       '</div>';
 
+    if ($('#bank-pub', root)) $('#bank-pub', root).onclick = MQ.publishDialog;
     MQ.syncSection($('#set-sync', root));
     $$('[data-theme-set]', root).forEach(b => b.onclick = () => {
       MQ.local.theme = b.dataset.themeSet; MQ.saveLocal(); MQ.applyTheme();

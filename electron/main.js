@@ -3,7 +3,7 @@ const { app, BrowserWindow, ipcMain, shell, net } = require('electron');
 const path = require('path');
 
 /* Só estes servidores do Google podem ser chamados pelo app */
-const ALLOWED_HOSTS = new Set(['oauth2.googleapis.com', 'www.googleapis.com', 'openidconnect.googleapis.com']);
+const ALLOWED_HOSTS = new Set(['oauth2.googleapis.com', 'www.googleapis.com', 'openidconnect.googleapis.com', 'drive.usercontent.google.com']);
 
 if (!app.requestSingleInstanceLock()) {
   app.quit();

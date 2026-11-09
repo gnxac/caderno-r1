@@ -6,6 +6,8 @@
 window.MQ_CONFIG = {
   googleClientId: '',
   googleClientSecret: '',
+  /* Código do banco publicado (aparece na primeira vez que o administrador usa "Publicar banco para todos"). */
+  bankManifestId: '',
   /* Só quem entrar em Sincronizar com uma destas contas Google vê "Cadastrar questões"
      (cadastrar, editar, importar e gerenciar). Para os demais, o banco é só para resolver. */
   adminEmails: ['guilhermeacnx@gmail.com']

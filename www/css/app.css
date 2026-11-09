@@ -530,3 +530,6 @@ details.quad ul { margin: 6px 0 0; padding-left: 1.1em; font-size: .9rem; }
 .set-link:hover { background: var(--sunk); }
 .set-pill { display: none; }
 @media (max-width: 860px) { .set-pill { display: flex; margin: 8px 0 0; color: var(--ink-2); font-size: .9rem; } }
+
+.pub-row { display: flex; align-items: center; gap: 10px; min-height: 44px; }
+.pub-row span:nth-of-type(1) { flex: 1; }
