@@ -131,7 +131,7 @@
       const m = await publicGet(id);
       if (MQ.local.bank && MQ.local.bank.version === m.version) { if (manual) MQ.toast('O banco já está na versão mais recente.'); return; }
       const bank = await publicGet(m.bankFileId);
-      const changed = MQ.mergeData({ questions: bank.questions });
+      const changed = MQ.mergeDeduped({ questions: bank.questions }).changed;
       MQ.local.bank = { version: m.version, count: m.count, updatedAt: m.updatedAt };
       await MQ.saveLocal();
       if (manual || changed) MQ.toast('Banco atualizado: versão ' + m.version + ', ' + m.count + ' questões.');
@@ -157,7 +157,8 @@
     Object.keys(prev.questions).forEach(id => {
       if (out[id]) return;
       const p = prev.questions[id];
-      out[id] = p.deleted ? p : { id, deleted: true, createdAt: p.createdAt, updatedAt: now };
+      const lo = MQ.data.questions[id];
+      out[id] = p.deleted ? p : Object.assign({ id, deleted: true, createdAt: p.createdAt, updatedAt: now }, lo && lo.dupOf ? { dupOf: lo.dupOf, dupMap: lo.dupMap } : {});
     });
     const count = Object.values(out).filter(q => !q.deleted).length;
     const version = (prevM ? prevM.version : 0) + 1;

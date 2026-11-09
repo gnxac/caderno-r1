@@ -122,6 +122,11 @@
       const [out, err] = collect();
       if (err) { MQ.toast(err, 'err'); return; }
       delete out.exemplo;
+      const dup = editing && MQ.dupKey(editing) === MQ.dupKey(out) ? null : MQ.dupFind(out); // ao editar, só bloqueia se a edição criou a repetição
+      if (dup) {
+        MQ.confirm('Questão repetida', 'Esta questão já existe no banco (código ' + dup.codigo + '). A cópia não foi salva.', 'Abrir a existente').then(go => { if (go) location.hash = '#/cadastrar/' + dup.id; });
+        return;
+      }
       MQ.put('questions', out);
       MQ.toast(editing ? 'Alterações salvas.' : 'Questão ' + out.codigo + ' salva.');
       if (editing) { history.back(); return; }
@@ -185,9 +190,15 @@
       });
       const yes = await MQ.confirm('Importar questões', ok.length + ' questões prontas para importar' + (bad.length ? '. ' + bad.length + ' linhas foram ignoradas por falta de enunciado, alternativas, gabarito ou área (linhas ' + bad.slice(0, 12).join(', ') + (bad.length > 12 ? '…' : '') + ').' : '.'), 'Importar ' + ok.length);
       if (!yes || !ok.length) return;
-      ok.forEach(q => { q.codigo = MQ.nextCode(); q.createdAt = MQ.now(); MQ.data.questions[q.id] = Object.assign(q, { updatedAt: MQ.now() }); });
+      let added = 0, dups = 0;
+      ok.forEach(q => {
+        const ex = MQ.dupFind(q);
+        if (ex) { dups++; MQ.dupMerge(ex, q); return; }
+        q.codigo = MQ.nextCode(); q.createdAt = MQ.now(); MQ.data.questions[q.id] = Object.assign(q, { updatedAt: MQ.now() });
+        MQ.dupIndex().set(MQ.dupKey(q), q.id); added++;
+      });
       MQ.touch();
-      MQ.toast(ok.length + ' questões importadas.');
+      MQ.toast(added + (added === 1 ? ' questão importada, ' : ' questões importadas, ') + dups + ' repetidas ignoradas (dados mesclados).');
     };
     $('#i-bkp', body).onclick = () => MQ.saveFile('caderno-r1-backup-' + new Date().toISOString().slice(0, 10) + '.json', JSON.stringify(Object.assign({}, MQ.data, { media: MQ.media })), 'application/json');
     $('#i-rest', body).onclick = async () => {
@@ -196,15 +207,16 @@
       let d;
       try { d = JSON.parse(f.text); } catch (e) { MQ.toast('Arquivo inválido: não é um backup do Caderno R1.', 'err'); return; }
       if (!d || !d.questions) { MQ.toast('Arquivo inválido: não é um pacote nem um backup do Caderno R1.', 'err'); return; }
-      const nq = Object.keys(d.questions).filter(id => !MQ.data.questions[id]).length;
+      const pre = MQ.mergeDeduped(d, true);
+      const nq = pre.added;
       const nl = Object.keys(d.lists || {}).filter(id => !MQ.data.lists[id]).length;
       const ok = await MQ.confirm('Importar ' + (d.formato === 'caderno-r1-pacote' ? 'pacote' : 'backup'),
-        (d.nome ? d.nome + ': ' : '') + nq + ' questões novas' + (nl ? ', ' + nl + (nl === 1 ? ' lista nova' : ' listas novas') : '') + (d.media ? ' e ' + Object.keys(d.media).length + ' imagens' : '') + '. Continuar?', 'Importar');
+        (d.nome ? d.nome + ': ' : '') + nq + ' questões novas' + (pre.dup ? ', ' + pre.dup + ' repetidas (serão ignoradas)' : '') + (nl ? ', ' + nl + (nl === 1 ? ' lista nova' : ' listas novas') : '') + (d.media ? ' e ' + Object.keys(d.media).length + ' imagens' : '') + '. Continuar?', 'Importar');
       if (!ok) return;
-      const n = MQ.mergeData(d);
+      const res = MQ.mergeDeduped(d);
       const m = MQ.mergeMedia(d.media, true);
       MQ.touch();
-      MQ.toast('Importado: ' + n + ' itens' + (m ? ' e ' + m + ' imagens' : '') + '.');
+      MQ.toast(res.added + (res.added === 1 ? ' questão importada, ' : ' questões importadas, ') + res.dup + ' repetidas ignoradas (dados mesclados)' + (m ? '; ' + m + ' imagens' : '') + '.');
     };
     $('#i-qcsv', body).onclick = () => {
       const rows = [CSV_COLS].concat(MQ.alive('questions').map(q => {

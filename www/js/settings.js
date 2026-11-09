@@ -19,9 +19,10 @@
       [['auto', 'Automático'], ['light', 'Claro'], ['dark', 'Escuro']].map(([v, l]) => '<button data-theme-set="' + v + '" aria-pressed="' + (theme === v) + '">' + l + '</button>').join('') + '</div></div>' +
       '<div class="set-row"><span>Tamanho da letra</span><div class="fs-ctl"><button class="icon-btn" id="fs-minus" aria-label="Diminuir letra">' + icon('textdown') + '</button><output id="fs-val" aria-live="polite">' + pct() + '</output><button class="icon-btn" id="fs-plus" aria-label="Aumentar letra">' + icon('textup') + '</button></div></div>' +
       '</section>' +
-      (MQ.isAdmin() ? '<section class="set-sec"><h2>Administrador</h2><a class="set-link" href="#/cadastrar"><span>Cadastrar questões</span>' + icon('right') + '</a></section>' : '') +
+      (MQ.isAdmin() ? '<section class="set-sec"><h2>Administrador</h2><a class="set-link" href="#/cadastrar"><span>Cadastrar questões</span>' + icon('right') + '</a><button class="btn" id="bank-dedupe" style="margin-top:10px">Remover questões repetidas</button></section>' : '') +
       '</div>';
 
+    if ($('#bank-dedupe', root)) $('#bank-dedupe', root).onclick = MQ.dedupeDialog;
     if ($('#bank-pub', root)) $('#bank-pub', root).onclick = MQ.publishDialog;
     MQ.syncSection($('#set-sync', root));
     $$('[data-theme-set]', root).forEach(b => b.onclick = () => {
