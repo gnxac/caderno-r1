@@ -69,8 +69,8 @@
         } else if (a.l === chosen) cls += ' sel';
         if (cut.includes(a.l)) cls += ' cut-on';
         return '<div class="' + cls + '" role="button" tabindex="0" data-alt="' + esc(a.l) + '"' + (revealed ? ' aria-disabled="true"' : '') + ' aria-pressed="' + (a.l === chosen) + '">' +
-          '<span class="letter">' + esc(a.l) + '</span><span class="txt">' + MQ.para(a.t) + (a.img ? MQ.imgHtml(a.img, 'Imagem da alternativa ' + a.l) : '') + '</span>' +
-          (revealed ? '<span></span>' : '<button class="icon-btn cut" data-cut="' + esc(a.l) + '" aria-label="Riscar alternativa ' + esc(a.l) + '" title="Riscar alternativa">' + icon('scissors') + '</button>') +
+          '<span class="letter">' + esc(a.l) + '</span><span class="txt"><span data-mk="' + esc(a.l) + '">' + MQ.para(a.t) + '</span>' + (a.img ? MQ.imgHtml(a.img, 'Imagem da alternativa ' + a.l) : '') + '</span>' +
+          (revealed ? '<span></span>' : '<button class="icon-btn cut" data-cut="' + esc(a.l) + '" aria-pressed="' + cut.includes(a.l) + '" aria-label="' + (cut.includes(a.l) ? 'Trazer de volta' : 'Descartar') + ' a alternativa ' + esc(a.l) + '" title="' + (cut.includes(a.l) ? 'Trazer de volta' : 'Descartar alternativa') + '">' + icon('scissors') + '</button>') +
           '</div>';
       }).join('');
       let verdict = '';
@@ -88,19 +88,20 @@
         '<div class="qtools">' +
         '<button class="icon-btn" id="q-add" title="Adicionar a uma lista" aria-label="Adicionar a uma lista">' + icon('plus') + '</button>' +
         '<button class="icon-btn" id="q-topics" title="Mostrar assunto" aria-label="Mostrar assunto" aria-pressed="' + s.showTopics + '">' + icon('tag') + '</button>' +
-        '<button class="icon-btn" id="q-edit" title="Editar questão" aria-label="Editar questão">' + icon('edit') + '</button>' +
+        (MQ.hasMarks(qid) ? '<button class="icon-btn" id="q-unmark" title="Apagar marcações desta questão" aria-label="Apagar marcações desta questão">' + icon('eraser') + '</button>' : '') +
+        (MQ.isAdmin() ? '<button class="icon-btn" id="q-edit" title="Editar questão" aria-label="Editar questão">' + icon('edit') + '</button>' : '') +
         '</div></div>' +
         '<div class="qcode"><span>' + esc(q.codigo || '') + '</span><button id="q-hist">' + icon('history') + (s.showHist[qid] ? 'Ocultar histórico' : 'Histórico de respostas (' + hist.length + ')') + '</button></div>' +
         histHtml +
         (s.showTopics ? '<div class="topics">' + esc(MQ.qPath(q).join(' › ') || 'Sem assunto definido') + '</div>' : '') +
-        '<div class="stem">' + MQ.para(q.enunciado) + (q.imagens || []).map(id => MQ.imgHtml(id)).join('') + '</div>' +
+        '<div class="stem"><div data-mk="stem">' + MQ.para(q.enunciado) + '</div>' + (q.imagens || []).map(id => MQ.imgHtml(id)).join('') + '</div>' +
         '<div class="alts" role="group" aria-label="Alternativas">' + alts + '</div>' +
         '<div class="answer-row">' +
         (revealed ? verdict : '<button class="btn primary" id="q-answer"' + (chosen ? '' : ' disabled') + '>Responder</button>' +
           '<button class="btn ghost" id="q-reveal">Ver gabarito sem responder</button>' +
           (chosen ? '' : '<span class="muted small">Escolha uma alternativa (teclas A–E)</span>')) +
         '</div>' +
-        (revealed ? '<section class="comment"><h3>Comentário</h3><div class="body">' + (q.comentario ? MQ.para(q.comentario) : '<p class="muted">Sem comentário cadastrado. Você pode escrever um em Editar questão.</p>') + '</div></section>' : '') +
+        (revealed ? '<section class="comment"><h3>Comentário</h3><div class="body">' + (q.comentario ? MQ.para(q.comentario) : '<p class="muted">Sem comentário para esta questão.</p>') + '</div></section>' : '') +
         '</article>';
     }
 
@@ -148,12 +149,14 @@
 
     $('#q-add', root).onclick = e => addToListMenu(e.currentTarget, qid);
     $('#q-topics', root).onclick = () => { s.showTopics = !s.showTopics; MQ.render(); };
-    $('#q-edit', root).onclick = () => { location.hash = '#/cadastrar/' + qid; };
+    MQ.enableMarker(root, qid);
+    if ($('#q-edit', root)) $('#q-edit', root).onclick = () => { location.hash = '#/cadastrar/' + qid; };
+    if ($('#q-unmark', root)) $('#q-unmark', root).onclick = () => { MQ.clearMarks(qid); MQ.toast('Marcações apagadas.'); MQ.render(); };
     $('#q-hist', root).onclick = () => { s.showHist[qid] = !s.showHist[qid]; MQ.render(); };
 
     $$('[data-alt]', root).forEach(el => {
       const pick = () => {
-        if (revealed) return;
+        if (revealed || MQ.selectingIn(el)) return;
         const l = el.dataset.alt;
         if (cut.includes(l)) return;
         s.sel[qid] = s.sel[qid] === l ? undefined : l;

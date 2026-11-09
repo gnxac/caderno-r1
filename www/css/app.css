@@ -255,9 +255,14 @@ input:focus, select:focus, textarea:focus { outline: 2px solid var(--focus); out
   font-family: var(--sans); font-weight: 600; font-size: .9rem; color: var(--ink-2);
 }
 .alt .txt { padding-top: 3px; }
-.alt .cut { opacity: .0; transition: opacity .1s; }
-.alt:hover .cut, .alt .cut:focus-visible, .alt.cut-on .cut { opacity: 1; }
-.alt.cut-on .txt { text-decoration: line-through; color: var(--ink-3); }
+/* Descartar alternativa (tesoura sempre visível, como no Estratégia) */
+.alt .cut { color: var(--ink-3); opacity: .7; transition: opacity .1s, color .1s; }
+.alt:hover .cut, .alt .cut:focus-visible { opacity: 1; color: var(--ink-2); }
+.alt.cut-on { background: var(--sunk); border-style: dashed; cursor: default; }
+.alt.cut-on .txt, .alt.cut-on .letter { opacity: .5; }
+.alt.cut-on .txt { text-decoration: line-through; text-decoration-thickness: 1.5px; }
+.alt.cut-on .cut { opacity: 1; color: var(--err); background: var(--err-soft); }
+.alt.cut-on.right .txt, .alt.cut-on.right .letter { opacity: 1; }
 .alt.sel { border-color: var(--accent); background: var(--accent-soft); }
 .alt.sel .letter { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
 .alt.right { border-color: var(--ok); background: var(--ok-soft); }
@@ -402,3 +407,18 @@ main:focus { outline: none; }
 .alt .qimg { margin: 6px 0 2px; }
 .qimg.missing { font-family: var(--sans); font-size: .82rem; color: var(--ink-3); background: var(--sunk); padding: 10px; border-radius: 6px; }
 .zoom-img { max-width: 100%; height: auto; background: #fff; display: block; margin: 0 auto; }
+[hidden] { display: none !important; }
+/* Marca-texto: cores claras, texto escuro também no modo escuro */
+mark.hl { color: #1D2B33; border-radius: 2px; padding: 0 1px; box-decoration-break: clone; -webkit-box-decoration-break: clone; }
+.hl-red { background: #FFC4C4; }
+.hl-yellow { background: #FFF08A; }
+.hl-blue { background: #C7DEFF; }
+.hl-green { background: #C4ECC8; }
+.hl-pink { background: #FFCCE8; }
+.mk-bar { position: absolute; z-index: 60; display: flex; align-items: center; gap: 6px; padding: 6px 8px; background: var(--surface); border: 1px solid var(--line-2); border-radius: 999px; box-shadow: 0 6px 20px rgba(0,0,0,.18); }
+.mk-bar button { width: 30px; height: 30px; border-radius: 50%; border: 1px solid rgba(0,0,0,.18); cursor: pointer; padding: 0; display: inline-flex; align-items: center; justify-content: center; }
+.mk-bar button:hover, .mk-bar button:focus-visible { transform: scale(1.12); outline: 2px solid var(--focus); outline-offset: 1px; }
+.mk-bar .mk-erase { background: var(--sunk); color: var(--ink-2); border-color: var(--line-2); margin-left: 2px; }
+.mk-bar .mk-erase .ic { width: 17px; height: 17px; }
+@media (pointer: coarse) { .mk-bar button { width: 44px; height: 44px; } }
+@media print { .mk-bar { display: none; } mark.hl { background: none; } }

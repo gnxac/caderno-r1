@@ -11,8 +11,17 @@
 
   const NAV_FOR = { questoes: 'questoes', resolver: 'questoes', listas: 'listas', simulado: 'listas', resultado: 'listas', desempenho: 'desempenho', cadastrar: 'cadastrar', sincronizar: 'sincronizar' };
 
+  MQ.isAdmin = function () {
+    const email = ((MQ.local.sync && MQ.local.sync.email) || '').trim().toLowerCase();
+    const admins = ((window.MQ_CONFIG || {}).adminEmails || []).map(e => String(e).trim().toLowerCase());
+    return !!email && admins.includes(email);
+  };
+
   MQ.render = function () {
     clearInterval(MQ.tick);
+    MQ.hideMarkBar && MQ.hideMarkBar();
+    const navAdmin = document.querySelector('#nav a[data-route="cadastrar"]');
+    if (navAdmin) navAdmin.hidden = !MQ.isAdmin();
     MQ.keyHandler = null;
     MQ.hideTip && MQ.hideTip();
     $$('.popmenu').forEach(m => m.remove());

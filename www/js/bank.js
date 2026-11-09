@@ -162,7 +162,7 @@
     const f = MQ.bankFilter;
     const t = MQ.norm(paneSearch);
     const arr = valueCounts(key, qs).filter(([v]) => !t || MQ.norm(v).includes(t));
-    if (!arr.length) return '<p class="muted">Nenhum valor cadastrado nas suas questões. Preencha este campo ao cadastrar ou importar questões.</p>';
+    if (!arr.length) return '<p class="muted">Nenhum valor cadastrado nas suas questões. </p>';
     return arr.map(([v, n]) =>
       '<label class="opt"><input type="checkbox" data-field="' + key + '" value="' + esc(v) + '"' + (f[key].includes(v) ? ' checked' : '') + '><span>' + esc(v) + '</span><span class="n">' + n + '</span></label>'
     ).join('');
@@ -213,7 +213,8 @@
     const all = MQ.alive('questions');
     if (!all.length) {
       root.innerHTML = '<div class="page-head"><div><h1>Banco de questões</h1></div></div>' +
-        '<div class="empty"><h2>Seu banco está vazio</h2><p>Cadastre questões uma a uma ou importe uma planilha para começar a filtrar, montar listas e simulados.</p><a class="btn primary" href="#/cadastrar">Cadastrar questões</a></div>';
+        (MQ.isAdmin() ? '<div class="empty"><h2>Seu banco está vazio</h2><p>Cadastre questões uma a uma ou importe uma planilha para começar a filtrar, montar listas e simulados.</p><a class="btn primary" href="#/cadastrar">Cadastrar questões</a></div>'
+          : '<div class="empty"><h2>Ainda não há questões</h2><p>As questões aparecem aqui quando forem adicionadas ao banco.</p></div>');
       return;
     }
     const tabs = [['assunto', 'Especialidade e assunto']].concat(FIELDS.map(x => [x.key, x.tab])).concat([['avancados', 'Filtros avançados']]);

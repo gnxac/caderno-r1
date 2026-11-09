@@ -224,7 +224,8 @@ window.MQ = window.MQ || {};
     textdown: '<path d="M4 18l5-12 5 12M5.8 14h6.4"/><path d="M15 9h6"/>',
     history: '<path d="M4 12a8 8 0 1 0 2.4-5.7"/><path d="M4 4v4h4"/><path d="M12 8v4l2.5 2"/>',
     tag: '<path d="M4 4h7l9 9-7 7-9-9z"/><circle cx="8" cy="8" r="1.3"/>',
-    trash: '<path d="M5 7h14M10 7V5h4v2M7 7l1 13h8l1-13"/>'
+    trash: '<path d="M5 7h14M10 7V5h4v2M7 7l1 13h8l1-13"/>',
+    eraser: '<path d="M8.5 19.5L3.8 14.8a1.5 1.5 0 0 1 0-2.1l8.9-8.9a1.5 1.5 0 0 1 2.1 0l5.4 5.4a1.5 1.5 0 0 1 0 2.1l-8.2 8.2"/><path d="M8.5 19.5H20M7 10.5l6.5 6.5"/>'
   };
   MQ.icon = function (name, cls) {
     return '<svg class="ic ' + (cls || '') + '" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">' + (ICONS[name] || '') + '</svg>';

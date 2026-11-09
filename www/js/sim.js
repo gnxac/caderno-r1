@@ -143,6 +143,8 @@
     const q = MQ.get('questions', qid);
     const chosen = run.answers[qid];
     const flagged = run.flags.includes(qid);
+    const cuts = run.cut || (run.cut = {});
+    const cut = cuts[qid] || [];
     const answered = Object.keys(run.answers).filter(k => run.answers[k]).length;
 
     root.innerHTML =
@@ -154,10 +156,11 @@
       '<div class="solve-wrap with-index"><div>' +
       (q ? '<article class="qcard"><div class="qmeta"><span class="num">Questão ' + (idx + 1) + ' de ' + n + '</span>' +
         [q.instituicao, q.ano].filter(Boolean).map(t => '<span class="tag">' + esc(t) + '</span>').join('') +
-        '<div class="qtools"><button class="icon-btn" id="sim-flag" aria-pressed="' + flagged + '" title="Marcar para revisar" aria-label="Marcar para revisar">' + icon('flag') + '</button></div></div>' +
-        '<div class="stem" style="margin-top:12px">' + MQ.para(q.enunciado) + (q.imagens || []).map(id => MQ.imgHtml(id)).join('') + '</div>' +
+        '<div class="qtools">' + (MQ.hasMarks(qid) ? '<button class="icon-btn" id="q-unmark" title="Apagar marcações desta questão" aria-label="Apagar marcações desta questão">' + icon('eraser') + '</button>' : '') + '<button class="icon-btn" id="sim-flag" aria-pressed="' + flagged + '" title="Marcar para revisar" aria-label="Marcar para revisar">' + icon('flag') + '</button></div></div>' +
+        '<div class="stem" style="margin-top:12px"><div data-mk="stem">' + MQ.para(q.enunciado) + '</div>' + (q.imagens || []).map(id => MQ.imgHtml(id)).join('') + '</div>' +
         '<div class="alts" role="radiogroup" aria-label="Alternativas">' + (q.alternativas || []).map(a =>
-          '<div class="alt' + (a.l === chosen ? ' sel' : '') + '" role="radio" tabindex="0" aria-checked="' + (a.l === chosen) + '" data-alt="' + esc(a.l) + '"><span class="letter">' + esc(a.l) + '</span><span class="txt">' + MQ.para(a.t) + (a.img ? MQ.imgHtml(a.img, 'Imagem da alternativa ' + a.l) : '') + '</span><span></span></div>').join('') +
+          '<div class="alt' + (a.l === chosen ? ' sel' : '') + (cut.includes(a.l) ? ' cut-on' : '') + '" role="radio" tabindex="0" aria-checked="' + (a.l === chosen) + '" data-alt="' + esc(a.l) + '"><span class="letter">' + esc(a.l) + '</span><span class="txt"><span data-mk="' + esc(a.l) + '">' + MQ.para(a.t) + '</span>' + (a.img ? MQ.imgHtml(a.img, 'Imagem da alternativa ' + a.l) : '') + '</span>' +
+          '<button class="icon-btn cut" data-cut="' + esc(a.l) + '" aria-pressed="' + cut.includes(a.l) + '" aria-label="' + (cut.includes(a.l) ? 'Trazer de volta' : 'Descartar') + ' a alternativa ' + esc(a.l) + '" title="' + (cut.includes(a.l) ? 'Trazer de volta' : 'Descartar alternativa') + '">' + icon('scissors') + '</button></div>').join('') +
         '</div>' + (chosen ? '<button class="btn ghost sm" id="sim-clear">Limpar resposta</button>' : '<span class="muted small">Sem correção até finalizar. Teclas A–E para marcar.</span>') + '</article>'
         : '<div class="qcard"><p class="muted">Questão excluída.</p></div>') +
       '<div class="qnav"><button class="btn" id="sim-prev"' + (idx === 0 ? ' disabled' : '') + '>' + icon('left') + ' Anterior</button><button class="btn" id="sim-next"' + (idx >= n - 1 ? ' disabled' : '') + '>Próxima ' + icon('right') + '</button></div></div>' +
@@ -167,9 +170,19 @@
 
     function save() { MQ.put('runs', run); }
     function go(i) { if (i < 0 || i >= n) return; run.idx = i; save(); MQ.render(); window.scrollTo(0, 0); }
-    function pick(l) { run.answers[qid] = run.answers[qid] === l ? undefined : l; if (!run.answers[qid]) delete run.answers[qid]; save(); MQ.render(); }
+    function pick(l) { if (cut.includes(l)) return; run.answers[qid] = run.answers[qid] === l ? undefined : l; if (!run.answers[qid]) delete run.answers[qid]; save(); MQ.render(); }
+    if (q) MQ.enableMarker(root, qid);
+    if ($('#q-unmark', root)) $('#q-unmark', root).onclick = () => { MQ.clearMarks(qid); MQ.toast('Marcações apagadas.'); MQ.render(); };
+    $$('[data-cut]', root).forEach(b => b.addEventListener('click', e => {
+      e.stopPropagation();
+      const l = b.dataset.cut;
+      const list = cuts[qid] || (cuts[qid] = []);
+      const i = list.indexOf(l);
+      if (i >= 0) list.splice(i, 1); else { list.push(l); if (run.answers[qid] === l) delete run.answers[qid]; }
+      save(); MQ.render();
+    }));
     $$('[data-alt]', root).forEach(el => {
-      el.onclick = () => pick(el.dataset.alt);
+      el.onclick = e => { if (e.target.closest('[data-cut]') || MQ.selectingIn(el)) return; pick(el.dataset.alt); };
       el.onkeydown = e => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); pick(el.dataset.alt); } };
     });
     $$('[data-go]', root).forEach(b => b.onclick = () => go(parseInt(b.dataset.go, 10)));

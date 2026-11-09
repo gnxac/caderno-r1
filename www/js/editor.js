@@ -20,6 +20,10 @@
   }
 
   MQ.views.cadastrar = function (root, qid) {
+    if (!MQ.isAdmin()) {
+      root.innerHTML = '<div class="empty"><h2>Área restrita</h2><p>Cadastrar, editar e importar questões fica disponível só para a conta do administrador. Entre com ela em Sincronizar para liberar.</p><a class="btn" href="#/questoes">Voltar ao banco</a></div>';
+      return;
+    }
     if (qid) tab = 'nova';
     const tabs = [['nova', qid ? 'Editar questão' : 'Nova questão'], ['importar', 'Importar e exportar'], ['gerenciar', 'Gerenciar questões']];
     root.innerHTML = '<div class="page-head"><div><h1>Cadastrar questões</h1><p>Monte seu banco: digite, importe uma planilha ou restaure um backup.</p></div></div>' +

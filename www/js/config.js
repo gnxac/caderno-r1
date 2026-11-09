@@ -5,5 +5,8 @@
    Se deixar vazio, dá para colar os dois valores na tela Sincronizar de cada aparelho. */
 window.MQ_CONFIG = {
   googleClientId: '',
-  googleClientSecret: ''
+  googleClientSecret: '',
+  /* Só quem entrar em Sincronizar com uma destas contas Google vê "Cadastrar questões"
+     (cadastrar, editar, importar e gerenciar). Para os demais, o banco é só para resolver. */
+  adminEmails: ['guilhermeacnx@gmail.com']
 };
