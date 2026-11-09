@@ -9,7 +9,7 @@
   "main": "electron/main.js",
   "scripts": {
     "start": "electron .",
-    "dist:win": "electron-builder --win nsis portable --publish never",
+    "dist:win": "electron-builder --win portable --publish never",
     "android:add": "cap add android",
     "android:icons": "capacitor-assets generate --android --iconBackgroundColor #1F3A4D --iconBackgroundColorDark #1F3A4D --splashBackgroundColor #F1F5F7 --splashBackgroundColorDark #12191E",
     "android:sync": "cap sync android",
@@ -35,15 +35,8 @@
     "directories": { "output": "dist" },
     "files": ["electron/**/*", "www/**/*", "package.json"],
     "win": {
-      "target": ["nsis", "portable"],
+      "target": ["portable"],
       "icon": "icon-1024.png"
-    },
-    "nsis": {
-      "oneClick": false,
-      "allowToChangeInstallationDirectory": true,
-      "createDesktopShortcut": true,
-      "shortcutName": "Caderno R1",
-      "artifactName": "Caderno-R1-Instalador-${version}.${ext}"
     },
     "portable": {
       "artifactName": "Caderno-R1-Portatil-${version}.${ext}"

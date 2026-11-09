@@ -1,4 +1,4 @@
-# Gera o instalador do Windows (.exe) e o app do Android (.apk) na nuvem do GitHub.
+# Gera o app portátil do Windows (.exe) e o app do Android (.apk) na nuvem do GitHub.
 # Como usar: aba "Actions" do repositório → "Gerar instaladores" → "Run workflow".
 # Ao terminar, baixe os arquivos em "Artifacts" no fim da página da execução.
 name: Gerar instaladores

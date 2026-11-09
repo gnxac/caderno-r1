@@ -47,7 +47,7 @@ A sincronização guarda seus dados numa pasta oculta do app no seu Google Drive
 2. Na página do repositório, **Add file → Upload files** e arraste **todo o conteúdo** desta pasta (inclusive a pasta `.github`). Confirme em **Commit changes**.
 3. Vá na aba **Actions → Gerar instaladores → Run workflow**.
 4. Em uns 10 minutos aparecem dois arquivos em **Artifacts**, no fim da página da execução:
-   - `Caderno-R1-Windows`: instalador `.exe` e uma versão portátil (roda sem instalar).
+   - `Caderno-R1-Windows`: versão portátil `.exe` (roda sem instalar).
    - `Caderno-R1-Android`: o `Caderno-R1.apk`.
 
 ### Opção B — no seu PC com Windows
