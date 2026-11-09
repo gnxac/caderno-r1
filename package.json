@@ -11,7 +11,7 @@
     "start": "electron .",
     "dist:win": "electron-builder --win nsis portable --publish never",
     "android:add": "cap add android",
-    "android:icons": "capacitor-assets generate --android --iconBackgroundColor #7A2E5E --iconBackgroundColorDark #7A2E5E --splashBackgroundColor #F5F6F8 --splashBackgroundColorDark #15181F",
+    "android:icons": "capacitor-assets generate --android --iconBackgroundColor #1F3A4D --iconBackgroundColorDark #1F3A4D --splashBackgroundColor #F1F5F7 --splashBackgroundColorDark #12191E",
     "android:sync": "cap sync android",
     "android:open": "cap open android"
   },
