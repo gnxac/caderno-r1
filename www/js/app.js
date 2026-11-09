@@ -9,7 +9,7 @@
     return { name: name || 'questoes', arg: arg ? decodeURIComponent(arg) : null };
   };
 
-  const NAV_FOR = { questoes: 'questoes', resolver: 'questoes', listas: 'listas', simulado: 'listas', resultado: 'listas', desempenho: 'desempenho', cadastrar: 'cadastrar', sincronizar: 'sincronizar' };
+  const NAV_FOR = { questoes: 'questoes', resolver: 'questoes', listas: 'listas', simulado: 'listas', resultado: 'listas', desempenho: 'desempenho', configuracoes: 'configuracoes', cadastrar: 'configuracoes', sincronizar: 'configuracoes' };
 
   MQ.isAdmin = function () {
     const email = ((MQ.local.sync && MQ.local.sync.email) || '').trim().toLowerCase();
@@ -20,12 +20,12 @@
   MQ.render = function () {
     clearInterval(MQ.tick);
     MQ.hideMarkBar && MQ.hideMarkBar();
-    const navAdmin = document.querySelector('#nav a[data-route="cadastrar"]');
-    if (navAdmin) navAdmin.hidden = !MQ.isAdmin();
     MQ.keyHandler = null;
     MQ.hideTip && MQ.hideTip();
     $$('.popmenu').forEach(m => m.remove());
     const r = MQ.route();
+    if (r.name === 'sincronizar') { location.replace('#/configuracoes'); return; } // rota antiga: agora fica em Configurações
+    document.body.classList.toggle('in-solve', r.name === 'resolver');
     const view = MQ.views[r.name] || MQ.views.questoes;
     const root = document.getElementById('view');
     const navKey = NAV_FOR[r.name] || 'questoes';
@@ -46,6 +46,7 @@
 
   let lastRoute = '';
   window.addEventListener('hashchange', () => {
+    document.querySelectorAll('.fpage, .sheet-back').forEach(m => { if (m._close) m._close(); else m.remove(); }); // página de filtro/menu não sobrevive à troca de tela
     const r = MQ.route();
     MQ.render();
     const key = r.name + '/' + (r.arg || '');
@@ -66,8 +67,8 @@
     const cap = window.Capacitor;
     if (cap && cap.Plugins && cap.Plugins.App) {
       cap.Plugins.App.addListener('backButton', () => {
-        const m = document.querySelector('.modal-back, .popmenu');
-        if (m) { m.remove(); return; }
+        const m = document.querySelector('.modal-back, .popmenu, .fpage, .sheet-back');
+        if (m) { if (m._close) m._close(); else m.remove(); return; }
         if (location.hash && location.hash !== '#/questoes') history.back();
         else cap.Plugins.App.exitApp();
       });

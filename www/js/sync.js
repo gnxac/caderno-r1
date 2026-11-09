@@ -26,9 +26,9 @@
 
   function setStatus(state, msg) {
     MQ.syncStatus = { state, msg };
-    const dot = document.getElementById('sync-dot'), lab = document.getElementById('sync-label');
-    if (dot) dot.className = 'sync-dot ' + ({ idle: 'on', busy: 'busy', error: 'err' }[state] || '');
-    if (lab) lab.textContent = msg;
+    const cls = 'sync-dot ' + ({ idle: 'on', busy: 'busy', error: 'err' }[state] || '');
+    document.querySelectorAll('.sync-dot').forEach(d => { d.className = cls; });
+    document.querySelectorAll('.sync-label').forEach(l => { l.textContent = msg; });
   }
 
   /* Requisição HTTP: no Windows passa pelo processo principal (sem CORS);
@@ -64,7 +64,7 @@
     if (res.status !== 200 || !j.access_token) {
       if (j.error === 'invalid_grant') {
         s.refreshToken = null; s.accessToken = null; MQ.saveLocal();
-        throw new Error('A autorização do Google expirou ou foi revogada. Entre de novo em Sincronizar.');
+        throw new Error('A autorização do Google expirou ou foi revogada. Entre de novo em Configurações.');
       }
       throw new Error('Não foi possível renovar o acesso ao Google (' + (j.error_description || j.error || res.status) + ').');
     }
@@ -141,7 +141,7 @@
         s.lastSync = Date.now();
         MQ.saveLocal();
         setStatus('idle', 'Sincronizado ' + new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }));
-        if (changed && ['questoes', 'listas', 'desempenho', 'sincronizar'].includes(MQ.route().name)) MQ.render();
+        if (changed && ['questoes', 'listas', 'desempenho', 'configuracoes'].includes(MQ.route().name)) MQ.render();
         if (opts.manual) MQ.toast(changed ? 'Sincronizado: ' + changed + ' itens vieram de outro aparelho.' : 'Sincronizado. Tudo em dia.');
         return true;
       } catch (e) {
@@ -235,12 +235,13 @@
     MQ.render();
   }
 
-  MQ.views.sincronizar = function (root) {
+  /* Seção "Conta e sincronização" da tela Configurações */
+  MQ.syncSection = function (root) {
     const s = MQ.local.sync || {};
     const c = cfg();
     const fromFile = !!(window.MQ_CONFIG && window.MQ_CONFIG.googleClientId);
     const platform = window.mqNative ? 'Windows' : (window.Capacitor && window.Capacitor.getPlatform ? (window.Capacitor.getPlatform() === 'android' ? 'Android' : 'Navegador') : 'Navegador');
-    root.innerHTML = '<div class="page-head"><div><h1>Sincronizar</h1><p>Seus dados ficam numa pasta oculta do app no seu Google Drive. Conecte a mesma conta Google no Windows e no Android.</p></div></div>' +
+    root.innerHTML =
       (MQ.syncLoggedIn()
         ? '<section class="sync-card"><h2>Conectado</h2><dl class="kv"><dt>Conta</dt><dd>' + esc(s.email || 'conta Google') + '</dd><dt>Este aparelho</dt><dd>' + platform + '</dd><dt>Última sincronização</dt><dd>' + (s.lastSync ? MQ.fmtDateTime(s.lastSync) : 'ainda não') + '</dd><dt>Situação</dt><dd>' + esc(MQ.syncStatus.msg) + '</dd></dl>' +
           '<p class="muted small">Sincroniza sozinho ao abrir o app, alguns segundos depois de cada mudança e a cada 5 minutos. Quando o mesmo item é editado nos dois aparelhos, vale a edição mais recente.</p>' +
@@ -252,9 +253,7 @@
       (fromFile ? '<p class="muted small">Esta versão do app já veio com a credencial configurada.</p>' : '') +
       '<label class="field"><span>ID do cliente OAuth</span><input type="text" id="sy-cid" value="' + esc(c.clientId) + '" placeholder="123456-abc.apps.googleusercontent.com" autocomplete="off"></label>' +
       '<label class="field"><span>Chave secreta do cliente</span><input type="password" id="sy-sec" value="' + esc(c.clientSecret) + '" placeholder="GOCSPX-…" autocomplete="off"><small>Tipo de cliente: "TVs e dispositivos de entrada limitada".</small></label>' +
-      '<button class="btn" id="sy-save">Salvar credencial</button></section>' +
-      '<section class="sync-card"><h2>Tema</h2><div class="seg" role="group" aria-label="Tema">' +
-      [['auto', 'Automático'], ['light', 'Claro'], ['dark', 'Escuro']].map(([v, l]) => '<button data-theme-set="' + v + '" aria-pressed="' + ((MQ.local.theme || 'auto') === v) + '">' + l + '</button>').join('') + '</div></section>';
+      '<button class="btn" id="sy-save">Salvar credencial</button></section>';
 
     if ($('#sy-now', root)) $('#sy-now', root).onclick = async () => { await MQ.syncNow({ manual: true }); MQ.render(); };
     if ($('#sy-out', root)) $('#sy-out', root).onclick = logout;
@@ -268,6 +267,5 @@
       MQ.toast(MQ.syncConfigured() ? 'Credencial salva. Agora clique em "Entrar com o Google".' : 'Preencha o ID e a chave secreta.');
       MQ.render();
     };
-    root.querySelectorAll('[data-theme-set]').forEach(b => b.onclick = () => { MQ.local.theme = b.dataset.themeSet; MQ.saveLocal(); MQ.applyTheme(); MQ.render(); });
   };
 })(window.MQ);

@@ -88,7 +88,7 @@
     return out.length ? { qid, list: out, rect: range.getBoundingClientRect() } : null;
   }
 
-  let bar = null, pending = null, watcher = null;
+  let bar = null, pending = null, watcher = null, touching = false;
 
   function hideBar() { if (bar) { bar.remove(); bar = null; } pending = null; }
   MQ.hideMarkBar = hideBar;
@@ -104,19 +104,23 @@
       '<button class="mk-sw hl-' + c + '" data-color="' + c + '" title="' + n + '" aria-label="Marcar em ' + n.toLowerCase() + '"></button>').join('') +
       '<button class="mk-erase" data-color="" title="Apagar marcação" aria-label="Apagar marcação">' + MQ.icon('eraser') + '</button>';
     document.body.appendChild(bar);
-    // mantém a seleção viva ao tocar nos botões
-    ['mousedown', 'touchstart', 'pointerdown'].forEach(ev => bar.addEventListener(ev, e => e.preventDefault(), { passive: false }));
-    bar.addEventListener('click', e => {
+    // Aplica no pointerdown, com a seleção já guardada em "pending". No Android, preventDefault em
+    // touchstart cancela o click e o toque recolhe a seleção, por isso nada aqui depende de click.
+    bar.addEventListener('pointerdown', e => {
       const b = e.target.closest('[data-color]');
+      e.preventDefault();
       if (!b || !pending) return;
+      touching = true;
       apply(pending, b.dataset.color || null);
     });
+    bar.addEventListener('mousedown', e => e.preventDefault());
+    bar.addEventListener('click', e => e.preventDefault());
     const r = p.rect, bw = bar.offsetWidth, bh = bar.offsetHeight;
     const touch = matchMedia('(pointer: coarse)').matches;
     // no celular fica abaixo da seleção, longe do menu nativo de copiar/colar
-    let top = touch ? r.bottom + 12 : r.top - bh - 10;
-    if (top < 8) top = r.bottom + 12;
-    if (top + bh > window.innerHeight - 8) top = Math.max(8, r.top - bh - 10);
+    let top = touch ? r.bottom + 34 : r.top - bh - 10; // 34px: abaixo das alças de seleção do Android
+    if (top < 8) top = r.bottom + (touch ? 34 : 12);
+    if (top + bh > window.innerHeight - 8) top = Math.max(8, r.top - bh - (touch ? 64 : 10)); // acima, fora do menu nativo
     let left = r.left + r.width / 2 - bw / 2;
     left = Math.max(8, Math.min(window.innerWidth - bw - 8, left));
     bar.style.top = (top + window.scrollY) + 'px';
@@ -133,6 +137,7 @@
     if (sel) sel.removeAllRanges();
     hideBar();
     MQ.render();
+    setTimeout(() => { touching = false; }, 400);
   }
 
   /* Liga o marca-texto numa tela de questão já desenhada. */
@@ -145,6 +150,7 @@
       clearTimeout(tm);
       tm = setTimeout(() => {
         if (!root.isConnected) { document.removeEventListener('selectionchange', watcher); hideBar(); return; }
+        if (touching) return; // toque em andamento na própria barra: não esconder
         const p = targetsOf(root, qid);
         if (p) showBar(p); else hideBar();
       }, 220);
@@ -153,7 +159,13 @@
   };
 
   /* Um clique que terminou uma seleção de texto não deve marcar a alternativa. */
+  let hadSel = false;
+  document.addEventListener('pointerdown', () => {
+    const sel = window.getSelection();
+    hadSel = !!(sel && !sel.isCollapsed);
+  }, true);
   MQ.selectingIn = function (el) {
+    if (hadSel) { hadSel = false; return true; } // o toque só desfez uma seleção
     const sel = window.getSelection();
     return !!(sel && !sel.isCollapsed && sel.rangeCount && el.contains(sel.getRangeAt(0).commonAncestorContainer));
   };

@@ -21,7 +21,7 @@
 
   MQ.views.cadastrar = function (root, qid) {
     if (!MQ.isAdmin()) {
-      root.innerHTML = '<div class="empty"><h2>Área restrita</h2><p>Cadastrar, editar e importar questões fica disponível só para a conta do administrador. Entre com ela em Sincronizar para liberar.</p><a class="btn" href="#/questoes">Voltar ao banco</a></div>';
+      root.innerHTML = '<div class="empty"><h2>Área restrita</h2><p>Cadastrar, editar e importar questões fica disponível só para a conta do administrador. Entre com ela em Configurações para liberar.</p><a class="btn" href="#/questoes">Voltar ao banco</a></div>';
       return;
     }
     if (qid) tab = 'nova';

@@ -35,7 +35,7 @@
   /* Bolhas: x = % de acerto, y = questões resolvidas, tamanho = incidência */
   MQ.bubbleChart = function (container, items, opts) {
     opts = opts || {};
-    const W = 640, H = 360, m = { l: 48, r: 16, t: 14, b: 40 };
+    const W = Math.max(320, Math.min(640, container.clientWidth || 640)), H = W < 500 ? 300 : 360, m = { l: 48, r: 16, t: 14, b: 40 };
     const iw = W - m.l - m.r, ih = H - m.t - m.b;
     const maxY = niceMax(Math.max(1, ...items.map(i => i.y)));
     const maxS = Math.max(1, ...items.map(i => i.size));
@@ -92,45 +92,45 @@
     container.appendChild(svg);
   };
 
-  /* Linha: evolução do % de acerto por semana */
-  MQ.lineChart = function (container, points, opts) {
-    opts = opts || {};
-    const W = 640, H = 220, m = { l: 40, r: 40, t: 14, b: 30 };
+  /* Linhas: uma série por área, um ponto por dia.
+     cfg: { labels, series: [{ name, color, values (número ou null), tips }], yMax (null = automático), unit, label } */
+  MQ.multiLineChart = function (container, cfg) {
+    const W = Math.max(320, Math.min(640, container.clientWidth || 640)), H = W < 500 ? 220 : 240, m = { l: 44, r: 16, t: 14, b: 30 };
     const iw = W - m.l - m.r, ih = H - m.t - m.b;
-    const n = points.length;
+    const n = cfg.labels.length, unit = cfg.unit || '';
+    const top = cfg.yMax || niceMax(Math.max(1, ...cfg.series.reduce((a, s) => a.concat(s.values.map(v => v == null ? 0 : v)), [])));
     const sx = i => m.l + (n <= 1 ? iw / 2 : (i / (n - 1)) * iw);
-    const sy = v => m.t + ih - (v / 100) * ih;
-    const svg = el('svg', { viewBox: '0 0 ' + W + ' ' + H, class: 'chart-svg', role: 'img', 'aria-label': opts.label || 'Evolução' });
-    [0, 25, 50, 75, 100].forEach(v => {
+    const sy = v => m.t + ih - (v / top) * ih;
+    const svg = el('svg', { viewBox: '0 0 ' + W + ' ' + H, class: 'chart-svg', role: 'img', 'aria-label': cfg.label || 'Evolução' });
+    [0, 0.25, 0.5, 0.75, 1].forEach(f => {
+      const v = top * f;
       svg.appendChild(el('line', { x1: m.l, x2: m.l + iw, y1: sy(v), y2: sy(v), class: 'grid' }));
-      svg.appendChild(el('text', { x: m.l - 8, y: sy(v) + 4, 'text-anchor': 'end' }, v + '%'));
+      svg.appendChild(el('text', { x: m.l - 8, y: sy(v) + 4, 'text-anchor': 'end' }, (Math.round(v * 10) / 10) + unit));
     });
-    const step = Math.max(1, Math.ceil(n / 6));
-    points.forEach((p, i) => {
-      if (i % step === 0 || i === n - 1) svg.appendChild(el('text', { x: sx(i), y: H - 8, 'text-anchor': 'middle' }, p.label));
+    cfg.labels.forEach((l, i) => svg.appendChild(el('text', { x: sx(i), y: H - 8, 'text-anchor': 'middle' }, l)));
+    cfg.series.forEach(s => {
+      const valid = s.values.map((v, i) => ({ v, i })).filter(o => o.v != null);
+      if (!valid.length) return;
+      const d = valid.map((o, k) => (k ? 'L' : 'M') + sx(o.i).toFixed(1) + ' ' + sy(o.v).toFixed(1)).join(' ');
+      svg.appendChild(el('path', { d, fill: 'none', stroke: s.color, 'stroke-width': 2.5, 'stroke-linejoin': 'round', 'stroke-linecap': 'round' }));
+      valid.forEach(o => svg.appendChild(el('circle', { cx: sx(o.i), cy: sy(o.v), r: 4.5, fill: 'var(--surface)', stroke: s.color, 'stroke-width': 2 })));
     });
-    const valid = points.map((p, i) => ({ p, i })).filter(o => o.p.value != null);
-    if (valid.length) {
-      const d = valid.map((o, k) => (k ? 'L' : 'M') + sx(o.i).toFixed(1) + ' ' + sy(o.p.value).toFixed(1)).join(' ');
-      svg.appendChild(el('path', { d, class: 'line', 'stroke-linejoin': 'round', 'stroke-linecap': 'round' }));
-      valid.forEach(o => svg.appendChild(el('circle', { cx: sx(o.i), cy: sy(o.p.value), r: 4.5, class: 'dot' })));
-      const last = valid[valid.length - 1];
-      svg.appendChild(el('text', { x: sx(last.i) + 8, y: sy(last.p.value) + 4, style: 'fill:var(--ink);font-weight:600' }, last.p.value + '%'));
-    }
     const cross = el('line', { x1: 0, x2: 0, y1: m.t, y2: m.t + ih, class: 'axis', visibility: 'hidden' });
     svg.appendChild(cross);
     const hit = el('rect', { x: m.l - 10, y: m.t, width: iw + 20, height: ih, fill: 'transparent' });
     svg.appendChild(hit);
-    hit.addEventListener('mousemove', e => {
+    function show(e) {
       const r = svg.getBoundingClientRect();
       const x = ((e.clientX - r.left) / r.width) * W;
       let best = 0, bd = Infinity;
-      points.forEach((p, i) => { const dd = Math.abs(sx(i) - x); if (dd < bd) { bd = dd; best = i; } });
-      const p = points[best];
+      for (let i = 0; i < n; i++) { const dd = Math.abs(sx(i) - x); if (dd < bd) { bd = dd; best = i; } }
       cross.setAttribute('x1', sx(best)); cross.setAttribute('x2', sx(best)); cross.setAttribute('visibility', 'visible');
-      MQ.showTip(e.clientX, e.clientY, '<b>' + esc(p.tipLabel || p.label) + '</b><br>' + (p.value == null ? 'Sem questões' : p.value + '% de acerto · ' + p.n + ' questões'));
-    });
-    hit.addEventListener('mouseleave', () => { cross.setAttribute('visibility', 'hidden'); MQ.hideTip(); });
+      MQ.showTip(e.clientX, e.clientY, '<b>' + esc(cfg.labels[best]) + '</b>' + cfg.series.map(s =>
+        '<br><span style="color:' + s.color + '">●</span> ' + esc(s.name) + ': ' + (s.values[best] == null ? 'sem questões' : s.values[best] + unit + (s.tips && s.tips[best] ? ' · ' + esc(s.tips[best]) : ''))).join(''));
+    }
+    hit.addEventListener('pointermove', show);
+    hit.addEventListener('pointerdown', show);
+    hit.addEventListener('pointerleave', () => { cross.setAttribute('visibility', 'hidden'); MQ.hideTip(); });
     container.innerHTML = '';
     container.appendChild(svg);
   };
