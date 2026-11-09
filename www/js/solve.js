@@ -59,7 +59,8 @@
     if (!q) {
       body = '<div class="qcard"><p class="muted">Esta questão foi excluída.</p></div>';
     } else {
-      const tags = [q.instituicao, q.ano, q.finalidade].filter(Boolean).map(t => '<span class="tag pill">' + esc(t) + '</span>').join('') +
+      const meta = [q.instituicao, q.ano, q.finalidade].filter(Boolean).map(esc).join(' · ');
+      const tags = (meta ? '<span class="qmeta">' + meta + '</span>' : '') +
         (q.anulada ? '<span class="tag pill warn">Anulada</span>' : '') + (q.desatualizada ? '<span class="tag pill warn">Desatualizada</span>' : '');
       const alts = (q.alternativas || []).map(a => {
         let cls = 'alt';
@@ -79,13 +80,13 @@
       const hasMk = MQ.hasMarks(qid);
       body = '<article class="qcard" aria-label="Questão ' + (s.idx + 1) + '">' +
         '<div class="qrow" role="toolbar" aria-label="Ferramentas da questão">' +
-        '<button class="icon-btn" id="q-add" title="Adicionar a uma lista" aria-label="Adicionar a uma lista">' + icon('plus') + '</button>' +
-        '<button class="icon-btn" id="q-topics" title="Mostrar assunto" aria-label="Mostrar assunto" aria-pressed="' + s.showTopics + '">' + icon('tag') + '</button>' +
+        '<button class="qb" id="q-add" title="Adicionar a uma lista" aria-label="Adicionar a uma lista">' + icon('plus') + '<span>Lista</span></button>' +
+        '<button class="qb" id="q-topics" title="Mostrar assunto" aria-label="Mostrar assunto" aria-pressed="' + s.showTopics + '">' + icon('tag') + '<span>Assunto</span></button>' +
         '<button class="icon-btn" id="q-fminus" title="Diminuir letra" aria-label="Diminuir letra">' + icon('textdown') + '</button>' +
         '<button class="icon-btn" id="q-fplus" title="Aumentar letra" aria-label="Aumentar letra">' + icon('textup') + '</button>' +
-        '<button class="icon-btn" id="q-sol" title="Solução e comentário" aria-label="Ir para a solução">' + icon('bulb') + '</button>' +
-        '<button class="icon-btn" id="q-unmark" title="Apagar marcações desta questão" aria-label="Apagar marcações desta questão"' + (hasMk ? '' : ' disabled') + '>' + icon('eraser') + '</button>' +
-        (MQ.isAdmin() ? '<button class="icon-btn" id="q-edit" title="Editar questão" aria-label="Editar questão">' + icon('edit') + '</button>' : '') +
+        '<button class="qb" id="q-sol" title="Solução e comentário" aria-label="Ir para a solução">' + icon('bulb') + '<span>Solução</span></button>' +
+        '<button class="qb" id="q-unmark" title="Apagar marcações desta questão" aria-label="Apagar marcações desta questão"' + (hasMk ? '' : ' disabled') + '>' + icon('eraser') + '<span>Limpar marcas</span></button>' +
+        (MQ.isAdmin() ? '<button class="qb" id="q-edit" title="Editar questão" aria-label="Editar questão">' + icon('edit') + '<span>Editar</span></button>' : '') +
         '</div>' +
         '<div class="qchips">' + tags + '</div>' +
         '<div class="qcode"><span>' + esc(q.codigo || '') + '</span><button id="q-hist">' + icon('history') + (s.showHist[qid] ? 'Ocultar histórico' : 'Histórico de respostas (' + hist.length + ')') + '</button></div>' +

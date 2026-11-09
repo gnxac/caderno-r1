@@ -354,20 +354,19 @@
     const s = MQ.local.sync || {};
     const c = cfg();
     const fromFile = !!(window.MQ_CONFIG && window.MQ_CONFIG.googleClientId);
-    const platform = window.mqNative ? 'Windows' : (window.Capacitor && window.Capacitor.getPlatform ? (window.Capacitor.getPlatform() === 'android' ? 'Android' : 'Navegador') : 'Navegador');
     root.innerHTML =
       (MQ.syncLoggedIn()
-        ? '<section class="sync-card"><h2>Conectado</h2><dl class="kv"><dt>Conta</dt><dd>' + esc(s.email || 'conta Google') + '</dd><dt>Este aparelho</dt><dd>' + platform + '</dd><dt>Última sincronização</dt><dd>' + (s.lastSync ? MQ.fmtDateTime(s.lastSync) : 'ainda não') + '</dd><dt>Situação</dt><dd>' + esc(MQ.syncStatus.msg) + '</dd></dl>' +
-          '<p class="muted small">Sincroniza sozinho ao abrir o app, alguns segundos depois de cada mudança e a cada 5 minutos. Quando o mesmo item é editado nos dois aparelhos, vale a edição mais recente.</p>' +
+        ? '<section class="sync-card"><h2>Conectado</h2><dl class="kv"><dt>Conta</dt><dd>' + esc(s.email || 'conta Google') + '</dd><dt>Última sincronização</dt><dd>' + (s.lastSync ? MQ.fmtDateTime(s.lastSync) : 'ainda não') + '</dd></dl>' +
+          '<p class="muted small">Sincroniza sozinho. Se o mesmo item mudar em dois aparelhos, vale a edição mais recente.</p>' +
           '<div class="toolbar"><button class="btn primary" id="sy-now">' + icon('sync') + ' Sincronizar agora</button><button class="btn ghost" id="sy-out">Desconectar este aparelho</button></div></section>'
         : (MQ.syncConfigured()
-          ? '<section class="sync-card"><h2>Conectar conta Google</h2><p>Você vai confirmar o acesso no site do Google digitando um código. O app só enxerga a própria pasta oculta no seu Drive, nada mais.</p><button class="btn primary" id="sy-in">' + icon('cloud') + ' Entrar com o Google</button></section>'
-          : '<section class="sync-card"><h2>Falta configurar o acesso ao Google</h2><p>Para sincronizar, o app precisa de um <b>ID do cliente</b> e uma <b>chave secreta</b> criados por você no Google Cloud (é gratuito e leva uns 5 minutos — passo a passo no LEIA-ME que veio com o app). Use os mesmos valores no Windows e no Android.</p></section>')) +
-      '<section class="sync-card"><h2>Credencial do Google</h2>' +
-      (fromFile ? '<p class="muted small">Esta versão do app já veio com a credencial configurada.</p>' : '') +
+          ? '<section class="sync-card"><h2>Entrar com o Google</h2><p>Enquanto você não entra, suas respostas, listas e simulados ficam só neste aparelho. Entre com a mesma conta no Windows e no Android para mantê-los iguais. O app só acessa a pasta oculta dele no seu Drive.</p><button class="btn primary" id="sy-in">' + icon('cloud') + ' Entrar com o Google</button></section>'
+          : '<section class="sync-card"><h2>Entrar com o Google não está disponível</h2><p>Esta versão do app ainda não tem o acesso ao Google configurado. Seus dados continuam salvos neste aparelho.' + (MQ.isAdmin() ? '' : ' Peça ao administrador a versão atualizada do app.') + '</p></section>')) +
+      '<details class="sync-card adv-cred"' + (MQ.syncConfigured() ? '' : ' open') + '><summary>Avançado: credencial do Google</summary>' +
+      (fromFile ? '<p class="muted small">Esta versão do app já veio com a credencial configurada.</p>' : '<p class="muted small">Só para quem gera o app: crie o ID e a chave no Google Cloud (passo a passo no LEIA-ME) e use os mesmos valores no Windows e no Android.</p>') +
       '<label class="field"><span>ID do cliente OAuth</span><input type="text" id="sy-cid" value="' + esc(c.clientId) + '" placeholder="123456-abc.apps.googleusercontent.com" autocomplete="off"></label>' +
       '<label class="field"><span>Chave secreta do cliente</span><input type="password" id="sy-sec" value="' + esc(c.clientSecret) + '" placeholder="GOCSPX-…" autocomplete="off"><small>Tipo de cliente: "TVs e dispositivos de entrada limitada".</small></label>' +
-      '<button class="btn" id="sy-save">Salvar credencial</button></section>';
+      '<button class="btn" id="sy-save">Salvar credencial</button></details>';
 
     if ($('#sy-now', root)) $('#sy-now', root).onclick = async () => { await MQ.syncNow({ manual: true }); MQ.render(); };
     if ($('#sy-out', root)) $('#sy-out', root).onclick = logout;

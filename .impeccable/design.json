@@ -1,0 +1,124 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-09T12:00:00.000Z",
+  "title": "Design System: Caderno R1",
+  "extensions": {
+    "colorMeta": {
+      "navy": { "role": "primary", "displayName": "Azul-marinho de jaleco", "canonical": "#1F3A4D", "tonalRamp": ["#0E1C27", "#162B3A", "#1F3A4D", "#33546B", "#4E7289", "#7A9CB1", "#B4CAD8", "#E1EBF1"] },
+      "accent": { "role": "primary", "displayName": "Azul-petróleo clínico", "canonical": "#2F6F8F", "tonalRamp": ["#10303F", "#1A4A60", "#2F6F8F", "#4A89A8", "#6FA5BF", "#98C0D3", "#C4DDE9", "#E8F2F7"] },
+      "accent-soft": { "role": "secondary", "displayName": "Névoa azul", "canonical": "#D5E4EC", "tonalRamp": ["#7F9FB0", "#98B5C4", "#B1C8D4", "#D5E4EC", "#E1ECF2", "#EBF2F6", "#F3F7FA", "#FAFCFD"] },
+      "paper": { "role": "neutral", "displayName": "Papel frio", "canonical": "#F1F5F7", "tonalRamp": ["#20272B", "#3F4A50", "#66737A", "#97A3A9", "#C2CBCF", "#DDE3E6", "#F1F5F7", "#FAFCFD"] },
+      "ink": { "role": "neutral", "displayName": "Tinta", "canonical": "#1D2B33", "tonalRamp": ["#0D1418", "#1D2B33", "#3F525E", "#587080", "#7C94A2", "#A5B7C1", "#CFD8DC", "#EDF1F3"] },
+      "ok": { "role": "semantic", "displayName": "Acerto", "canonical": "#1F7A4D", "tonalRamp": ["#0C3320", "#14573A", "#1F7A4D", "#3E9A6A", "#6DB88C", "#9FD2B3", "#CBE8D7", "#E1F3E8"] },
+      "err": { "role": "semantic", "displayName": "Erro", "canonical": "#B3261E", "tonalRamp": ["#4D0F0B", "#7E1B15", "#B3261E", "#CC5048", "#DE837D", "#EDB1AD", "#F7D5D3", "#FBE7E5"] }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "Título de página e contador de questões." },
+      "headline": { "displayName": "Headline", "purpose": "Títulos de seção e de cartões." },
+      "body": { "displayName": "Body", "purpose": "Interface geral em sans de sistema." },
+      "question": { "displayName": "Question", "purpose": "Enunciado, alternativas e comentário em serifa; tamanho ajustável pelo usuário." },
+      "label": { "displayName": "Label", "purpose": "Rótulos de campo e selos." }
+    },
+    "shadows": [
+      { "name": "modal", "value": "0 18px 50px rgba(0,0,0,.25)", "purpose": "Janelas de diálogo." },
+      { "name": "menu", "value": "0 10px 30px rgba(0,0,0,.18)", "purpose": "Menus e popovers." },
+      { "name": "side-panel", "value": "-10px 0 40px rgba(0,0,0,.22)", "purpose": "Página lateral de filtros." }
+    ],
+    "motion": [
+      { "name": "state-fast", "value": "150ms ease", "purpose": "Troca de estado do interruptor e hover; sem animação decorativa." }
+    ],
+    "breakpoints": [
+      { "name": "mobile", "value": "860px" },
+      { "name": "wide", "value": "1100px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Ação principal em azul-petróleo.",
+      "html": "<button class=\"ds-btn-primary\">Salvar</button>",
+      "css": ".ds-btn-primary { display: inline-flex; align-items: center; justify-content: center; min-height: 38px; padding: 0 14px; border-radius: 6px; border: 1px solid #2F6F8F; background: #2F6F8F; color: #fff; font: 500 15px 'Segoe UI', system-ui, sans-serif; cursor: pointer; } .ds-btn-primary:hover { filter: brightness(1.08); } .ds-btn-primary:focus-visible { outline: 2px solid #B45309; outline-offset: 2px; }"
+    },
+    {
+      "name": "Default Button",
+      "kind": "button",
+      "refersTo": "button",
+      "description": "Ação secundária: superfície com borda forte.",
+      "html": "<button class=\"ds-btn\">Cancelar</button>",
+      "css": ".ds-btn { display: inline-flex; align-items: center; justify-content: center; min-height: 38px; padding: 0 14px; border-radius: 6px; border: 1px solid #B4C2CA; background: #fff; color: #1D2B33; font: 500 15px 'Segoe UI', system-ui, sans-serif; cursor: pointer; } .ds-btn:hover { border-color: #587080; } .ds-btn:focus-visible { outline: 2px solid #B45309; outline-offset: 2px; }"
+    },
+    {
+      "name": "Filter Button",
+      "kind": "custom",
+      "refersTo": "filter-button",
+      "description": "Botão de filtro da tela Questões, com selo de quantidade.",
+      "html": "<button class=\"ds-fbtn\"><span class=\"ds-plus\">+</span><span class=\"ds-lb\">Assunto</span><span class=\"ds-badge\">+2</span></button>",
+      "css": ".ds-fbtn { display: flex; align-items: center; gap: 14px; width: 100%; min-height: 54px; padding: 0 16px; border: 1px solid transparent; border-radius: 12px; background: #D5E4EC; color: #1F3A4D; font: 400 16px 'Segoe UI', system-ui, sans-serif; text-align: left; cursor: pointer; } .ds-fbtn:hover { filter: brightness(.97); } .ds-fbtn:focus-visible { outline: 2px solid #B45309; outline-offset: 2px; } .ds-plus { width: 26px; height: 26px; border-radius: 50%; background: #1F3A4D; color: #D5E4EC; display: inline-flex; align-items: center; justify-content: center; } .ds-lb { flex: 1; } .ds-badge { background: #2F6F8F; color: #fff; border-radius: 999px; padding: 2px 12px; font-size: .85rem; font-weight: 600; }"
+    },
+    {
+      "name": "Filter Chip",
+      "kind": "chip",
+      "refersTo": "chip",
+      "description": "Filtro aplicado: texto abre o filtro, × remove só ele.",
+      "html": "<span class=\"ds-chip\"><button class=\"ds-chip-t\">Cardiologia</button><button class=\"ds-chip-x\" aria-label=\"Remover\">×</button></span>",
+      "css": ".ds-chip { display: inline-flex; align-items: center; border-radius: 16px; background: #D5E4EC; color: #1F3A4D; font: 400 13.6px 'Segoe UI', system-ui, sans-serif; overflow: hidden; } .ds-chip-t, .ds-chip-x { border: 0; background: none; color: inherit; font: inherit; cursor: pointer; min-height: 34px; } .ds-chip-t { padding: 0 6px 0 12px; } .ds-chip-x { padding: 0 10px 0 6px; } .ds-chip-x:hover { background: rgba(0,0,0,.1); } .ds-chip-t:focus-visible, .ds-chip-x:focus-visible { outline: 2px solid #B45309; outline-offset: -2px; }"
+    },
+    {
+      "name": "Alternative",
+      "kind": "custom",
+      "refersTo": "alternative",
+      "description": "Alternativa da questão, em serifa, com letra em círculo.",
+      "html": "<div class=\"ds-alt\" role=\"radio\" tabindex=\"0\"><span class=\"ds-letter\">A</span><span>Digoxina reduz hospitalizações, mas não a mortalidade.</span></div>",
+      "css": ".ds-alt { display: grid; grid-template-columns: 34px 1fr; gap: 12px; align-items: start; border: 1px solid #B4C2CA; border-radius: 8px; padding: 10px 8px 10px 12px; background: #fff; font: 400 16px/1.5 'Sitka Text', Charter, Georgia, serif; color: #1D2B33; cursor: pointer; } .ds-alt:hover { border-color: #587080; } .ds-alt:focus-visible { outline: 2px solid #B45309; outline-offset: 2px; } .ds-letter { width: 30px; height: 30px; border-radius: 50%; border: 1.5px solid #B4C2CA; display: inline-flex; align-items: center; justify-content: center; font: 600 14px 'Segoe UI', sans-serif; }"
+    },
+    {
+      "name": "Text Field",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Campo de texto com anel de foco de 2px.",
+      "html": "<label class=\"ds-field\"><span>Instituição</span><input type=\"text\" placeholder=\"Ex.: INEP\"></label>",
+      "css": ".ds-field { display: flex; flex-direction: column; gap: 5px; font: 400 15px 'Segoe UI', system-ui, sans-serif; } .ds-field > span { font-size: .85rem; font-weight: 600; color: #3F525E; } .ds-field input { min-height: 38px; padding: 7px 10px; border: 1px solid #B4C2CA; border-radius: 6px; background: #fff; color: #1D2B33; font: inherit; } .ds-field input:focus-visible { outline: 2px solid #B45309; outline-offset: -1px; border-color: transparent; }"
+    },
+    {
+      "name": "Navigation Item",
+      "kind": "nav",
+      "refersTo": "nav",
+      "description": "Item da barra lateral; o ativo fica em névoa azul.",
+      "html": "<nav class=\"ds-nav\"><a class=\"ds-nav-a\" href=\"#\" aria-current=\"page\">Questões</a><a class=\"ds-nav-a\" href=\"#\">Listas</a></nav>",
+      "css": ".ds-nav { display: flex; flex-direction: column; gap: 2px; width: 200px; font: 400 15px 'Segoe UI', system-ui, sans-serif; } .ds-nav-a { display: flex; align-items: center; padding: 9px 10px; border-radius: 6px; color: #3F525E; text-decoration: none; } .ds-nav-a:hover { background: #E3EDF2; color: #1D2B33; } .ds-nav-a[aria-current=page] { background: #D5E4EC; color: #1F3A4D; font-weight: 600; } .ds-nav-a:focus-visible { outline: 2px solid #B45309; outline-offset: 2px; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "O Caderno Anotado",
+    "overview": "O app é uma superfície de estudo que guarda a mão do estudante: marca-texto em cinco cores claras, alternativas riscadas com a tesoura, listas e simulados montados por ele. A interface fica quieta para que essas marcas sejam a única cor expressiva da página. O azul-marinho de jaleco dá identidade e seriedade clínica; o resto é papel limpo, texto legível e bordas finas.",
+    "keyCharacteristics": [
+      "Azul-marinho (#1F3A4D) como identidade, azul-petróleo (#2F6F8F) como ação; azul só em destaques, nunca em fundos grandes.",
+      "Enunciado em serifa; interface em sans.",
+      "Modo escuro neutro (preto/cinza sem tom azul); o azul claro (#6FB1D1) vira o destaque.",
+      "Verde e vermelho só para acerto e erro; marca-texto e tesoura são cores do usuário, não da marca.",
+      "Alvos de toque de 44px no celular; uso com uma mão."
+    ],
+    "rules": [
+      { "name": "The Quiet Paper Rule", "body": "Nenhum fundo grande é azul. O azul vive em botões, chips, item ativo e selos; o resto é papel ou, no escuro, preto/cinza neutro.", "section": "colors" },
+      { "name": "The User's Ink Rule", "body": "As cores do marca-texto e da tesoura são do estudante e nunca entram como cor de marca nem de estado.", "section": "colors" },
+      { "name": "The Printed Question Rule", "body": "O que o estudante lê para responder (enunciado, alternativas, comentário) é serifa; toda a interface ao redor é sans.", "section": "typography" },
+      { "name": "The Flat-At-Rest Rule", "body": "Superfícies em repouso não têm sombra; só o que flutua sobre a página (modal, menu, página de filtro, barra de marca-texto) a ganha.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do manter fundos em papel/superfície (ou preto/cinza neutro no escuro) e usar o azul só em ação, estado ativo, chips e selos.",
+      "Do compor enunciado, alternativas e comentário em serifa; o resto da interface em sans.",
+      "Do separar camadas por borda de 1px e tom, e reservar sombra para o que flutua.",
+      "Do garantir 44px de alvo de toque no celular e contraste ≥ 4,5:1 em claro e escuro.",
+      "Do usar verde e vermelho só para acerto e erro; manter a área segura (safe-area-inset) no topo e na base do celular."
+    ],
+    "donts": [
+      "Don't pintar fundos grandes de azul nem usar azul-marinho como fundo no escuro.",
+      "Don't usar as cores do marca-texto ou da tesoura como cor de marca ou de estado.",
+      "Don't adicionar sombras de repouso, gradientes decorativos ou animações que não sinalizem estado.",
+      "Don't usar pílula em botões comuns; pílula é só para a ação principal grande, chips e selos.",
+      "Don't reduzir o texto da questão abaixo da escala escolhida pelo usuário."
+    ]
+  }
+}

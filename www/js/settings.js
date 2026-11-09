@@ -9,10 +9,9 @@
     const st = MQ.syncStatus || { state: 'off', msg: 'Sem sincronização' };
     root.innerHTML = '<div class="page-head"><div><h1>Configurações</h1></div></div><div class="settings">' +
       '<section class="set-sec"><h2>Conta e sincronização</h2>' +
-      '<p class="muted small">Seus dados ficam numa pasta oculta do app no seu Google Drive. Conecte a mesma conta Google no Windows e no Android.</p>' +
       '<div class="sync-pill set-pill"><span class="sync-dot ' + ({ idle: 'on', busy: 'busy', error: 'err' }[st.state] || '') + '"></span><span class="sync-label">' + MQ.esc(st.msg) + '</span></div>' +
       '<div id="set-sync"></div></section>' +
-      '<section class="set-sec"><h2>Banco de questões</h2><p id="bank-info">' + (MQ.local.bank ? 'Banco: versão ' + Number(MQ.local.bank.version) + ', ' + Number(MQ.local.bank.count) + ' questões, atualizado em ' + MQ.fmtDate(MQ.local.bank.updatedAt) : 'Banco: nenhum banco publicado baixado ainda') + '</p>' +
+      '<section class="set-sec"><h2>Banco de questões</h2><p id="bank-info">' + (MQ.local.bank ? 'Banco: versão ' + Number(MQ.local.bank.version) + ', ' + Number(MQ.local.bank.count) + ' questões, atualizado em ' + MQ.fmtDate(MQ.local.bank.updatedAt) : 'Banco: ainda sem versão baixada') + '</p>' +
       (MQ.isAdmin() ? '<button class="btn" id="bank-pub">Publicar banco para todos</button>' : '') + '</section>' +
       '<section class="set-sec"><h2>Aparência</h2>' +
       '<div class="set-row"><span>Tema</span><div class="seg" role="group" aria-label="Tema">' +

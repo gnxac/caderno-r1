@@ -570,3 +570,27 @@ details.quad ul { margin: 6px 0 0; padding-left: 1.1em; font-size: .9rem; }
   .chip-x { min-width: 44px; justify-content: center; }
   #f-reset { min-height: 44px; }
 }
+
+.adv-cred > summary { cursor: pointer; font-weight: 600; color: var(--ink-2); min-height: 44px; display: flex; align-items: center; }
+.adv-cred[open] > summary { margin-bottom: 6px; }
+
+/* Resolver: ferramentas com rótulo, metadados em uma linha e alvos de 44px */
+.qrow { justify-content: flex-start; flex-wrap: wrap; gap: 4px; }
+.qb { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 12px; border: 1px solid transparent; border-radius: 6px; background: transparent; color: var(--accent); font-size: .88rem; font-weight: 600; cursor: pointer; }
+.qb:hover { background: var(--sunk); }
+.qb[aria-pressed="true"] { background: var(--accent-soft); color: var(--on-soft); }
+.qb:disabled { opacity: .35; cursor: default; }
+.qb .ic { width: 20px; height: 20px; }
+.qrow .icon-btn { width: 44px; height: 44px; }
+.qmeta { font-size: .88rem; color: var(--ink-2); }
+.qchips { align-items: center; }
+.alt .cut { width: 44px; height: 44px; margin: -10px -4px -10px 0; }
+.qcode button { min-height: 44px; }
+
+/* Celular: alvos de 44px (fica no fim para vencer as regras base de .btn e .icon-btn) */
+@media (max-width: 860px) {
+  .btn, .seg button { min-height: 44px; }
+  .icon-btn { width: 44px; height: 44px; }
+  .crumbs button, button.bar-row { min-height: 44px; }
+  input[type="text"], input[type="number"], input[type="search"], input[type="date"], input[type="password"], select { min-height: 44px; }
+}
