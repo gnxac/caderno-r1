@@ -293,19 +293,21 @@
     $('#fp-back', root).focus();
   }
 
-  /* ---------- Resumo dos filtros ativos ---------- */
+  /* ---------- Filtros aplicados (chips agrupados) ---------- */
+  const GROUPS = [['assunto', 'Assunto'], ['instituicao', 'Instituição'], ['ano', 'Ano'], ['uf', 'Região'], ['finalidade', 'Finalidade'], ['banca', 'Banca'], ['avancados', 'Avançados']];
+  /* Cada chip: label, kind/val (para remover), group (qual página abre). Em Avançados só o que difere do padrão, mais a Situação. */
   function chipList() {
     const f = MQ.bankFilter;
     const chips = [];
-    f.paths.forEach(p => chips.push({ label: p.split('>').join(' › '), kind: 'path', val: p }));
-    FIELDS.forEach(x => f[x.key].forEach(v => chips.push({ label: x.label + ': ' + (x.key === 'uf' ? (v === 'BR' ? 'Federal' : (UF_NAMES[v] || v)) : v), kind: x.key, val: v })));
-    f.situacao.forEach(v => chips.push({ label: SIT_LABEL[v], kind: 'situacao', val: v }));
-    if (f.tipos.length < 2) f.tipos.forEach(v => chips.push({ label: v === 'multipla' ? 'Só múltipla escolha' : 'Só certo/errado', kind: 'tipos', val: v }));
-    if (f.comCom === false) chips.push({ label: 'Sem comentário', kind: 'com', val: '' });
-    if (f.semCom === false) chips.push({ label: 'Com comentário', kind: 'com', val: '' });
-    if (f.texto) chips.push({ label: 'Texto: "' + f.texto + '"', kind: 'texto', val: '' });
-    if (f.anuladas) chips.push({ label: 'Inclui anuladas', kind: 'anuladas', val: '' });
-    if (f.desatualizadas) chips.push({ label: 'Inclui desatualizadas', kind: 'desatualizadas', val: '' });
+    f.paths.forEach(p => chips.push({ label: p.split('>').join(' › '), kind: 'path', val: p, group: 'assunto' }));
+    FIELDS.forEach(x => f[x.key].forEach(v => chips.push({ label: x.key === 'uf' ? (v === 'BR' ? 'Federal' : (UF_NAMES[v] || v)) : v, kind: x.key, val: v, group: x.key })));
+    f.situacao.forEach(v => chips.push({ label: SIT_LABEL[v], kind: 'situacao', val: v, group: 'avancados' }));
+    if (f.tipos.length < 2) f.tipos.forEach(v => chips.push({ label: v === 'multipla' ? 'Só múltipla escolha' : 'Só certo/errado', kind: 'tipos', val: v, group: 'avancados' }));
+    if (f.comCom === false) chips.push({ label: 'Sem comentário', kind: 'com', val: '', group: 'avancados' });
+    if (f.semCom === false) chips.push({ label: 'Com comentário', kind: 'com', val: '', group: 'avancados' });
+    if (f.texto) chips.push({ label: 'Texto: "' + f.texto + '"', kind: 'texto', val: '', group: 'avancados' });
+    if (f.anuladas) chips.push({ label: 'Inclui anuladas', kind: 'anuladas', val: '', group: 'avancados' });
+    if (f.desatualizadas) chips.push({ label: 'Inclui desatualizadas', kind: 'desatualizadas', val: '', group: 'avancados' });
     return chips;
   }
   function removeChip(kind, val) {
@@ -328,43 +330,6 @@
     return f[k].length;
   }
 
-  function openContinue(refresh) {
-    const items = [['sim', 'Criar simulado', 'timer'], ['list', 'Criar lista', 'book'], ['see', 'Ver questões', 'clipboard']];
-    const L = layer('sheet-back', '<div class="sheet" role="dialog" aria-modal="true" aria-label="Continuar"><div class="sheet-handle"></div>' +
-      items.map(([a, l, ic]) => '<button class="sheet-item" data-a="' + a + '"><span>' + l + '</span>' + icon(ic) + '</button>').join('') +
-      '<button class="sheet-item" data-a="applied" aria-expanded="false"><span>Filtros aplicados</span><span class="badge-n" id="sh-n"></span></button>' +
-      '<div class="sheet-applied" id="sh-applied" hidden></div></div>');
-    const root = L.back;
-    L.back.addEventListener('mousedown', e => { if (e.target === L.back) L.close(); });
-    function drawApplied() {
-      const chips = chipList();
-      $('#sh-n', root).textContent = chips.length;
-      $('#sh-applied', root).innerHTML = chips.length
-        ? '<div class="chips">' + chips.map((c, i) => '<button class="chip" data-chip="' + i + '" aria-label="Remover filtro ' + esc(c.label) + '">' + esc(c.label) + icon('x') + '</button>').join('') + '</div>'
-        : '<p class="muted small">Nenhum filtro: todas as questões ativas entram.</p>';
-    }
-    drawApplied();
-    root.addEventListener('click', e => {
-      const chip = e.target.closest('[data-chip]');
-      if (chip) { const c = chipList()[+chip.dataset.chip]; removeChip(c.kind, c.val); drawApplied(); refresh(); return; }
-      const b = e.target.closest('[data-a]');
-      if (!b) return;
-      const a = b.dataset.a;
-      if (a === 'applied') {
-        const box = $('#sh-applied', root);
-        box.hidden = !box.hidden; b.setAttribute('aria-expanded', String(!box.hidden));
-        return;
-      }
-      const qs = MQ.sortQuestions(MQ.filterQuestions(MQ.bankFilter));
-      if (!qs.length) { MQ.toast('Nenhuma questão com esses filtros.'); return; }
-      const ids = qs.map(q => q.id);
-      L.close();
-      if (a === 'sim') MQ.simCreateModal(ids);
-      else if (a === 'list') MQ.createListModal(ids);
-      else MQ.openSolve({ title: 'Banco de questões', qids: ids, ctx: 'banco' });
-    });
-  }
-
   /* ---------- Tela Questões ---------- */
   MQ.views.questoes = function (root) {
     const all = MQ.alive('questions');
@@ -377,30 +342,61 @@
     root.innerHTML = '<div class="qhome">' +
       '<h1 class="qh-count" id="qh-n" aria-live="polite"></h1>' +
       '<p class="qh-sub">Combine filtros e comece a resolver questões ou crie uma nova lista</p>' +
+      '<p class="qh-zero" id="qh-zero" role="status" hidden></p>' +
       '<div class="fbtns" id="fbtns"></div>' +
-      '<div class="fbar"><button class="btn ghost" id="f-reset">Limpar filtros</button><button class="btn primary big" id="f-cont">Continuar</button></div></div>';
+      '<section class="qh-applied" id="qh-applied" aria-label="Filtros aplicados">' +
+      '<div class="qa-head"><h2>Filtros aplicados</h2><button class="btn ghost" id="f-reset">Limpar filtros</button></div>' +
+      '<div class="qa-sec"><h2 class="qa-mtitle">Filtros selecionados</h2><div id="qa-body"></div><p class="muted qa-empty" id="qa-empty">Nenhum filtro aplicado. Escolha filtros à esquerda.</p></div>' +
+      '<div class="qa-actions">' +
+      '<button class="btn primary" id="a-see">' + icon('clipboard') + ' Ver questões</button>' +
+      '<button class="btn" id="a-sim">' + icon('timer') + ' Criar simulado</button>' +
+      '<button class="btn" id="a-list">' + icon('book') + ' Criar lista</button></div></section></div>';
 
     function refresh() {
-      const n = MQ.filterQuestions(MQ.bankFilter).length;
+      const f = MQ.bankFilter;
+      const n = MQ.filterQuestions(f).length;
       $('#qh-n', root).textContent = n.toLocaleString('pt-BR') + (n === 1 ? ' questão' : ' questões');
       const btn = (k, label, ic, adv) => {
         const c = badgeCount(k);
         return '<button class="fbtn' + (adv ? ' adv' : '') + '" data-f="' + k + '"><span class="fplus">' + icon(ic) + '</span><span class="lb">' + label + '</span>' + (c ? '<span class="badge-n">+' + c + '</span>' : '') + '</button>';
       };
       $('#fbtns', root).innerHTML = FILTER_LIST.map(([k, l]) => btn(k, l, 'plus')).join('') + btn('avancados', 'Filtros avançados', 'settings', true);
-      const def = MQ.newFilter();
-      $('#f-reset', root).disabled = JSON.stringify(MQ.bankFilter) === JSON.stringify(def);
-      $('#f-cont', root).disabled = !n;
+
+      const isDefault = JSON.stringify(f) === JSON.stringify(MQ.newFilter());
+      const chips = chipList();
+      $('#qa-body', root).innerHTML = isDefault ? '' : GROUPS.map(([g, label]) => {
+        const cs = chips.map((c, i) => ({ c, i })).filter(o => o.c.group === g);
+        return cs.length ? '<div class="qa-group"><h3>' + label + '</h3><div class="chips">' + cs.map(o =>
+          '<span class="chip"><button class="chip-t" data-open="' + g + '">' + esc(o.c.label) + '</button><button class="chip-x" data-rm="' + o.i + '" aria-label="Remover ' + esc(o.c.label) + '">' + icon('x') + '</button></span>').join('') + '</div></div>' : '';
+      }).join('');
+      $('#qa-empty', root).hidden = !isDefault;
+      $('#qh-applied', root).classList.toggle('is-default', isDefault);
+      $('#f-reset', root).disabled = isDefault;
+
+      /* sem questões: diz qual combinação zerou e desativa as ações */
+      const zero = $('#qh-zero', root);
+      const names = GROUPS.slice(0, 6).filter(([g]) => chips.some(c => c.group === g)).map(x => x[1]).concat(chips.filter(c => c.group === 'avancados').map(c => c.label));
+      zero.hidden = n > 0;
+      zero.textContent = n > 0 ? '' : 'Nenhuma questão com ' + (names.join(' + ') || 'esses filtros') + '.';
+      ['a-see', 'a-sim', 'a-list'].forEach(id => { $('#' + id, root).disabled = !n; });
     }
-    $('#fbtns', root).addEventListener('click', e => {
-      const b = e.target.closest('[data-f]');
-      if (!b) return;
-      const k = b.dataset.f;
+    function open(k) {
       if (k === 'avancados') openAdvanced(refresh);
       else openFilterPage(k, FILTER_LIST.find(x => x[0] === k)[1], refresh);
-    });
+    }
+    root.onclick = e => { // onclick (não addEventListener): #view é o mesmo elemento entre telas e os handlers se acumulariam
+      const rm = e.target.closest('[data-rm]');
+      if (rm) { const c = chipList()[+rm.dataset.rm]; removeChip(c.kind, c.val); refresh(); return; }
+      const op = e.target.closest('[data-open]');
+      if (op) { open(op.dataset.open); return; }
+      const b = e.target.closest('[data-f]');
+      if (b) open(b.dataset.f);
+    };
     $('#f-reset', root).onclick = () => { MQ.bankFilter = MQ.newFilter(); refresh(); };
-    $('#f-cont', root).onclick = () => openContinue(refresh);
+    const ids = () => MQ.sortQuestions(MQ.filterQuestions(MQ.bankFilter)).map(q => q.id);
+    $('#a-sim', root).onclick = () => MQ.simCreateModal(ids());
+    $('#a-list', root).onclick = () => MQ.createListModal(ids());
+    $('#a-see', root).onclick = () => MQ.openSolve({ title: 'Banco de questões', qids: ids(), ctx: 'banco' });
     refresh();
   };
 

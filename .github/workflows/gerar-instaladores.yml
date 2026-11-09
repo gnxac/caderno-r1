@@ -48,6 +48,12 @@ jobs:
           npx cap add android
           npx capacitor-assets generate --android --iconBackgroundColor '#1F3A4D' --iconBackgroundColorDark '#1F3A4D' --splashBackgroundColor '#F1F5F7' --splashBackgroundColorDark '#12191E'
           npx cap sync android
+      - name: Assinar sempre com a mesma chave (permite instalar por cima da versão anterior)
+        run: |
+          mkdir -p ~/.android
+          cp android-debug.keystore ~/.android/debug.keystore
+          sed -i "s/versionCode 1/versionCode ${{ github.run_number }}/" android/app/build.gradle
+          grep -n versionCode android/app/build.gradle
       - name: Compilar APK
         working-directory: android
         run: |
