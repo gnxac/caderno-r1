@@ -19,6 +19,12 @@ App de banco de questões para residência médica: resolver questões, listas, 
 - Versão Windows Admin: `npm run dist:win:admin` gera `Caderno-R1-Admin-<versão>.exe` (`electron-builder.admin.json`; painel de administrador sempre ligado e dados em `%APPDATA%\Caderno R1 Admin`, separados do app comum). É nela que se importa e se publica o banco; os outros apps só baixam, com `bankManifestId` no `config.js`.
 - Antes de commitar: `revisor-codigo` e `testador-navegador`.
 
+## Janelas e terminal (não atrapalhar o uso do PC)
+- Não abra janelas novas: nada de `start`, `cmd /c start`, `explorer` ou abrir o navegador, a menos que eu peça. Para testar no navegador, use o `testador-navegador` (sem abrir o meu navegador).
+- Não abra o app (Electron) nem o emulador Android para testar sem me avisar antes; prefira testes que rodam no terminal.
+- Rode builds, servidores (ex.: `python -m http.server`) e comandos longos no mesmo terminal, em segundo plano, sem abrir console novo.
+- Quando precisar iniciar um processo separado, use `Start-Process -WindowStyle Hidden` (ou `-NoNewWindow`) no PowerShell, para nenhum console aparecer na minha tela.
+
 ## Subagentes
 `revisor-codigo`, `testador-navegador`, `git-publicador` (commit e push), `especialista-instaladores` (Electron, Gradle, workflow).
 
