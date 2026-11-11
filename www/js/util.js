@@ -198,6 +198,7 @@ window.MQ = window.MQ || {};
 
   /* ---------- Ícones: Lucide (ISC), traço de 2 px, 24px ---------- */
   const ICONS = {
+    maximize: '<path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3m8 0h3a2 2 0 0 0 2-2v-3"/>',
     home: '<path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
     x: '<path d="M18 6L6 18M6 6l12 12"/>',
     search: '<path d="m21 21l-4.34-4.34"/><circle cx="11" cy="11" r="8"/>',

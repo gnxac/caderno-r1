@@ -27,6 +27,7 @@
     const r = MQ.route();
     if (r.name === 'sincronizar') { location.replace('#/configuracoes'); return; } // rota antiga: agora fica em Configurações
     document.body.classList.toggle('in-solve', r.name === 'resolver');
+    if (r.name !== 'resolver') document.body.classList.remove('in-focus');
     const view = MQ.views[r.name] || MQ.views.questoes;
     const root = document.getElementById('view');
     const navKey = NAV_FOR[r.name] || 'questoes';

@@ -34,17 +34,19 @@ Ordem aprovada na fase 1. Marque `[x]` ao concluir cada item. Decisões de visua
 - [x] Atalhos globais `Ctrl 1–5` (não valem digitando nem no simulado) e `?`
 - [x] Busca `Ctrl K` por texto, instituição, ano ou código R1-… (abre as questões achadas no Resolver)
 - [x] Pílula de sincronização no pé da navegação (só o ponto no rail, com o texto no `title`)
-- [ ] Atalho `Esc` para sair do modo foco (entra com o modo foco, no passo 3)
+- [x] Atalho `Esc` para sair do modo foco (passo 3)
 
 ## 3. Resolver questão
-- [ ] Layout mapa | questão | painel no PC; questão | painel no tablet; tela cheia no celular
-- [ ] Sabia / Tive dúvida / Chutei
-- [ ] Cronômetro por questão e "sua média"
-- [ ] Anotações por questão
-- [ ] Motivo do erro
-- [ ] Modo foco
-- [ ] Atalhos de resolução
-- [ ] Selo de anulada e desatualizada
+- [x] Layout mapa | questão | painel no PC (>= 1100 px); questão | painel no tablet (>= 860 px); só a questão no celular, com a anotação numa janela
+- [x] Sabia / Tive dúvida / Chutei (campo `conf`; teclas 1, 2, 3)
+- [x] Cronômetro por questão na barra e no painel, e "sua média" (teto de 600 s por resposta)
+- [x] Anotações por questão (coleção `notes`, id = id da questão; a deduplicação junta as anotações)
+- [x] Motivo do erro (campo `why`: não sabia, confundi conceito, li errado)
+- [x] Modo foco (botão e tecla `F`; `Esc` sai)
+- [x] Atalhos: `A–E`, `Shift A–E` (descartar), `1–3`, `Enter`, `← →`, `N`, `L`, `F`
+- [x] Selo de anulada e desatualizada (já existia; o filtro que as esconde entra no passo 4)
+- [ ] Atalho `H` (marca-texto na cor atual): o marca-texto continua pela barra que aparece ao selecionar o texto
+- [ ] Anotações de uma questão removida como repetida em outro aparelho (a remapeação remota de `notes` não existe; a local sim)
 
 ## 4. Questões
 - [ ] Busca, chips rápidos ("Que não resolvi" ligado por padrão) e filtros redesenhados, sem filtro de Professor

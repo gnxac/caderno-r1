@@ -9,7 +9,7 @@
     if (!opts.qids || !opts.qids.length) { MQ.toast('Nenhuma questão para abrir.'); return; }
     MQ.session = {
       title: opts.title || 'Questões', qids: opts.qids.slice(), ctx: opts.ctx || 'banco', listId: opts.listId || null,
-      idx: Math.min(opts.startIndex || 0, opts.qids.length - 1), sel: {}, revealed: {}, cut: {}, hideBanner: {}, showTopics: false, showHist: {},
+      idx: Math.min(opts.startIndex || 0, opts.qids.length - 1), sel: {}, conf: {}, attempt: {}, time: {}, focus: false, revealed: {}, cut: {}, hideBanner: {}, showTopics: false, showHist: {},
       showIndex: window.innerWidth > 1100, shownAt: Date.now()
     };
     // Reabrir a lista mostra de novo as respostas já dadas (desde o último "recomeçar")
@@ -44,6 +44,32 @@
     MQ.menu(anchor, items);
   }
 
+  const CONF_L = { sabia: 'sabia', duvida: 'com dúvida', chute: 'chutou' };
+  const WHY = [['nao-sabia', 'Não sabia'], ['conceito', 'Confundi conceito'], ['li-errado', 'Li errado']];
+  const WHY_L = Object.fromEntries(WHY);
+  const MAX_SEC = 600; // shortcut: tela parada > 10 min conta só 10 min; trocar por visibilitychange se incomodar
+
+  /* Tempo médio por questão do estudante (só respostas com tempo gravado) */
+  MQ.avgTime = function () {
+    let n = 0, t = 0;
+    MQ.alive('attempts').forEach(a => { if (a.timeSec > 0 && a.timeSec <= MAX_SEC) { n++; t += a.timeSec; } });
+    return n ? t / n : 0;
+  };
+
+  /* Anotação pessoal: coleção "notes", um item por questão (id = id da questão) */
+  const noteOf = qid => (MQ.get('notes', qid) || {}).text || '';
+  function saveNote(qid, text) {
+    text = String(text || '').trim();
+    const o = MQ.get('notes', qid);
+    if (text) { if (o && o.text === text) return; MQ.put('notes', Object.assign(o || { id: qid, qid }, { text })); }
+    else if (o) MQ.remove('notes', qid);
+  }
+
+  function histRows(list) {
+    return list.slice().reverse().map(a =>
+      '<div><span>' + MQ.fmtDateTime(a.ts) + '</span><span>marcou ' + esc(a.choice) + (a.conf ? ' · ' + CONF_L[a.conf] : '') + '</span><b style="color:var(--' + (a.correct ? 'ok' : 'err') + ')">' + (a.correct ? 'certo' : 'errado') + '</b><span class="muted">' + esc(ctxLabel(a.ctx)) + (a.why ? ' · ' + esc(WHY_L[a.why] || '') : '') + '</span></div>').join('');
+  }
+
   function statusIn(ctx) {
     return MQ.latestByQ(ctx);
   }
@@ -57,6 +83,7 @@
     const curList = s.listId && MQ.get('lists', s.listId);
     const latestCtx = curList ? MQ.listStats(curList).latest : statusIn(s.ctx);
     const hist = (MQ.attemptsByQ()[qid] || []);
+    const att = s.attempt[qid] || latestCtx[qid];
     const revealed = !!s.revealed[qid];
     const chosen = s.sel[qid];
     const cut = s.cut[qid] || (s.cut[qid] = []);
@@ -81,8 +108,7 @@
           (revealed ? '<span></span>' : '<button class="icon-btn cut" data-cut="' + esc(a.l) + '" aria-pressed="' + cut.includes(a.l) + '" aria-label="' + (cut.includes(a.l) ? 'Trazer de volta' : 'Descartar') + ' a alternativa ' + esc(a.l) + '" title="' + (cut.includes(a.l) ? 'Trazer de volta' : 'Descartar alternativa') + '">' + icon('scissors') + '</button>') +
           '</div>';
       }).join('');
-      const histHtml = s.showHist[qid] ? '<div class="history">' + (hist.length ? hist.slice().reverse().map(a =>
-        '<div><span>' + MQ.fmtDateTime(a.ts) + '</span><span>marcou ' + esc(a.choice) + '</span><b style="color:var(--' + (a.correct ? 'ok' : 'err') + ')">' + (a.correct ? 'certo' : 'errado') + '</b><span class="muted">' + esc(ctxLabel(a.ctx)) + '</span></div>').join('') : 'Você ainda não respondeu esta questão.') + '</div>' : '';
+      const histHtml = s.showHist[qid] ? '<div class="history">' + (hist.length ? histRows(hist) : 'Você ainda não respondeu esta questão.') + '</div>' : '';
 
       const hasMk = MQ.hasMarks(qid);
       body = '<article class="qcard" aria-label="Questão ' + (s.idx + 1) + '">' +
@@ -91,6 +117,7 @@
         '<button class="qb" id="q-topics" title="Mostrar assunto" aria-label="Mostrar assunto" aria-pressed="' + s.showTopics + '">' + icon('tag') + '<span>Assunto</span></button>' +
         '<button class="icon-btn" id="q-fminus" title="Diminuir letra" aria-label="Diminuir letra">' + icon('textdown') + '</button>' +
         '<button class="icon-btn" id="q-fplus" title="Aumentar letra" aria-label="Aumentar letra">' + icon('textup') + '</button>' +
+        '<button class="qb qb-note" id="q-note-btn" title="Anotação (N)" aria-label="Anotação">' + icon('edit') + '<span>Anotação' + (noteOf(qid) ? ' ✓' : '') + '</span></button>' +
         '<button class="qb" id="q-sol" title="Solução e comentário" aria-label="Ir para a solução">' + icon('bulb') + '<span>Solução</span></button>' +
         '<button class="qb" id="q-unmark" title="Apagar marcações desta questão" aria-label="Apagar marcações desta questão"' + (hasMk ? '' : ' disabled') + '>' + icon('eraser') + '<span>Limpar marcas</span></button>' +
         (MQ.isAdmin() ? '<button class="qb" id="q-edit" title="Editar questão" aria-label="Editar questão">' + icon('edit') + '<span>Editar</span></button>' : '') +
@@ -101,6 +128,10 @@
         (s.showTopics ? '<div class="topics">' + esc(MQ.qPath(q).join(' › ') || 'Sem assunto definido') + '</div>' : '') +
         '<div class="stem"><div data-mk="stem">' + MQ.para(q.enunciado) + '</div>' + (q.imagens || []).map(id => MQ.imgHtml(id)).join('') + '</div>' +
         '<div class="alts" role="group" aria-label="Alternativas">' + alts + '</div>' +
+        (!revealed ? '<div class="conf" role="group" aria-label="Como você vai responder?"><span class="st">Como você vai responder? <small>(teclas 1, 2, 3)</small></span><div class="seg full">' +
+          [['sabia', 'Sabia'], ['duvida', 'Tive dúvida'], ['chute', 'Chutei']].map(c => '<button data-conf="' + c[0] + '" aria-pressed="' + (s.conf[qid] === c[0]) + '">' + c[1] + '</button>').join('') + '</div></div>' : '') +
+        (revealed && att && att.correct === false ? '<div class="why" role="group" aria-label="Por que errou?"><span class="st">Por que errou?</span><div class="chips">' +
+          WHY.map(w => '<button class="chip-trail' + (att.why === w[0] ? ' cur' : '') + '" data-why="' + w[0] + '" aria-pressed="' + (att.why === w[0]) + '">' + w[1] + '</button>').join('') + '</div></div>' : '') +
         (revealed ? '<section class="comment" id="q-comment"><h3>Solução em texto</h3><div class="gab">GABARITO: ALTERNATIVA ' + esc(q.gabarito) + '</div><div class="body">' + (q.comentario ? MQ.para(q.comentario) : '<p class="muted">Sem comentário para esta questão.</p>') + '</div></section>' : '') +
         '</article>';
       if (revealed && chosen && !s.hideBanner[qid]) {
@@ -121,22 +152,33 @@
         return '<button class="' + cls + '" data-go="' + i + '" aria-label="Questão ' + (i + 1) + (a ? (a.correct ? ', acertou' : ', errou') : '') + '">' + (i + 1) + '</button>';
       }).join('') + '</div><div class="legend"><span><i style="background:var(--ok-soft);border-color:var(--ok)"></i>' + okN + ' ' + (okN === 1 ? 'acerto' : 'acertos') + '</span><span><i style="background:var(--err-soft);border-color:var(--err)"></i>' + badN + ' ' + (badN === 1 ? 'erro' : 'erros') + '</span></div></aside>' : '';
 
+    const secsDone = revealed ? Math.round(s.time[qid] || (att && att.timeSec) || 0) : 0;
+    const avg = MQ.avgTime();
+    const tNow = revealed ? (secsDone ? MQ.fmtDuration(secsDone) : '–') : MQ.fmtDuration(Math.min((Date.now() - s.shownAt) / 1000, 5999));
+    const panel = !q ? '' : '<aside class="qpanel" aria-label="Painel da questão">' +
+      '<section class="qp-card"><h3>' + icon('clock') + 'Tempo</h3><div class="qp-time"><b class="num" data-qtime>' + tNow + '</b><span class="muted small">sua média ' + (avg ? MQ.fmtDuration(avg) : '–') + '</span></div></section>' +
+      '<section class="qp-card"><h3>Seu histórico</h3>' + (hist.length ? '<div class="history">' + histRows(hist.slice(-5)) + '</div>' : '<p class="muted small">Você ainda não respondeu esta questão.</p>') + '</section>' +
+      '<section class="qp-card"><h3>' + icon('edit') + 'Anotação</h3><textarea id="q-note" rows="5" placeholder="Escreva um lembrete sobre esta questão…" aria-label="Anotação da questão">' + esc(noteOf(qid)) + '</textarea></section></aside>';
+    document.body.classList.toggle('in-focus', !!s.focus);
+
     const last = s.idx >= n - 1;
     root.innerHTML =
       '<div class="solve-bar">' +
       '<div class="sb-left"><button class="icon-btn" id="q-back" aria-label="Voltar">' + icon('arrowleft') + '</button><span class="title">Questão ' + (s.idx + 1) + '<small>' + esc(s.title) + '</small></span></div>' +
       '<div class="toolbar">' +
+      '<span class="timer" title="Tempo nesta questão">' + icon('clock') + '<span data-qtime>' + tNow + '</span></span>' +
+      '<button class="icon-btn" id="q-focus" title="Modo foco (F)" aria-label="' + (s.focus ? 'Sair do modo foco' : 'Modo foco') + '" aria-pressed="' + !!s.focus + '">' + icon('maximize') + '</button>' +
       '<span class="pager"><input type="number" id="q-page" min="1" max="' + n + '" value="' + (s.idx + 1) + '" aria-label="Ir para a questão"><span class="muted">de ' + n + '</span></span>' +
       '<button class="icon-btn" id="q-index" title="Índice" aria-label="Mostrar índice" aria-pressed="' + s.showIndex + '">' + icon('grid') + '</button>' +
       (s.listId ? '<button class="icon-btn" id="q-print" title="Imprimir lista" aria-label="Imprimir lista">' + icon('printer') + '</button>' : '') +
       '</div></div>' + banner +
-      '<div class="solve-wrap screen-only' + (s.showIndex ? ' with-index' : '') + '"><div>' + body +
+      '<div class="solve-wrap screen-only' + (s.showIndex ? ' with-index' : '') + '"><div class="qmain">' + body +
       '<div class="solve-foot"><div class="sf-count">' + (s.idx + 1) + ' de ' + n + '<span class="hide-m"> · escolha com o toque ou as teclas A–E</span></div>' +
       '<div class="sf-row"><button class="round" id="q-prev" aria-label="Questão anterior"' + (s.idx === 0 ? ' disabled' : '') + '>' + icon('left') + '</button>' +
       (revealed || !q
         ? '<button class="btn primary big" id="q-next-main"' + (last ? ' disabled' : '') + '>' + (last ? 'Fim da lista' : 'Próxima') + '</button>'
         : '<button class="btn primary big" id="q-answer"' + (chosen ? '' : ' disabled') + '>Responder</button>') +
-      '<button class="round" id="q-next" aria-label="Próxima questão"' + (last ? ' disabled' : '') + '>' + icon('right') + '</button></div></div></div>' + idxHtml + '</div>' +
+      '<button class="round" id="q-next" aria-label="Próxima questão"' + (last ? ' disabled' : '') + '>' + icon('right') + '</button></div></div></div>' + idxHtml + panel + '</div>' +
       '<div class="print-only" id="print-area"></div>';
 
     function go(i) {
@@ -152,7 +194,24 @@
     $('#q-index', root).onclick = () => { s.showIndex = !s.showIndex; MQ.render(); };
     if ($('#q-print', root)) $('#q-print', root).onclick = () => printList(s);
     $$('[data-go]', root).forEach(b => b.onclick = () => go(parseInt(b.dataset.go, 10)));
+    $('#q-focus', root).onclick = () => { s.focus = !s.focus; MQ.render(); };
     if (!q) return;
+    const tEls = $$('[data-qtime]', root);
+    if (!revealed && tEls.length) {
+      MQ.tick = setInterval(() => { const t = MQ.fmtDuration(Math.min((Date.now() - s.shownAt) / 1000, 5999)); tEls.forEach(el => { el.textContent = t; }); }, 1000);
+    }
+    const note = $('#q-note', root);
+    if (note) {
+      let nt = 0;
+      note.addEventListener('input', () => { clearTimeout(nt); nt = setTimeout(() => saveNote(qid, note.value), 500); });
+      note.addEventListener('change', () => { clearTimeout(nt); saveNote(qid, note.value); });
+    }
+    $('#q-note-btn', root).onclick = () => MQ.modal({
+      title: 'Anotação', body: '<textarea id="n-t" rows="6" maxlength="4000" aria-label="Anotação da questão" placeholder="Escreva um lembrete sobre esta questão…">' + esc(noteOf(qid)) + '</textarea>',
+      actions: [{ label: 'Salvar', kind: 'primary', onClick(close, box) { saveNote(qid, $('#n-t', box).value); MQ.render(); } }]
+    });
+    $$('[data-conf]', root).forEach(b => b.onclick = () => { s.conf[qid] = s.conf[qid] === b.dataset.conf ? undefined : b.dataset.conf; MQ.render(); });
+    $$('[data-why]', root).forEach(b => b.onclick = () => { if (!att) return; att.why = att.why === b.dataset.why ? undefined : b.dataset.why; if (!att.why) delete att.why; MQ.put('attempts', att); MQ.render(); });
 
     $('#q-fplus', root).onclick = () => MQ.setFontScale((MQ.local.fontScale || 1) + 0.08);
     $('#q-fminus', root).onclick = () => MQ.setFontScale((MQ.local.fontScale || 1) - 0.08);
@@ -178,20 +237,21 @@
       el.addEventListener('click', e => { if (e.target.closest('[data-cut]')) return; pick(); });
       el.addEventListener('keydown', e => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); pick(); } });
     });
-    $$('[data-cut]', root).forEach(b => b.addEventListener('click', e => {
-      e.stopPropagation();
-      const l = b.dataset.cut;
+    function toggleCut(l) {
       const i = cut.indexOf(l);
       if (i >= 0) cut.splice(i, 1); else { cut.push(l); if (s.sel[qid] === l) s.sel[qid] = undefined; }
       MQ.render();
-    }));
+    }
+    $$('[data-cut]', root).forEach(b => b.addEventListener('click', e => { e.stopPropagation(); toggleCut(b.dataset.cut); }));
     const ans = $('#q-answer', root);
     if (ans) ans.onclick = answer;
 
     function answer() {
       const c = s.sel[qid];
       if (!c || s.revealed[qid]) return;
-      MQ.recordAttempt(qid, c, s.ctx, (Date.now() - s.shownAt) / 1000);
+      const secs = Math.min((Date.now() - s.shownAt) / 1000, MAX_SEC);
+      s.attempt[qid] = MQ.recordAttempt(qid, c, s.ctx, secs, s.conf[qid]);
+      s.time[qid] = secs;
       s.revealed[qid] = true;
       MQ.render();
     }
@@ -199,7 +259,14 @@
       if (e.target.matches('input, textarea, select') || e.ctrlKey || e.metaKey || e.altKey) return;
       if (document.querySelector('.modal-back, .popmenu')) return;
       const k = e.key.toUpperCase();
-      if (/^[A-E]$/.test(k) && !s.revealed[qid] && (q.alternativas || []).some(a => a.l === k) && !cut.includes(k)) { s.sel[qid] = k; MQ.render(); }
+      const isAlt = /^[A-E]$/.test(k) && (q.alternativas || []).some(a => a.l === k);
+      if (isAlt && e.shiftKey && !s.revealed[qid]) toggleCut(k); // Shift + letra descarta (tesoura)
+      else if (isAlt && !e.shiftKey && !s.revealed[qid] && !cut.includes(k)) { s.sel[qid] = k; MQ.render(); }
+      else if (/^[1-3]$/.test(e.key) && !s.revealed[qid]) { const c = MQ.CONF[+e.key - 1]; s.conf[qid] = s.conf[qid] === c ? undefined : c; MQ.render(); }
+      else if (k === 'F' && !e.shiftKey) { s.focus = !s.focus; MQ.render(); }
+      else if (e.key === 'Escape' && s.focus) { s.focus = false; MQ.render(); }
+      else if (k === 'N') { e.preventDefault(); const t = $('#q-note', root); if (t && t.offsetParent) t.focus(); else $('#q-note-btn', root).click(); }
+      else if (k === 'L' && !s.focus) { e.preventDefault(); $('#q-add', root).click(); }
       else if (e.key === 'Enter' && s.sel[qid] && !s.revealed[qid]) { e.preventDefault(); answer(); }
       else if (e.key === 'Enter' && s.revealed[qid]) { e.preventDefault(); go(s.idx + 1); }
       else if (e.key === 'ArrowRight') go(s.idx + 1);

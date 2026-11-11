@@ -129,6 +129,12 @@
       if (r.times && from in r.times) { r.times[to] = (r.times[to] || 0) + r.times[from]; delete r.times[from]; ch = true; }
       if (ch) MQ.put('runs', r);
     });
+    const nf = MQ.get('notes', from);
+    if (nf) {
+      const nt = MQ.get('notes', to);
+      MQ.put('notes', { id: to, qid: to, text: nt && nt.text && nt.text !== nf.text ? nt.text + '\n\n' + nf.text : nf.text });
+      MQ.remove('notes', from);
+    }
     const mk = MQ.local.marks;
     if (mk && mk[from]) { mk[to] = Object.assign({}, mk[from], mk[to]); delete mk[from]; MQ.saveLocal(); }
   }
