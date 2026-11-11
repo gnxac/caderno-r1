@@ -9,7 +9,7 @@
     if (!opts.qids || !opts.qids.length) { MQ.toast('Nenhuma questão para abrir.'); return; }
     MQ.session = {
       title: opts.title || 'Questões', qids: opts.qids.slice(), ctx: opts.ctx || 'banco', listId: opts.listId || null,
-      idx: Math.min(opts.startIndex || 0, opts.qids.length - 1), sel: {}, conf: {}, attempt: {}, time: {}, focus: false, revealed: {}, cut: {}, hideBanner: {}, showTopics: false, showHist: {},
+      idx: Math.min(opts.startIndex || 0, opts.qids.length - 1), sid: MQ.uid(), sel: {}, conf: {}, attempt: {}, time: {}, focus: false, revealed: {}, cut: {}, hideBanner: {}, showTopics: false, showHist: {},
       showIndex: window.innerWidth > 1100, shownAt: Date.now()
     };
     // Reabrir a lista mostra de novo as respostas já dadas (desde o último "recomeçar")
@@ -90,7 +90,14 @@
     const revealed = !!s.revealed[qid];
     const chosen = s.sel[qid];
     const cut = s.cut[qid] || (s.cut[qid] = []);
-    if (s.listId) { MQ.local.progress = MQ.local.progress || {}; MQ.local.progress[s.listId] = s.idx; MQ.saveLocal(); }
+    let dirty = false; // só grava no aparelho quando a posição muda (last.qids pode ser grande)
+    if (s.listId) { MQ.local.progress = MQ.local.progress || {}; if (MQ.local.progress[s.listId] !== s.idx) { MQ.local.progress[s.listId] = s.idx; dirty = true; } }
+    if (s.ctx === 'banco' || s.listId) { // "continuar de onde parei" no Início; as questões só são guardadas uma vez por sessão
+      const lt = MQ.local.last;
+      if (lt && lt.sid === s.sid) { if (lt.idx !== s.idx) { lt.idx = s.idx; lt.at = Date.now(); dirty = true; } }
+      else { MQ.local.last = { sid: s.sid, title: s.title, ctx: s.ctx, listId: s.listId || null, qids: s.listId ? null : s.qids.slice(), idx: s.idx, total: n, at: Date.now() }; dirty = true; }
+    }
+    if (dirty) MQ.saveLocal();
 
     let body, banner = '';
     if (!q) {

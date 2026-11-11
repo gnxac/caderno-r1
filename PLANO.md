@@ -65,14 +65,16 @@ Ordem aprovada na fase 1. Marque `[x]` ao concluir cada item. Decisões de visua
 - [ ] Atalho "Caderno de erros" fixo no topo de Listas (entra no passo 7)
 
 ## 6. Início
-- [ ] Continuar de onde parei
-- [ ] Meta de hoje
-- [ ] Revisões de hoje
-- [ ] Ponto mais fraco com "Treinar 20 questões"
-- [ ] Sequência
-- [ ] Heatmap de dias estudados
-- [ ] Sessão rápida de 10 questões
-- [ ] Estado de primeiro uso
+- [x] Continuar de onde parei (simulado em andamento, lista ou sessão do banco; guardado só neste aparelho)
+- [x] Meta de hoje (anel; meta na coleção `prefs`, sincroniza entre aparelhos; "Mudar meta")
+- [x] Revisões de hoje (com as atrasadas e "Revisar agora")
+- [x] Ponto mais fraco em 30 dias (mínimo de 15 respostas) com "Treinar 20 questões"
+- [x] Sequência de dias e bolinhas da semana
+- [x] Mapa de dias estudados (20, 18 ou 33 semanas, conforme o formato)
+- [x] Sessão rápida de 10 questões (revisões, ponto fraco e não resolvidas)
+- [x] Estado de primeiro uso; no tablet e no PC também "Acerto por grande área" e "Simulados recentes"
+- [ ] Sequência quando hoje está vazio e ontem tem resposta, e meta com 1 questão restante: lógica revisada, sem teste no navegador
+- [ ] A meta de hoje mostra "Meta batida!" no mesmo cartão; falta decidir se a sequência e a meta destacam a conquista com mais ênfase (ciano hoje só no número, nas bolinhas e no anel cheio)
 
 ## 7. Listas e Simulados
 - [ ] Segmento Listas | Simulados

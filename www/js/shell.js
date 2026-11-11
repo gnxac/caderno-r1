@@ -3,20 +3,6 @@
   'use strict';
   const { esc, $, $$, icon } = MQ;
 
-  /* ---------- Início (esqueleto; o painel completo entra no passo 6 do PLANO.md) ---------- */
-  MQ.views.inicio = function (root) {
-    const qs = MQ.alive('questions').length;
-    const done = new Set(MQ.alive('attempts').map(a => a.qid)).size;
-    root.innerHTML =
-      '<div class="page-head"><div><h1>Início</h1><p>Seu resumo de estudo vai ficar aqui.</p></div></div>' +
-      '<div class="home-grid">' +
-      '<section class="home-card hi"><h2>Comece por aqui</h2><p>' + (done ? 'Você já respondeu ' + done + (done === 1 ? ' questão' : ' questões') + '. Continue de onde parou.' : 'Escolha os filtros e resolva suas primeiras questões.') + '</p>' +
-      '<a class="btn primary big" href="#/questoes">' + icon('search') + 'Buscar questões</a></section>' +
-      '<section class="home-card"><h2>Seu banco</h2><p class="muted">' + qs + ' questões disponíveis.</p>' +
-      '<div class="home-links"><a class="btn" href="#/listas">' + icon('folder') + 'Minhas listas</a><a class="btn" href="#/desempenho">' + icon('chart') + 'Desempenho</a></div></section>' +
-      '</div>';
-  };
-
   /* ---------- Atalhos de teclado ---------- */
   const ROUTES = ['inicio', 'questoes', 'listas', 'desempenho', 'configuracoes'];
   const inSim = () => MQ.route().name === 'simulado'; // prova em andamento: nada de sair por atalho
