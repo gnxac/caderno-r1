@@ -118,16 +118,35 @@
 
   function remainingMs(run) { return run.startedAt + run.durationMin * 60000 - Date.now(); }
 
+  /* Tempo por questão: soma o tempo em que cada questão ficou na tela (run.times, em segundos) */
+  let viewing = null;
+  const MAX_CHUNK = 600; // shortcut: tela parada mais de 10 min (app em segundo plano) conta só 10 min; trocar por visibilitychange se incomodar
+  function countTime(run, now) {
+    if (!viewing || viewing.run !== run.id) return;
+    const times = run.times || (run.times = {});
+    times[viewing.qid] = (times[viewing.qid] || 0) + Math.min(Math.max(0, (now - viewing.at) / 1000), MAX_CHUNK);
+  }
+  /* Saiu do simulado sem terminar: guarda o tempo até aqui e para de contar */
+  window.addEventListener('hashchange', () => {
+    if (!viewing || location.hash.startsWith('#/simulado/' + viewing.run)) return;
+    const run = MQ.get('runs', viewing.run);
+    if (run && run.status === 'andamento') { countTime(run, Date.now()); MQ.put('runs', run); }
+    viewing = null;
+  });
+
   MQ.finishRun = function (run) {
     if (run.status !== 'andamento') return;
     run.status = 'concluido';
     run.finishedAt = Math.min(Date.now(), run.startedAt + run.durationMin * 60000);
+    countTime(run, run.finishedAt);
+    if (viewing && viewing.run === run.id) viewing = null;
     MQ.put('runs', run);
     const ctx = 'sim:' + run.listId;
+    const times = run.times || {};
     Object.keys(run.answers).forEach(qid => {
       const q = MQ.get('questions', qid);
       if (!q || !run.answers[qid]) return;
-      MQ.put('attempts', { id: MQ.uid(), qid, choice: run.answers[qid], correct: run.answers[qid] === q.gabarito, ctx, ts: run.finishedAt, runId: run.id, device: MQ.local.deviceId });
+      MQ.put('attempts', { id: MQ.uid(), qid, choice: run.answers[qid], correct: run.answers[qid] === q.gabarito, ctx, ts: run.finishedAt, timeSec: times[qid] ? Math.round(times[qid]) : null, runId: run.id, device: MQ.local.deviceId });
     });
   };
 
@@ -140,6 +159,9 @@
     const n = run.qids.length;
     const idx = Math.min(run.idx || 0, n - 1);
     const qid = run.qids[idx];
+    const now = Date.now();
+    countTime(run, now);
+    viewing = { run: run.id, qid, at: now };
     const q = MQ.get('questions', qid);
     const chosen = run.answers[qid];
     const flagged = run.flags.includes(qid);

@@ -93,6 +93,7 @@
         x.qids = m(x.qids); x.flags = m(x.flags);
         if (x.cut) { const cut = {}; Object.keys(x.cut).forEach(q => { const to = map[q] || q; cut[to] = cut[to] || x.cut[q].map(c => fixChoice(c, perms[q])); }); x.cut = cut; }
         if (x.answers) { const ans = {}; Object.keys(x.answers).forEach(q => { const to = map[q] || q; ans[to] = ans[to] || fixChoice(x.answers[q], perms[q]); }); x.answers = ans; }
+        if (x.times) { const t = {}; Object.keys(x.times).forEach(q => { const to = map[q] || q; t[to] = (t[to] || 0) + x.times[q]; }); x.times = t; }
         return x;
       });
     }
@@ -125,6 +126,7 @@
       if ((r.flags || []).includes(from)) { r.flags = swap(r.flags); ch = true; }
       if (r.cut && r.cut[from]) { if (!r.cut[to]) r.cut[to] = r.cut[from].map(c => fixChoice(c, perm)); delete r.cut[from]; ch = true; } // tesoura (alternativas descartadas)
       if (r.answers && from in r.answers) { if (!r.answers[to]) r.answers[to] = fixChoice(r.answers[from], perm); delete r.answers[from]; ch = true; }
+      if (r.times && from in r.times) { r.times[to] = (r.times[to] || 0) + r.times[from]; delete r.times[from]; ch = true; }
       if (ch) MQ.put('runs', r);
     });
     const mk = MQ.local.marks;

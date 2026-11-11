@@ -7,10 +7,18 @@
   const KEY_DATA = 'dados';
   const KEY_LOCAL = 'local';
   const KEY_MEDIA = 'midia';
-  const COLLECTIONS = ['questions', 'attempts', 'folders', 'lists', 'runs'];
+  /* notes: anotação por questão · reviews: revisão espaçada por questão · prefs: meta e lembrete (sincronizam) */
+  const COLLECTIONS = ['questions', 'attempts', 'folders', 'lists', 'runs', 'notes', 'reviews', 'prefs'];
+  /* Coleção = objeto de itens por id; "version" e "counter" são números e ficam de fora */
+  const isColl = v => !!v && typeof v === 'object' && !Array.isArray(v);
+  /* Chaves que, vindas de um JSON, alterariam o protótipo dos objetos */
+  const UNSAFE = new Set(['__proto__', 'constructor', 'prototype']);
+  MQ.CONF = ['sabia', 'duvida', 'chute'];
 
   function emptyData() {
-    return { version: 1, questions: {}, attempts: {}, folders: {}, lists: {}, runs: {}, counter: 0 };
+    const d = { version: 1, counter: 0 };
+    COLLECTIONS.forEach(c => { d[c] = {}; });
+    return d;
   }
 
   MQ.data = emptyData();
@@ -127,17 +135,22 @@
     return 'R1-' + String(max + 1).padStart(5, '0');
   };
 
-  /* Mescla dados remotos nos locais: em cada item vence a edição mais recente */
+  /* Mescla dados remotos nos locais: em cada item vence a edição mais recente.
+     Mescla toda coleção que vier, inclusive as que esta versão ainda não usa,
+     para não apagar do Drive dados gravados por uma versão mais nova do app. */
   MQ.mergeData = function (remote) {
     let changed = 0;
     if (!remote) return 0;
-    COLLECTIONS.forEach(c => {
-      const r = remote[c] || {};
-      const l = MQ.data[c];
+    Object.keys(remote).forEach(c => {
+      const r = remote[c];
+      if (UNSAFE.has(c) || !isColl(r)) return;
+      const has = Object.prototype.hasOwnProperty.call(MQ.data, c);
+      if (has && !isColl(MQ.data[c])) return;
+      const l = has ? MQ.data[c] : (MQ.data[c] = {});
       Object.keys(r).forEach(id => {
         const ro = r[id];
-        const lo = l[id];
-        if (!ro) return;
+        if (UNSAFE.has(id) || !ro || typeof ro !== 'object') return;
+        const lo = Object.prototype.hasOwnProperty.call(l, id) ? l[id] : null;
         if (!lo || (ro.updatedAt || 0) > (lo.updatedAt || 0)) { l[id] = ro; changed++; }
       });
     });
@@ -168,7 +181,7 @@
     return map;
   };
 
-  MQ.recordAttempt = function (qid, choice, ctx, timeSec) {
+  MQ.recordAttempt = function (qid, choice, ctx, timeSec, conf) {
     const q = MQ.get('questions', qid);
     if (!q) return null;
     const a = {
@@ -176,6 +189,7 @@
       ctx: ctx || 'banco', ts: MQ.now(), timeSec: timeSec || null,
       device: MQ.local.deviceId
     };
+    if (MQ.CONF.includes(conf)) a.conf = conf;
     return MQ.put('attempts', a);
   };
 

@@ -8,8 +8,9 @@ const ALLOWED_HOSTS = new Set(['oauth2.googleapis.com', 'www.googleapis.com', 'o
 /* Build "Caderno R1 Admin" (npm run dist:win:admin): extraMetadata.mqAdmin no package.json empacotado */
 let IS_ADMIN = false;
 try { IS_ADMIN = !!require('../package.json').mqAdmin; } catch (e) { /* app comum */ }
-// dados separados do app comum (outra pasta, outra instância permitida ao mesmo tempo)
-if (IS_ADMIN) app.setPath('userData', path.join(app.getPath('appData'), 'Caderno R1 Admin'));
+// Pasta de dados fixa: o nome exibido vai mudar (Pulse), mas os dados salvos continuam nestas pastas.
+// O admin usa pasta separada do app comum (outra instância permitida ao mesmo tempo).
+app.setPath('userData', path.join(app.getPath('appData'), IS_ADMIN ? 'Caderno R1 Admin' : 'Caderno R1'));
 
 if (!app.requestSingleInstanceLock()) {
   app.quit();

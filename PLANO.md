@@ -8,13 +8,15 @@ Ordem aprovada na fase 1. Marque `[x]` ao concluir cada item. Decisões de visua
 - passou por `revisor-codigo` e `testador-navegador` antes do commit.
 
 ## 0. Fundação de dados
-- [ ] `mergeData` mescla qualquer coleção presente nos dados remotos, não só as 5 atuais
-- [ ] Coleções novas `notes`, `reviews` e `prefs` criadas vazias
-- [ ] Campo `conf` (sabia, dúvida, chute) aceito nas respostas, opcional
-- [ ] Simulado passa a gravar `timeSec` por questão
-- [ ] Electron: `userData` fixo em `%APPDATA%\Caderno R1` (e `Caderno R1 Admin` na versão admin)
-- [ ] Teste de mesclagem: dado antigo + dado novo, nos dois sentidos, sem perda
-- [ ] Versão instalada em todos os aparelhos antes de seguir para funções que gravam coleções novas
+- [x] `mergeData` mescla qualquer coleção presente nos dados remotos, não só as 5 atuais (ignora `__proto__`, `constructor`, `prototype` e itens que não são objeto)
+- [x] Coleções novas `notes`, `reviews` e `prefs` criadas vazias
+- [x] Campo `conf` (sabia, dúvida, chute) aceito nas respostas, opcional
+- [x] Simulado passa a gravar `timeSec` por questão (`run.times`; para de contar ao sair do simulado)
+- [x] Electron: `userData` fixo em `%APPDATA%\Caderno R1` (e `Caderno R1 Admin` na versão admin)
+- [x] Teste de mesclagem: dado antigo + dado novo, nos dois sentidos, sem perda (`node tests/mesclagem.test.js`)
+- [ ] Sincronização real entre dois aparelhos com a versão 1.3.0
+- [ ] Versão 1.3.0 instalada em todos os aparelhos antes de seguir para funções que gravam coleções novas
+- Ao implementar anotações e revisões: remapear `notes` e `reviews` em `dedupe.js` (como já é feito com `runs.times`)
 
 ## 1. Sistema visual
 - [ ] Tokens da paleta Índigo + ciano (claro e escuro) no `app.css`
