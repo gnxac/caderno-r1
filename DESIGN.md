@@ -1,237 +1,382 @@
 ---
-name: Caderno R1
-description: Banco de questões de residência médica com ferramentas de estudo à mão, em azul-marinho de jaleco sobre papel limpo.
+name: Pulse
+description: Banco de questões de residência médica com ferramentas de estudo à mão, em índigo profundo sobre papel claro, com ciano só para conquistas.
 colors:
-  navy: "#1F3A4D"
-  accent: "#2F6F8F"
-  accent-soft: "#D5E4EC"
-  paper: "#F1F5F7"
+  accent: "#4338A8"
+  accent-ink: "#FFFFFF"
+  title: "#26236B"
+  soft: "#E2E0F7"
+  on-soft: "#26236B"
+  sec: "#0E7490"
+  sec-soft: "#D5EEF4"
+  paper: "#F4F4F9"
   surface: "#FFFFFF"
-  sunk: "#E3EDF2"
-  ink: "#1D2B33"
-  ink-2: "#3F525E"
-  ink-3: "#587080"
-  line: "#CFD8DC"
-  line-2: "#B4C2CA"
+  rail: "#FFFFFF"
+  sunk: "#E8E8F2"
+  ink: "#1B1B2E"
+  ink-2: "#3E3E57"
+  ink-3: "#62627D"
+  line: "#D5D5E3"
+  line-2: "#BBBBD0"
   ok: "#1F7A4D"
   ok-soft: "#E1F3E8"
   err: "#B3261E"
   err-soft: "#FBE7E5"
-  warn: "#8A5A00"
-  warn-soft: "#FFF2D6"
+  doubt: "#8A5A00"
+  doubt-soft: "#FFF2D6"
   focus: "#B45309"
-  dark-paper: "#0A0A0A"
-  dark-rail: "#111111"
-  dark-surface: "#161616"
-  dark-sunk: "#1E1E1E"
-  dark-line: "#2A2A2A"
-  dark-line-2: "#3A3A3A"
-  dark-ink: "#EDEDED"
-  dark-ink-2: "#A8A8A8"
-  dark-ink-3: "#8A8A8A"
-  dark-accent: "#6FB1D1"
-  dark-accent-soft: "#1E3644"
+  heat-1: "#E2E0F7"
+  heat-2: "#AAA5DB"
+  heat-3: "#736AC0"
+  heat-4: "#4338A8"
+  dark-accent: "#A5A0F5"
+  dark-accent-ink: "#15124A"
+  dark-title: "#D4D2FA"
+  dark-soft: "#27245A"
+  dark-on-soft: "#DCDAFD"
+  dark-sec: "#5CD0E4"
+  dark-sec-soft: "#103540"
+  dark-paper: "#0B0B12"
+  dark-surface: "#15151F"
+  dark-rail: "#0F0F18"
+  dark-sunk: "#1D1D2A"
+  dark-ink: "#ECECF5"
+  dark-ink-2: "#ABABC2"
+  dark-ink-3: "#8A8AA3"
+  dark-line: "#2A2A3A"
+  dark-line-2: "#3A3A4E"
+  dark-ok: "#5CC28E"
+  dark-ok-soft: "#173326"
+  dark-err: "#F08A80"
+  dark-err-soft: "#3B1C1A"
+  dark-doubt: "#E6B450"
+  dark-doubt-soft: "#3A2E12"
+  dark-focus: "#FBBF24"
+  dark-heat-1: "#27245A"
+  dark-heat-2: "#534F90"
+  dark-heat-3: "#7F7BC6"
+  dark-heat-4: "#A5A0F5"
 typography:
   display:
-    fontFamily: "Segoe UI Variable Text, Segoe UI, Roboto, Noto Sans, system-ui, sans-serif"
-    fontSize: "1.7rem"
-    fontWeight: 600
-    lineHeight: 1.25
-    letterSpacing: "-0.01em"
+    fontFamily: "Manrope, Segoe UI, Roboto, system-ui, sans-serif"
+    fontSize: "28px"
+    fontWeight: 800
+    lineHeight: 1.2
+    letterSpacing: "-0.02em"
   headline:
-    fontFamily: "Segoe UI Variable Text, Segoe UI, Roboto, Noto Sans, system-ui, sans-serif"
-    fontSize: "1.15rem"
-    fontWeight: 600
-    lineHeight: 1.25
+    fontFamily: "Manrope, Segoe UI, Roboto, system-ui, sans-serif"
+    fontSize: "22px"
+    fontWeight: 800
+    lineHeight: 1.2
+    letterSpacing: "-0.015em"
+  title:
+    fontFamily: "Manrope, Segoe UI, Roboto, system-ui, sans-serif"
+    fontSize: "16px"
+    fontWeight: 700
+    lineHeight: 1.3
   body:
-    fontFamily: "Segoe UI Variable Text, Segoe UI, Roboto, Noto Sans, system-ui, sans-serif"
-    fontSize: "15px"
-    fontWeight: 400
-    lineHeight: 1.5
-  question:
-    fontFamily: "Sitka Text, Charter, Bitstream Charter, Noto Serif, Cambria, Georgia, serif"
-    fontSize: "1rem"
+    fontFamily: "Manrope, Segoe UI, Roboto, system-ui, sans-serif"
+    fontSize: "14px"
     fontWeight: 400
     lineHeight: 1.5
   label:
-    fontFamily: "Segoe UI Variable Text, Segoe UI, Roboto, Noto Sans, system-ui, sans-serif"
-    fontSize: "0.85rem"
+    fontFamily: "Manrope, Segoe UI, Roboto, system-ui, sans-serif"
+    fontSize: "13px"
     fontWeight: 600
+  eyebrow:
+    fontFamily: "Manrope, Segoe UI, Roboto, system-ui, sans-serif"
+    fontSize: "11px"
+    fontWeight: 700
+    letterSpacing: "0.08em"
+  question:
+    fontFamily: "Literata, Sitka Text, Charter, Noto Serif, Georgia, serif"
+    fontSize: "17px"
+    fontWeight: 400
+    lineHeight: 1.62
 rounded:
-  sm: "6px"
-  md: "8px"
-  lg: "12px"
+  field: "6px"
+  button: "8px"
+  alternative: "10px"
+  card: "12px"
+  panel: "14px"
   pill: "999px"
 spacing:
-  sm: "8px"
+  xxs: "4px"
+  xs: "8px"
+  sm: "12px"
   md: "16px"
-  lg: "28px"
+  lg: "24px"
+  xl: "32px"
+  xxl: "48px"
 components:
   button:
     backgroundColor: "{colors.surface}"
     textColor: "{colors.ink}"
-    rounded: "{rounded.sm}"
-    height: "38px"
-    padding: "0 14px"
+    rounded: "{rounded.button}"
+    height: "40px (44px no toque)"
+    padding: "0 16px"
   button-primary:
     backgroundColor: "{colors.accent}"
-    textColor: "#FFFFFF"
-    rounded: "{rounded.sm}"
-    height: "38px"
+    textColor: "{colors.accent-ink}"
+    rounded: "{rounded.button}"
+    height: "40px (44px no toque)"
   button-action:
     backgroundColor: "{colors.accent}"
-    textColor: "#FFFFFF"
+    textColor: "{colors.accent-ink}"
     rounded: "{rounded.pill}"
-    height: "52px"
+    height: "48px"
   filter-button:
-    backgroundColor: "{colors.accent-soft}"
-    textColor: "{colors.navy}"
-    rounded: "{rounded.lg}"
-    height: "54px"
-    padding: "0 16px"
+    backgroundColor: "{colors.soft}"
+    textColor: "{colors.on-soft}"
+    rounded: "{rounded.card}"
+    height: "50px"
+    padding: "0 14px"
   chip:
-    backgroundColor: "{colors.accent-soft}"
-    textColor: "{colors.navy}"
-    rounded: "{rounded.lg}"
-  question-card:
+    backgroundColor: "{colors.soft}"
+    textColor: "{colors.on-soft}"
+    rounded: "{rounded.pill}"
+    height: "32px"
+  card:
     backgroundColor: "{colors.surface}"
-    rounded: "{rounded.md}"
-    padding: "22px 26px 24px"
+    rounded: "{rounded.card}"
+    padding: "14px (16px no PC)"
   alternative:
     backgroundColor: "{colors.surface}"
-    rounded: "{rounded.md}"
-    padding: "10px 8px 10px 12px"
+    rounded: "{rounded.alternative}"
+    padding: "10px 12px"
   input:
     backgroundColor: "{colors.surface}"
-    rounded: "{rounded.sm}"
-    height: "38px"
+    rounded: "{rounded.field}"
+    height: "40px (44px no toque)"
 ---
 
-# Design System: Caderno R1
+# Design System: Pulse
+
+Fonte da verdade do visual do app. Os nomes internos continuam `caderno-r1` (pasta, `appId`, IndexedDB, arquivos do Drive); só o nome exibido mudou. Plano completo e mockups aprovados: https://claude.ai/artifact/5UEsWEqJe55ZWP6JTiBqVA
 
 ## Overview
 
-**Creative North Star: "O Caderno Anotado"**
+**Norte criativo: "Caderno de quem treina todo dia."** O app é uma superfície de estudo longo que guarda a mão do estudante: marca-texto em cinco cores, alternativas riscadas com a tesoura, listas e simulados montados por ele. A interface fica quieta para que essas marcas sejam a cor mais expressiva da página. O índigo dá identidade e foco; o ciano aparece só quando o estudante conquista algo (meta batida, sequência, revisões em dia).
 
-O app é uma superfície de estudo que guarda a mão do estudante: marca-texto em cinco cores claras, alternativas riscadas com a tesoura, listas e simulados montados por ele. A interface fica quieta para que essas marcas sejam a única cor expressiva da página. O azul-marinho de jaleco dá identidade e seriedade clínica; o resto é papel limpo, texto legível e bordas finas.
+O enunciado é lido em serifa (Literata), como texto impresso; todo o resto (navegação, filtros, números) em sans (Manrope). Nada pisca nem decora; o movimento só confirma o que o estudante fez.
 
-A densidade é de ferramenta de uso longo: o enunciado da questão é lido em serifa, como texto impresso, e todo o resto (navegação, filtros, números) em sans de sistema. Nada pisca nem decora. Cantos suaves, sem sombras de repouso, e pílulas só onde há ação principal ou chip de filtro.
+**Características:**
+- Índigo (`#4338A8`) é a cor de ação; ciano (`#0E7490`) só marca conquistas, nunca vira botão.
+- Enunciado, alternativas e comentário em serifa; interface em sans.
+- Escuro quase preto com leve tom índigo; o índigo claro (`#A5A0F5`) vira a cor de ação.
+- Verde e vermelho só para acerto e erro, sempre acompanhados de ✓ e ✗.
+- Alvos de toque de 44 px no celular e tablet; uso com uma mão.
 
-**Key Characteristics:**
-- Azul-marinho (#1F3A4D) como identidade, azul-petróleo (#2F6F8F) como ação; azul só em destaques, nunca em fundos grandes.
-- Enunciado em serifa; interface em sans.
-- Modo escuro neutro (preto/cinza sem tom azul); o azul claro (#6FB1D1) vira o destaque.
-- Verde e vermelho só para acerto e erro; marca-texto e tesoura são cores do usuário, não da marca.
-- Alvos de toque de 44px no celular; uso com uma mão.
+## Brand
+
+- **Nome:** Pulse.
+- **Logo:** "pulso que vira check": linha de monitor com um pico que termina em check. Grade de 64, quadrado de cantos 15, traço único de 5 com pontas e junções arredondadas: `M12 34h8l4-8 5 14 22-22`.
+- **Ícone do app** (Android e Windows): fundo `#4338A8`, traço `#FFFFFF`, o mesmo nos dois temas. Conteúdo dentro da zona segura do ícone adaptativo (66% central). Windows: `.ico` com 16, 24, 32, 48 e 256 px. Android: foreground + background + monocromático (ícone temático do Android 13+).
+- **Glifo** (sem fundo, dentro do app): o mesmo traço em `currentColor`.
+- **Assinatura:** ícone + "Pulse" em Manrope 800, letter-spacing −0,02em.
 
 ## Colors
 
-Paleta contida: neutros frios de papel, um azul de marca e semânticos de acerto/erro. No escuro os fundos viram preto/cinza puros.
+### Tokens
 
-### Primary
-- **Azul-marinho de jaleco** (#1F3A4D): títulos, ícone do app, textos sobre azul claro (`--navy`, `--on-soft`).
-- **Azul-petróleo clínico** (#2F6F8F): botão principal, link, item ativo. No escuro, #6FB1D1.
-- **Névoa azul** (#D5E4EC): fundo de chips, botões de filtro, item ativo da navegação e alternativa selecionada. No escuro, #1E3644.
+| Token | Claro | Escuro | Uso |
+| --- | --- | --- | --- |
+| `--paper` | `#F4F4F9` | `#0B0B12` | Fundo da página |
+| `--surface` | `#FFFFFF` | `#15151F` | Cartões, painéis, modais, campos |
+| `--rail` | `#FFFFFF` | `#0F0F18` | Barra lateral, rail e barra inferior |
+| `--sunk` | `#E8E8F2` | `#1D1D2A` | Trilho de barras, campos aninhados, controle segmentado |
+| `--line` | `#D5D5E3` | `#2A2A3A` | Bordas fracas e divisórias |
+| `--line-2` | `#BBBBD0` | `#3A3A4E` | Bordas fortes (botões, alternativas) |
+| `--ink` | `#1B1B2E` | `#ECECF5` | Texto principal |
+| `--ink-2` | `#3E3E57` | `#ABABC2` | Texto secundário |
+| `--ink-3` | `#62627D` | `#8A8AA3` | Texto terciário, rótulos |
+| `--title` | `#26236B` | `#D4D2FA` | Títulos e números de destaque |
+| `--accent` | `#4338A8` | `#A5A0F5` | Botão principal, link, item ativo, progresso |
+| `--accent-ink` | `#FFFFFF` | `#15124A` | Texto sobre a cor de ação |
+| `--soft` | `#E2E0F7` | `#27245A` | Chips, botões de filtro, item ativo, alternativa selecionada |
+| `--on-soft` | `#26236B` | `#DCDAFD` | Texto sobre `--soft` |
+| `--sec` | `#0E7490` | `#5CD0E4` | Conquistas: meta batida, sequência, revisões em dia |
+| `--sec-soft` | `#D5EEF4` | `#103540` | Fundo das conquistas |
+| `--ok` / `--ok-soft` | `#1F7A4D` / `#E1F3E8` | `#5CC28E` / `#173326` | Certa |
+| `--err` / `--err-soft` | `#B3261E` / `#FBE7E5` | `#F08A80` / `#3B1C1A` | Errada |
+| `--doubt` / `--doubt-soft` | `#8A5A00` / `#FFF2D6` | `#E6B450` / `#3A2E12` | Tive dúvida, chutei, questão marcada no simulado |
+| `--focus` | `#B45309` | `#FBBF24` | Anel de foco de 2 px |
+| `--heat-1…4` | `#E2E0F7` `#AAA5DB` `#736AC0` `#4338A8` | `#27245A` `#534F90` `#7F7BC6` `#A5A0F5` | Heatmap de dias estudados (nível 0 = `--sunk`) |
 
-### Neutral
-- **Papel frio** (#F1F5F7): fundo da página. Escuro: #0A0A0A.
-- **Superfície** (#FFFFFF): cartões, painéis, modais, campos, barra lateral. Escuro: #161616 (barra lateral #111111).
-- **Afundado** (#E3EDF2): campos aninhados, tópicos, histórico, trilho de barras. Escuro: #1E1E1E (alternativas também).
-- **Tinta** (#1D2B33), **tinta 2** (#3F525E), **tinta 3** (#587080): texto principal, secundário e terciário. Escuro: #EDEDED, #A8A8A8, #8A8A8A (todos ≥ 4,5:1).
-- **Linha** (#CFD8DC) e **linha forte** (#B4C2CA): bordas fracas e fortes. Escuro: #2A2A2A e #3A3A3A.
+Os temas seguem o padrão: tokens claros em `:root`, escuros em `@media (prefers-color-scheme: dark)` com `:root:not([data-theme="light"])` e de novo em `:root[data-theme="dark"]`, para a escolha manual valer nos dois sentidos.
 
-### Semânticas
-- **Acerto** (#1F7A4D) e **erro** (#B3261E), cada um com fundo suave (#E1F3E8, #FBE7E5); **aviso** (#8A5A00) com #FFF2D6; **foco** (#B45309), anel de 2px.
-
-### Named Rules
-**The Quiet Paper Rule.** Nenhum fundo grande é azul. O azul vive em botões, chips, item ativo e selos; o resto é papel ou, no escuro, preto/cinza neutro.
-**The User's Ink Rule.** As cores do marca-texto e da tesoura são do estudante e nunca entram como cor de marca nem de estado.
+### Regras
+- **Índigo é ação.** Botão principal, link, item ativo, barra de progresso. Fundos grandes nunca são índigo.
+- **Ciano é conquista.** Só meta batida, sequência e revisões em dia; nunca botão nem link.
+- **Semânticas com ícone.** Certa leva ✓ e errada leva ✗; a cor nunca é o único sinal.
+- **A tinta do usuário.** As 5 cores do marca-texto (vermelho, amarelo, azul, verde, rosa, todas claras) e a tesoura são do estudante: nunca viram cor de marca nem de estado. O texto marcado fica com tinta escura fixa (`#1B1B2E`) para manter o contraste nos dois temas.
+- Contraste mínimo de 4,5:1 para texto nos dois temas.
 
 ## Typography
 
-**Interface Font:** Segoe UI Variable Text (Segoe UI, Roboto, Noto Sans, system-ui, sans-serif)
-**Question Font:** Sitka Text (Charter, Noto Serif, Cambria, Georgia, serif)
+- **Interface:** Manrope (SIL OFL 1.1), pesos 400–800.
+- **Leitura:** Literata (SIL OFL 1.1), 400, 600 e itálico 400, com tamanho óptico.
+- Ambas embutidas como `.woff2` em `www/fonts/`, só o subconjunto latino (~250 KB), sem Google Fonts em tempo de execução.
 
-**Character:** sans do sistema para tudo que é ferramenta; serifa só no texto que se lê e se marca (enunciado, alternativas, comentário). O tamanho da letra da questão é ajustável pelo usuário (`--font-scale`).
+| Papel | Fonte | Tamanho | Peso | Linha |
+| --- | --- | --- | --- | --- |
+| Display (título de página, número grande) | Manrope | 28 px | 800 | 1,2 |
+| Headline (título de seção) | Manrope | 22 px | 800 | 1,2 |
+| Title (título de cartão) | Manrope | 16 px | 700 | 1,3 |
+| Body | Manrope | 14 px | 400 | 1,5 |
+| Label (botão, chip, navegação) | Manrope | 13 px | 600 | — |
+| Eyebrow (rótulo de cartão, maiúsculas) | Manrope | 11 px | 700, +0,08em | — |
+| Enunciado, alternativas, comentário | Literata | 17 px × escala do usuário (mín. 15 px) | 400 | 1,62 |
 
-### Hierarchy
-- **Display** (600, 1.6–1.7rem, 1.25): título de página e contador de questões.
-- **Headline** (600, 1.15rem, 1.25): títulos de seção e cartões.
-- **Title** (600, 1rem): subtítulos e grupos (`h3`).
-- **Body** (400, 15px, 1.5): interface geral. Texto longo da questão em serifa 1rem × escala, linha 1.5.
-- **Label** (600, 0.85rem): rótulos de campo e selos; números sempre com `tabular-nums`.
+Escala: 12 · 13 · 14 · 16 · 18 · 22 · 28. **Regra da questão impressa:** o que se lê para responder é serifa; toda a interface ao redor é sans. A linha do enunciado vai até ~68 caracteres.
 
-### Named Rules
-**The Printed Question Rule.** O que o estudante lê para responder (enunciado, alternativas, comentário) é serifa; toda a interface ao redor é sans.
+## Iconography
+
+- **Conjunto único: Lucide** (licença ISC). Nenhuma outra biblioteca no app.
+- **Traço de 2 px em todo o app**, pontas e junções arredondadas (os rótulos ao lado são seminegrito).
+- Tamanhos: 20 px na navegação e nos botões, 16 px dentro de chips e botões pequenos, 18 px nas ações da questão.
+- Embutidos como SVG local (sprite com `<symbol>` + `<use>`), em `currentColor`. Estados (hover, ativo, desabilitado) mudam só cor e opacidade do mesmo SVG; o item ativo da navegação ganha a pílula de fundo `--soft`.
+- Busca e download com a skill `better-icons` (`better-icons get lucide:<nome>`); o CLI pinta `circle`/`rect` por dentro, então remover o `fill="currentColor"` desses elementos ao importar.
+
+| Uso | Ícone Lucide |
+| --- | --- |
+| Início · Questões · Listas · Desempenho · Configurações | `house` · `search` · `folder` · `chart-column` · `sliders-horizontal` |
+| Resolver · Cronômetro · Descartar · Marca-texto · Anotação | `play` · `timer` · `scissors` · `highlighter` · `notebook-pen` |
+| Sequência · Ponto fraco · Certa · Errada · Novo | `flame` · `target` · `check` · `x` · `plus` |
+| Filtro · Abrir · Voltar · Mais · Lista inteligente | `funnel` · `chevron-right` · `chevron-left` · `ellipsis` · `zap` |
+| Flashcard · Modo foco · Marcar · Ordenar · Backup | `layers` · `maximize` · `flag` · `arrow-up-down` · `download` |
+| Lembrete · Atalhos · Sincronizado · Sincronizar · Excluir | `bell` · `keyboard` · `cloud-check` · `refresh-cw` · `trash-2` |
+| Tema · Simulado · Adicionar à lista · Editar · Pulso | `sun-moon` · `list-checks` · `list-plus` · `pencil` · `heart-pulse` |
 
 ## Layout
 
-Casca de duas colunas no computador: barra lateral de 232px e conteúdo com 28px/36px de respiro; no celular (≤ 860px) a barra lateral vira barra inferior e o conteúdo usa 16px de lateral, com folga para a área segura (`env(safe-area-inset-*)`). Cartão da questão limitado a 820px.
+O formato é decidido pela largura da janela, não pelo aparelho: Windows em meia tela usa o layout de tablet; tablet com teclado ganha os atalhos.
 
-Telas de operação usam grades simples: filtros em coluna à esquerda (≈500px) e painel de filtros aplicados à direita no computador; coluna única no celular. Desempenho usa painel lateral de filtros (240px) e grade de 12 colunas para os gráficos. Espaçamento em múltiplos de 4–8px; alvos de toque de pelo menos 44px no celular.
+| Formato | Largura | Navegação | Colunas |
+| --- | --- | --- | --- |
+| Celular | < 600 px | Barra inferior com 5 itens (ícone + rótulo, item ativo em pílula). Some em Resolver e Simulado, que viram tela cheia com barra própria. | 1 coluna; ação principal fixa acima da barra, ao alcance do polegar. Lateral de 14–16 px e área segura (`safe-area-inset`). |
+| Tablet | 600–1199 px | Rail de 76 px (ícone + rótulo curto), sincronização no pé. | 2 colunas a partir de 840 px (lista \| detalhe, questão \| painel); abaixo disso, 1 coluna larga. Respiro de 20 px. |
+| Computador | ≥ 1200 px | Barra lateral de 220 px com logo, itens com atalho, meta do dia e sincronização no pé. Recolhe para rail sozinha em Resolver; some no Simulado em modo prova. | 3 colunas: lista ou mapa \| conteúdo \| painel. Respiro de 26 px. |
 
-## Elevation & Depth
+Rótulo da barra inferior para Configurações: **Ajustes** ("Configurações" não cabe em 72 px). No rail, Desempenho vira **Desemp.** Em tablet largo e PC, nome inteiro.
 
-Sistema plano e em camadas tonais: papel → superfície → afundado. Cartões e painéis se separam por borda fina (1px), não por sombra. Sombra existe só em camadas flutuantes.
+### Regra do espaço vazio
+Em telas largas, cada coluna que sobra recebe um painel útil para a tarefa da tela (resumo do filtro, detalhe da lista, painel da questão, status da sincronização). Os painéis são os mesmos blocos do celular, reposicionados; nada existe só para preencher. Espaço livre fica só onde ajuda:
+- **Linha do enunciado** limitada a ~68 caracteres: linha longa cansa em enunciados grandes.
+- **Modo foco:** só enunciado e alternativas, centralizados, sem painéis.
+- **Simulado em modo prova:** sem estatísticas nem navegação, para imitar a prova.
 
-### Shadow Vocabulary
-- **Modal** (`box-shadow: 0 18px 50px rgba(0,0,0,.25)`): janelas de diálogo.
-- **Menu** (`box-shadow: 0 10px 30px rgba(0,0,0,.18)`): menus e popovers.
-- **Painel de filtro** (`box-shadow: -10px 0 40px rgba(0,0,0,.22)`): página lateral de filtros.
+### Atalhos de teclado
+Atalhos de letra só valem fora de campos de texto.
 
-### Named Rules
-**The Flat-At-Rest Rule.** Superfícies em repouso não têm sombra; só o que flutua sobre a página (modal, menu, página de filtro, barra de marca-texto) a ganha.
+| Onde | Tecla | Ação |
+| --- | --- | --- |
+| Global | `Ctrl K` | Buscar questão por texto ou código R1-… |
+| Global | `Ctrl 1–5` | Início, Questões, Listas, Desempenho, Configurações |
+| Global | `?` / `Esc` | Mostrar atalhos / fechar menu, sair do foco |
+| Resolver | `A–E` / `Shift A–E` | Escolher / descartar alternativa |
+| Resolver | `1` `2` `3` | Sabia · Tive dúvida · Chutei |
+| Resolver | `Enter` · `←` `→` | Confirmar ou próxima · anterior / próxima |
+| Resolver | `H` · `N` · `L` · `F` | Marca-texto na cor atual · anotação · adicionar à lista · modo foco |
+| Simulado | `M` · `C` · `Ctrl Enter` | Marcar para revisar · cartão-resposta · entregar (com confirmação) |
 
-## Shapes
+## Navigation & Tabs
 
-Cantos suaves e consistentes: 6px em botões, campos e navegação, 8px em cartões e alternativas, 12px em botões de filtro e cartões de desempenho, pílula (999px) para a ação principal grande, chips de navegação e selos. Bordas de 1px. Letras das alternativas em círculo.
+Cinco abas: **Início, Questões, Listas, Desempenho, Configurações.** Início é a tela de abertura.
+
+### Início
+Cada cartão responde "o que faço agora?" e tem uma ação só. Ordem: **Continuar de onde parei** (único cartão de destaque) → **Meta de hoje** (anel 28/40) → **Revisões de hoje** (revisão espaçada; atrasadas à parte) → **Ponto mais fraco** (pior tema em 30 dias, mínimo de 15 respostas, "Treinar 20 questões") → **Sequência** (dias seguidos e a semana em bolinhas, em ciano) → **Dias estudados** (heatmap de 17 semanas). Tablet e PC acrescentam **Acerto por grande área** e **Simulados recentes**. Primeiro uso: cartão "Comece por aqui" no lugar dos números vazios. Sem lista em andamento nem revisões, o destaque vira "Sessão rápida: 10 questões". Sincronização numa pílula pequena, não em cartão.
+
+### Questões
+- Topo: busca (`Ctrl K`) e chips rápidos: **Que não resolvi** (ligado por padrão), Errei, Chutei ou dúvida, Caderno de erros.
+- Filtros na ordem de uso: Grande área → Especialidade → Tema e subtema, Instituição, Ano, UF, Tipo de prova. **Sem filtro de Professor.** "Filtros avançados" (botão cheio): anuladas, desatualizadas, com imagem, com comentário.
+- Resultado (cartão de destaque): contagem, filtros aplicados e **Resolver**; abaixo, Criar lista, Lista inteligente, Simulado.
+- Menu ⋯: ordem (aleatória, ano, recentes), limpar filtros, salvar como padrão; para o administrador, Cadastrar questão.
+- PC: filtros \| prévia das questões \| resultado + resumo do filtro. Celular: Resolver fixo acima da barra.
+
+### Resolver (dentro de Questões e Listas)
+- Topo: contexto, "18 de 40", cronômetro e barra de progresso.
+- Centro: código e classificação, enunciado, alternativas com tesoura, **Sabia / Tive dúvida / Chutei**, Confirmar.
+- Depois de confirmar: gabarito, comentário, motivo do erro (Não sabia · Confundi conceito · Li errado) e Próxima. **Não existe ver gabarito sem responder.**
+- Painel (PC e tablet): tempo, histórico nesta questão, anotação, ações (adicionar à lista, flashcard Anki), marca-texto. No celular vão para o menu ⋯; ferramentas numa pílula flutuante.
+- PC: mapa da lista \| questão \| painel.
+
+### Listas
+- Controle segmentado **Listas | Simulados** no topo.
+- Fixos no topo: **Caderno de erros** (automático) e listas em andamento. "Inteligentes" é uma pasta virtual.
+- Pastas: coluna à esquerda no PC, chips roláveis no celular.
+- Cartão de lista: nome, nº de questões, progresso, acerto; ação principal Continuar. Menu ⋯: renomear, duplicar, mover para pasta, criar simulado, refazer erradas, excluir. Ordenar no cabeçalho.
+- PC: pastas \| cartões \| detalhe da lista com acerto por tema.
+
+### Simulados (segmento de Listas)
+- Primeiro o simulado em andamento, com tempo restante; depois Novo simulado (personalizado ou **modo prova** por instituição) e os concluídos com nota, data e tempo, que abrem a revisão pós-prova.
+- Durante a prova: sem navegação do app, sem gabarito, sem estatísticas. Só questão, cartão-resposta e relógio. PC e tablet: questão \| cartão-resposta; celular: cartão-resposta abre por baixo.
+
+### Desempenho
+- Fixos no topo: período (7, 30, 90 dias, tudo) e origem (banco, listas, simulados).
+- 4 números: questões, acerto (com **acerto real**, sem chutes), tempo médio, dias estudados.
+- Corpo, do mais acionável ao mais histórico: evolução semanal, pontos fracos com Treinar, acerto por grande área com drill até subtema, por instituição, heatmap, simulados.
+- Menu ⋯: exportar CSV, zerar histórico (confirmação digitada).
+
+### Configurações
+- Ordem: **Conta e sincronização** (status, alterações pendentes, versão do banco, Sincronizar agora) → Aparência (tema claro/escuro/automático, tamanho do enunciado com prévia) → Estudo (meta diária, lembrete, pedir Sabia/Dúvida/Chutei, filtros padrão) → Dados e backup → Atalhos → Administrador (só para o admin) → Sobre.
+- Celular: lista com o valor atual à direita, cada item abre a subtela. PC: índice \| conteúdo em rolagem \| status da sincronização e do backup.
+
+## Elevation & Shapes
+
+- **Cantos:** 6 campos · 8 botões · 10 alternativas · 12 cartões · 14 painéis que contêm botões · pílula só para ação principal grande, chips, selos, controle segmentado e item ativo da navegação.
+- **Cantos concêntricos:** canto de fora = canto de dentro + espaçamento (cartão de 14 px com botão de 8 px a 6 px da borda). Nunca o mesmo raio em pai e filho aninhados.
+- **Borda para estrutura** (divisórias, selecionado, foco, cartões no escuro); **sombra em camadas transparentes para elevação**.
+- Sombras: elevada (controle segmentado ativo, barra fixa, pílula de ferramentas) `0 1px 2px rgba(0,0,0,.06), 0 4px 14px rgba(0,0,0,.06)`; menu `0 10px 30px rgba(0,0,0,.18)`; modal `0 18px 50px rgba(0,0,0,.25)`. No escuro, sombras viram borda `--line-2`.
+- Espaçamento em múltiplos de 4: 4 · 8 · 12 · 16 · 24 · 32 · 48. Gap de grade 12 (celular) e 14–16 (tablet e PC).
 
 ## Components
 
-### Buttons
-- **Shape:** cantos de 6px, altura de 38px (44px no celular).
-- **Padrão:** fundo de superfície, borda forte, texto tinta; hover escurece a borda.
-- **Primary:** azul-petróleo com texto branco; hover clareia.
-- **Ghost:** sem borda nem fundo; hover afunda.
-- **Danger:** texto e borda de erro; hover com fundo suave de erro.
-- **Ação grande (`.big`):** pílula de 52px de altura e largura total, para Confirmar e ações principais.
-- **Foco:** anel de 2px na cor de foco.
+- **Botões:** cantos de 8 px, 40 px de altura (44 px no toque), rótulo em Manrope 600. Padrão: superfície, borda `--line-2`, texto `--ink`. Primário: `--accent` com `--accent-ink`. Fantasma: sem borda, texto `--accent`. Perigo: texto e borda `--err`. **Um único botão primário por área.**
+- **Ação grande:** pílula de 48 px, largura total no celular, só para a ação que encerra a tela (Confirmar, Resolver, Entregar).
+- **Chips:** pílula de 32 px, `--soft` com `--on-soft`. Chip rápido liga e desliga com ✓; desligado tem fundo de superfície e borda. Chip de filtro aplicado tem dois alvos: o texto abre o filtro e o × remove só ele (44 px no toque).
+- **Botões de filtro:** 50 px, cantos de 12 px, `--soft`, círculo com + à esquerda e selo "+N" em `--accent` à direita. "Filtros avançados" cheio em `--accent`.
+- **Controle segmentado:** trilho `--sunk` em pílula; opção ativa em superfície com sombra elevada.
+- **Cartões:** superfície, cantos de 12 px, padding 14 px (16 no PC), rótulo eyebrow em `--ink-3`. **Cartão de destaque** (`--soft`, sem borda): no máximo um por tela (Continuar no Início, Resultado em Questões).
+- **Barras de progresso:** trilho `--sunk` de 6–8 px em pílula; progresso em `--accent`; resultado com `--ok` + `--err` empilhados. Meta do dia em anel (`conic-gradient`). Sequência em ciano.
+- **Alternativas:** cantos de 10 px, borda `--line-2`, letra em círculo de 26–30 px, texto em Literata. Selecionada: `--soft` com borda `--accent` e letra cheia. Descartada: texto riscado em `--ink-3` e tesoura em `--err`.
+- **Mapa da lista / cartão-resposta:** quadrados de 30 px (cantos 7) ou círculos; certa `--ok-soft`, errada `--err-soft`, atual `--accent`, marcada com contorno `--doubt`.
+- **Anotação:** caixa `--doubt-soft` com texto em Literata.
+- **Campos:** 40 px (44 no toque), cantos de 6 px, borda `--line-2`; foco troca a borda pelo anel `--focus`. Busca em pílula com dica `Ctrl K`.
+- **Marca-texto e tesoura (assinatura):** pílula flutuante com as 5 cores, borracha, tesoura e anotação; cor atual com anel `--accent`.
 
-### Filter buttons
-Botões de filtro da tela Questões: 54px de altura, cantos de 12px, fundo névoa azul (no escuro #1A1A1A com borda #2A2A2A), círculo "+" à esquerda e selo "+N" à direita. "Filtros avançados" é preenchido de azul.
+## Acabamento
 
-### Chips
-Cantos de 16px, fundo névoa azul, texto marinho. Cada chip tem dois alvos: o texto (abre o filtro) e o × (remove só ele), ambos com 44px de altura no celular.
+Princípios da skill `make-interfaces-feel-better`, aplicados em cada tela; revisão completa dela em todas as telas no fim da implementação.
 
-### Cards / Containers
-- **Cartão da questão:** superfície, borda fina, cantos de 8px, padding 22px 26px, máx. 820px.
-- **Painéis e cartões de configuração:** superfície, borda de 1px, cantos de 8px, padding 18px.
-- **Cartões de desempenho:** fundo névoa azul, cantos de 12px, ícone em círculo.
-
-### Alternatives
-Cantos de 8px, borda forte, letra em círculo de 30px. Selecionada: fundo névoa azul. No escuro, não selecionada em #1E1E1E. Tesoura à direita risca a alternativa.
-
-### Inputs / Fields
-Altura de 38px, cantos de 6px, borda forte, fundo de superfície; foco troca a borda por anel de 2px na cor de foco. Busca em pílula na barra do filtro.
-
-### Navigation
-Barra lateral de 232px com itens de 6px de raio; ativo em névoa azul com texto marinho e peso 600. No celular, barra inferior com ícone sobre rótulo e itens de 52px de altura.
-
-### Marca-texto e tesoura (signature)
-Barra flutuante em pílula com cinco cores claras (vermelho, amarelo, azul, verde, rosa) e borracha; o texto marcado fica em `mark.hl` com texto tinta escuro fixo para manter contraste nos dois temas. A tesoura risca a alternativa sem alterar a resposta.
+- **Estados em tudo que é clicável:** hover, foco (anel visível para teclado), pressionado (`scale(0.96)`, nunca menos que 0,95), desabilitado, **carregando** (esqueleto no lugar do conteúdo, nunca tela em branco) e **vazio** (diz o que vai aparecer ali e qual o próximo passo).
+- **Transições:** ≤ 150 ms em cor e opacidade, `ease-out`, sempre com as propriedades nomeadas (nunca `transition: all`). CSS transitions para estados interativos, para poderem ser interrompidas.
+- **Entradas:** cascata de ~100 ms só no primeiro carregamento do Início; nada anima ao trocar de questão nem em interações frequentes. Sem animação de entrada no carregamento normal das telas.
+- **Saídas:** sobem 4–8 px e somem, sem encolher a altura.
+- **Troca de ícone** (ex.: sincronizar → sincronizado): os dois no DOM, cross-fade com escala 0,25→1, opacidade 0→1 e desfoque 4px→0, `cubic-bezier(0.2, 0, 0, 1)`.
+- **`will-change`** só em `transform`/`opacity`/`filter` e só se houver engasgo no primeiro quadro.
+- **Movimento nunca é o único sinal:** toda mudança animada tem também cor, ícone ou texto. Tudo respeita `prefers-reduced-motion`.
+- **Números tabulares** (`tabular-nums`) no Desempenho, contadores, metas, cronômetros e cartão-resposta.
+- **Texto:** títulos com `text-wrap: balance`; enunciado e textos longos com `text-wrap: pretty`; `-webkit-font-smoothing: antialiased` na raiz.
+- **Imagens das questões:** contorno de 1 px a 10% (`oklch(0 0 0 / .1)` no claro, `oklch(1 0 0 / .1)` no escuro).
+- **Área de toque:** mínimo de 44×44 px no celular e tablet, 40×40 px no PC; estender com pseudo-elemento quando o visual for menor; áreas de dois controles nunca se sobrepõem.
+- **Alinhamento óptico** em botões com ícone e no triângulo de "play".
 
 ## Do's and Don'ts
 
-### Do:
-- **Do** manter fundos em papel/superfície (ou preto/cinza neutro no escuro) e usar o azul só em ação, estado ativo, chips e selos.
-- **Do** compor enunciado, alternativas e comentário em serifa; o resto da interface em sans.
-- **Do** separar camadas por borda de 1px e tom, e reservar sombra para o que flutua.
-- **Do** garantir 44px de alvo de toque no celular e contraste ≥ 4,5:1 em claro e escuro.
-- **Do** usar verde e vermelho só para acerto e erro; manter a área segura (`safe-area-inset`) no topo e na base do celular.
+### Do
+- Usar índigo só em ação e estado ativo, e ciano só em conquistas.
+- Compor enunciado, alternativas e comentário em Literata; o resto em Manrope.
+- Usar só ícones Lucide, traço de 2 px, em `currentColor`.
+- Acompanhar certa e errada de ✓ e ✗.
+- Garantir 44 px de alvo no toque e contraste ≥ 4,5:1 em claro e escuro.
+- Manter a área segura no topo e na base do celular.
 
-### Don't:
-- **Don't** pintar fundos grandes de azul nem usar azul-marinho como fundo no escuro.
-- **Don't** usar as cores do marca-texto ou da tesoura como cor de marca ou de estado.
-- **Don't** adicionar sombras de repouso, gradientes decorativos ou animações que não sinalizem estado.
-- **Don't** usar pílula em botões comuns; pílula é só para a ação principal grande, chips e selos.
-- **Don't** reduzir o texto da questão abaixo da escala escolhida pelo usuário.
+### Don't
+- Pintar fundos grandes de índigo ou ciano.
+- Usar ciano em botão ou link, ou as cores do marca-texto como cor de interface.
+- Misturar bibliotecas de ícones ou pesos de traço.
+- Usar pílula em botões comuns.
+- Adicionar gradientes decorativos ou animações que não sinalizem estado.
+- Reduzir o enunciado abaixo da escala escolhida pelo usuário.
+- Mostrar o gabarito antes da resposta.
