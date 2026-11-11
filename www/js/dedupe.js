@@ -129,6 +129,12 @@
       if (r.times && from in r.times) { r.times[to] = (r.times[to] || 0) + r.times[from]; delete r.times[from]; ch = true; }
       if (ch) MQ.put('runs', r);
     });
+    const rf = MQ.get('reviews', from);
+    if (rf) {
+      const rt = MQ.get('reviews', to);
+      if (!rt || rf.due < rt.due) MQ.put('reviews', { id: to, qid: to, box: rf.box, due: rf.due, lastAt: rf.lastAt });
+      MQ.remove('reviews', from);
+    }
     const nf = MQ.get('notes', from);
     if (nf) {
       const nt = MQ.get('notes', to);

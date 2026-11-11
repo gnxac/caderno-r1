@@ -16,12 +16,21 @@
   const ALL_SIT = ['nao', 'resolvi'];
   const isAllSit = f => f.situacao.length === 2 && ALL_SIT.every(s => f.situacao.includes(s));
   /* Atalhos de situação: um por vez; tocar no ativo volta para "todas" */
-  const QUICK = [['nao', 'Que não resolvi', ['nao'], false], ['errei', 'Errei', ['errei'], false], ['duvida', 'Chutei ou dúvida', ['resolvi'], true]];
-  const quickOn = (f, q) => !!f.conf === q[3] && f.situacao.length === q[2].length && q[2].every(s => f.situacao.includes(s));
+  const QUICK = [
+    { k: 'nao', label: 'Que não resolvi', set: { situacao: ['nao'] } },
+    { k: 'errei', label: 'Errei', set: { situacao: ['errei'] } },
+    { k: 'duvida', label: 'Chutei ou dúvida', set: { situacao: ['resolvi'], conf: true } },
+    { k: 'erros', label: 'Caderno de erros', set: { situacao: ['resolvi'], erros: true } },
+    { k: 'revisao', label: 'Revisão de hoje', set: { situacao: ALL_SIT, revisao: true } }
+  ];
+  const FLAGS = ['conf', 'erros', 'revisao'];
+  const quickOn = (f, q) => FLAGS.every(k => !!f[k] === !!q.set[k]) && f.situacao.length === q.set.situacao.length && q.set.situacao.every(s => f.situacao.includes(s));
+  const quickOff = f => { f.situacao = ALL_SIT.slice(); FLAGS.forEach(k => { f[k] = false; }); };
+  const quickOnApply = (f, q) => { FLAGS.forEach(k => { f[k] = !!q.set[k]; }); f.situacao = q.set.situacao.slice(); };
   const SIT_LABEL = { nao: 'Que não resolvi', resolvi: 'Que já resolvi', acertei: 'Que acertei', errei: 'Que errei' };
 
   MQ.newFilter = function () {
-    const f = { paths: [], situacao: ['nao'], conf: false, tipos: ['multipla', 'certoerrado'], comCom: true, semCom: true, anuladas: false, desatualizadas: false, texto: '' };
+    const f = { paths: [], situacao: ['nao'], conf: false, erros: false, revisao: false, tipos: ['multipla', 'certoerrado'], comCom: true, semCom: true, anuladas: false, desatualizadas: false, texto: '' };
     FIELDS.forEach(x => { f[x.key] = []; });
     return f;
   };
@@ -41,7 +50,7 @@
     return h;
   }
 
-  MQ.matchQuestion = function (q, f, latest, textNorm) {
+  MQ.matchQuestion = function (q, f, latest, textNorm, dueLimit) {
     if (f.paths.length) {
       const p = pathKey(q);
       if (!f.paths.some(s => p === s || p.startsWith(s + '>'))) return false;
@@ -64,6 +73,8 @@
       const ok = f.situacao.some(s => s === st || (s === 'resolvi' && a));
       if (!ok) return false;
     }
+    if (f.erros) { const a = latest[q.id]; if (!a || (a.correct && a.conf !== 'chute')) return false; } // caderno de erros: última resposta errada ou acerto no chute
+    if (f.revisao) { const r = MQ.get('reviews', q.id); if (!r || r.due > dueLimit) return false; }
     if (f.conf) { const a = latest[q.id]; if (!a || (a.conf !== 'chute' && a.conf !== 'duvida')) return false; }
     if (f.texto) {
       if (!hayOf(q).includes(textNorm == null ? MQ.norm(f.texto) : textNorm)) return false;
@@ -74,7 +85,8 @@
   MQ.filterQuestions = function (f, latest) {
     latest = latest || MQ.latestByQ();
     const t = f.texto ? MQ.norm(f.texto) : '';
-    return MQ.alive('questions').filter(q => MQ.matchQuestion(q, f, latest, t));
+    const lim = f.revisao ? MQ.endOfToday() : 0;
+    return MQ.alive('questions').filter(q => MQ.matchQuestion(q, f, latest, t, lim));
   };
 
   MQ.sortQuestions = function (qs) {
@@ -298,7 +310,7 @@
     });
     $('#adv-reset', root).onclick = () => {
       const d = MQ.newFilter();
-      Object.assign(t, { situacao: d.situacao, conf: false, tipos: d.tipos, comCom: true, semCom: true, anuladas: false, desatualizadas: false, texto: '' });
+      Object.assign(t, { situacao: d.situacao, conf: false, erros: false, revisao: false, tipos: d.tipos, comCom: true, semCom: true, anuladas: false, desatualizadas: false, texto: '' });
       draw(); MQ.toast('Padrão restaurado. Toque em Confirmar para aplicar.');
     };
     $('#fp-back', root).onclick = () => L.close();
@@ -315,9 +327,11 @@
     const chips = [];
     f.paths.forEach(p => chips.push({ label: p.split('>').join(' › '), kind: 'path', val: p, group: 'assunto' }));
     FIELDS.forEach(x => f[x.key].forEach(v => chips.push({ label: x.key === 'uf' ? (v === 'BR' ? 'Federal' : (UF_NAMES[v] || v)) : v, kind: x.key, val: v, group: x.key })));
-    if (isAllSit(f)) chips.push({ label: 'Todas as situações', kind: 'situacao', val: '__all', group: 'avancados' });
+    if (isAllSit(f)) { if (!f.revisao) chips.push({ label: 'Todas as situações', kind: 'situacao', val: '__all', group: 'avancados' }); }
     else f.situacao.forEach(v => chips.push({ label: SIT_LABEL[v], kind: 'situacao', val: v, group: 'avancados' }));
     if (f.conf) chips.push({ label: 'Só chutes e dúvidas', kind: 'conf', val: '', group: 'avancados' });
+    if (f.erros) chips.push({ label: 'Caderno de erros', kind: 'erros', val: '', group: 'avancados' });
+    if (f.revisao) chips.push({ label: 'Revisão de hoje', kind: 'revisao', val: '', group: 'avancados' });
     if (f.tipos.length < 2) f.tipos.forEach(v => chips.push({ label: v === 'multipla' ? 'Só múltipla escolha' : 'Só certo/errado', kind: 'tipos', val: v, group: 'avancados' }));
     if (f.comCom === false) chips.push({ label: 'Sem comentário', kind: 'com', val: '', group: 'avancados' });
     if (f.semCom === false) chips.push({ label: 'Com comentário', kind: 'com', val: '', group: 'avancados' });
@@ -330,7 +344,7 @@
     const f = MQ.bankFilter;
     if (kind === 'path') f.paths = f.paths.filter(p => p !== val);
     else if (kind === 'situacao') { if (val === '__all') f.situacao = ['nao']; else { f.situacao = f.situacao.filter(x => x !== val); if (!f.situacao.length) f.situacao = ['nao', 'resolvi']; } }
-    else if (kind === 'conf') f.conf = false;
+    else if (kind === 'conf' || kind === 'erros' || kind === 'revisao') f[kind] = false;
     else if (kind === 'tipos') f.tipos = ['multipla', 'certoerrado'];
     else if (kind === 'com') { f.comCom = true; f.semCom = true; }
     else if (kind === 'texto') f.texto = '';
@@ -342,7 +356,7 @@
     if (k === 'assunto') return f.paths.length;
     if (k === 'avancados') {
       return (f.situacao.length === 1 && f.situacao[0] === 'nao' ? 0 : 1) + (f.tipos.length < 2 ? 1 : 0) + (f.comCom === false || f.semCom === false ? 1 : 0) +
-        (f.conf ? 1 : 0) + (f.texto ? 1 : 0) + (f.anuladas ? 1 : 0) + (f.desatualizadas ? 1 : 0);
+        (f.conf ? 1 : 0) + (f.erros ? 1 : 0) + (f.revisao ? 1 : 0) + (f.texto ? 1 : 0) + (f.anuladas ? 1 : 0) + (f.desatualizadas ? 1 : 0);
     }
     return f[k].length;
   }
@@ -380,7 +394,7 @@
 
     /* Resumo: o assunto/banca escolhidos, sem olhar a situação (senão "não resolvi" sempre daria 0%) */
     function summary(f, latest) {
-      const set = MQ.filterQuestions(Object.assign({}, f, { situacao: ALL_SIT, conf: false }), latest);
+      const set = MQ.filterQuestions(Object.assign({}, f, { situacao: ALL_SIT, conf: false, erros: false, revisao: false }), latest);
       let done = 0, ok = 0;
       const by = new Map();
       set.forEach(q => {
@@ -420,7 +434,8 @@
       ['a-see', 'a-see2'].forEach(id => { $('#' + id, root).innerHTML = icon('play') + ' ' + label; });
       const input = $('#q-search', root);
       if (document.activeElement !== input) input.value = f.texto || '';
-      $('#qh-quick', root).innerHTML = QUICK.map(q => '<button class="qchip' + (quickOn(f, q) ? ' on' : '') + '" data-quick="' + q[0] + '" aria-pressed="' + quickOn(f, q) + '">' + (quickOn(f, q) ? icon('check') : '') + q[1] + '</button>').join('');
+      const dueN = MQ.reviewsDue().length;
+      $('#qh-quick', root).innerHTML = QUICK.map(q => '<button class="qchip' + (quickOn(f, q) ? ' on' : '') + '" data-quick="' + q.k + '" aria-pressed="' + quickOn(f, q) + '">' + (quickOn(f, q) ? icon('check') : '') + q.label + (q.k === 'revisao' && dueN ? ' <b class="qn">' + dueN + '</b>' : '') + '</button>').join('');
       const btn = (k, label, ic, adv) => {
         const c = badgeCount(k);
         return '<button class="fbtn' + (adv ? ' adv' : '') + '" data-f="' + k + '"><span class="fplus">' + icon(ic) + '</span><span class="lb">' + label + '</span>' + (c ? '<span class="badge-n">+' + c + '</span>' : '') + '</button>';
@@ -457,8 +472,8 @@
       if (rm) { const c = chipList()[+rm.dataset.rm]; removeChip(c.kind, c.val); refresh(); return; }
       const qk = e.target.closest('[data-quick]');
       if (qk) {
-        const q = QUICK.find(x => x[0] === qk.dataset.quick), f = MQ.bankFilter;
-        if (quickOn(f, q)) { f.situacao = ALL_SIT.slice(); f.conf = false; } else { f.situacao = q[2].slice(); f.conf = q[3]; }
+        const q = QUICK.find(x => x.k === qk.dataset.quick), f = MQ.bankFilter;
+        if (quickOn(f, q)) quickOff(f); else quickOnApply(f, q);
         refresh(); return;
       }
       const pv = e.target.closest('[data-pv]');

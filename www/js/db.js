@@ -181,6 +181,33 @@
     return map;
   };
 
+  /* ---------- Revisão espaçada (caixas de Leitner) ----------
+     Coleção "reviews", um item por questão (id = id da questão): { box, due, lastAt }.
+     Errou: volta para a caixa 0 e reaparece em 1 dia. Acertou uma questão em revisão que já venceu: sobe uma caixa
+     (1, 3, 7, 15, 30 dias) e, depois da última, sai da revisão. Acertou com "chutei": repete em 3 dias. */
+  const DAY = 86400000, REV_DAYS = [1, 3, 7, 15, 30];
+  MQ.DAY = DAY;
+  MQ.endOfDay = function (ts) { const d = new Date(ts); d.setHours(23, 59, 59, 999); return d.getTime(); };
+  MQ.endOfToday = function () { return MQ.endOfDay(Date.now()); };
+  MQ.reviewUpdate = function (a) {
+    if (!a || !MQ.get('questions', a.qid)) return;
+    const cur = MQ.get('reviews', a.qid);
+    const at = a.ts || MQ.now();
+    const set = (box, days) => MQ.put('reviews', Object.assign(cur || { id: a.qid, qid: a.qid }, { box, due: at + days * DAY, lastAt: at }));
+    if (!a.correct) set(0, REV_DAYS[0]);
+    else if (cur && cur.due > MQ.endOfDay(at)) return; // ainda não venceu: acertar de novo antes da hora não sobe a caixa
+    else if (a.conf === 'chute') set(cur ? cur.box : 0, 3);
+    else if (cur) {
+      const box = cur.box + 1;
+      if (box >= REV_DAYS.length) MQ.remove('reviews', a.qid); else set(box, REV_DAYS[box]);
+    }
+  };
+  /* Revisões que vencem até o fim de hoje (inclui as atrasadas) */
+  MQ.reviewsDue = function () {
+    const lim = MQ.endOfToday();
+    return MQ.alive('reviews').filter(r => r.due <= lim && MQ.get('questions', r.qid));
+  };
+
   MQ.recordAttempt = function (qid, choice, ctx, timeSec, conf) {
     const q = MQ.get('questions', qid);
     if (!q) return null;
@@ -190,7 +217,9 @@
       device: MQ.local.deviceId
     };
     if (MQ.CONF.includes(conf)) a.conf = conf;
-    return MQ.put('attempts', a);
+    MQ.put('attempts', a);
+    MQ.reviewUpdate(a);
+    return a;
   };
 
   /* Caminho de assunto da questão: [área, especialidade, tema, subtema] sem vazios */

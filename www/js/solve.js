@@ -85,6 +85,8 @@
     const latestCtx = curList ? MQ.listStats(curList).latest : statusIn(s.ctx);
     const hist = (MQ.attemptsByQ()[qid] || []);
     const att = s.attempt[qid] || latestCtx[qid];
+    const rv = MQ.get('reviews', qid);
+    const rvDays = rv ? Math.ceil((rv.due - Date.now()) / MQ.DAY) : 0;
     const revealed = !!s.revealed[qid];
     const chosen = s.sel[qid];
     const cut = s.cut[qid] || (s.cut[qid] = []);
@@ -131,6 +133,7 @@
         '<div class="alts" role="group" aria-label="Alternativas">' + alts + '</div>' +
         (!revealed ? '<div class="conf" role="group" aria-label="Como você vai responder?"><span class="st">Como você vai responder? <small>(teclas 1, 2, 3)</small></span><div class="seg full">' +
           [['sabia', 'Sabia'], ['duvida', 'Tive dúvida'], ['chute', 'Chutei']].map(c => '<button data-conf="' + c[0] + '" aria-pressed="' + (s.conf[qid] === c[0]) + '">' + c[1] + '</button>').join('') + '</div></div>' : '') +
+        (revealed && rv ? '<p class="rv-note">' + icon('history') + 'Revisão: volta ' + (rvDays <= 0 ? 'hoje' : rvDays === 1 ? 'amanhã' : 'em ' + rvDays + ' dias') + '.</p>' : '') +
         (revealed && att && att.correct === false ? '<div class="why" role="group" aria-label="Por que errou?"><span class="st">Por que errou?</span><div class="chips">' +
           WHY.map(w => '<button class="chip-trail' + (att.why === w[0] ? ' cur' : '') + '" data-why="' + w[0] + '" aria-pressed="' + (att.why === w[0]) + '">' + w[1] + '</button>').join('') + '</div></div>' : '') +
         (revealed ? '<section class="comment" id="q-comment"><h3>Solução em texto</h3><div class="gab">GABARITO: ALTERNATIVA ' + esc(q.gabarito) + '</div><div class="body">' + (q.comentario ? MQ.para(q.comentario) : '<p class="muted">Sem comentário para esta questão.</p>') + '</div></section>' : '') +

@@ -146,7 +146,7 @@
     Object.keys(run.answers).forEach(qid => {
       const q = MQ.get('questions', qid);
       if (!q || !run.answers[qid]) return;
-      MQ.put('attempts', { id: MQ.uid(), qid, choice: run.answers[qid], correct: run.answers[qid] === q.gabarito, ctx, ts: run.finishedAt, timeSec: times[qid] ? Math.round(times[qid]) : null, runId: run.id, device: MQ.local.deviceId });
+      MQ.reviewUpdate(MQ.put('attempts', { id: MQ.uid(), qid, choice: run.answers[qid], correct: run.answers[qid] === q.gabarito, ctx, ts: run.finishedAt, timeSec: times[qid] ? Math.round(times[qid]) : null, runId: run.id, device: MQ.local.deviceId }));
     });
   };
 

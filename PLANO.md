@@ -53,12 +53,16 @@ Ordem aprovada na fase 1. Marque `[x]` ao concluir cada item. Decisões de visua
 - [x] Botões de filtro (Assunto, Instituição, Ano, Região, Finalidade, Banca) e Filtros avançados, como antes, com o campo novo "só chutes e dúvidas"
 - [x] Cartão de resultado (contagem, filtros aplicados, Resolver, Criar lista, Lista inteligente, Simulado) e resumo "Neste filtro"; prévia das questões no PC; botão Resolver fixo no celular
 - [x] Salvar como lista inteligente (guarda o filtro; atualiza ao abrir Listas ou a lista; selo "Inteligente")
-- [ ] Atalho "Caderno de erros" (entra com o passo 5)
+- [x] Atalho "Caderno de erros" (passo 5)
 - [ ] Lista inteligente: o ponto de "continuar" é um índice e pode pular questões quando a lista encolhe; a lista só recalcula ao abrir Listas, então dois aparelhos podem disputar o mesmo registro até sincronizar
 
 ## 5. Caderno de erros e revisão espaçada
-- [ ] Caderno de erros automático (filtro)
-- [ ] Revisão espaçada Leitner 1-3-7-15-30 dias na coleção `reviews`
+- [x] Caderno de erros automático: atalho em Questões (filtro: última resposta errada ou acerto marcado como chute); sai quando você acerta sem chute
+- [x] Revisão espaçada Leitner 1-3-7-15-30 dias na coleção `reviews` (errou: volta em 1 dia; acertou uma revisão vencida: sobe uma caixa e, depois da última, sai; acerto no chute: repete em 3 dias; acertar antes de vencer não sobe a caixa). Vale para respostas do banco, das listas e dos simulados
+- [x] Atalho "Revisão de hoje" (com contador das vencidas e atrasadas) e linha "Revisão: volta …" no Resolver
+- [x] Teste da regra: `node tests/revisao.test.js`
+- [ ] Montar a revisão com os erros antigos (quem já tem histórico começa com a revisão vazia; o Caderno de erros já mostra esses erros)
+- [ ] Atalho "Caderno de erros" fixo no topo de Listas (entra no passo 7)
 
 ## 6. Início
 - [ ] Continuar de onde parei

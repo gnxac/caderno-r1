@@ -778,3 +778,7 @@ body.in-focus .qcard { margin-left: auto; margin-right: auto; }
   .shell { --bar: calc(68px + env(safe-area-inset-bottom)); }
   .qh-fab { padding-bottom: 10px; }
 }
+.qchip .qn { background: var(--accent); color: var(--accent-ink); border-radius: 999px; padding: 0 7px; font-size: 11px; font-variant-numeric: tabular-nums; }
+.qchip.on .qn { background: var(--on-soft); color: var(--accent-soft); }
+.rv-note { display: flex; align-items: center; gap: 6px; margin: 0 0 14px; font-size: 13px; color: var(--ink-3); font-weight: 600; }
+.rv-note .ic { width: 15px; height: 15px; }
