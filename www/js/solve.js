@@ -12,6 +12,12 @@
       idx: Math.min(opts.startIndex || 0, opts.qids.length - 1), sel: {}, revealed: {}, cut: {}, hideBanner: {}, showTopics: false, showHist: {},
       showIndex: window.innerWidth > 1100, shownAt: Date.now()
     };
+    // Reabrir a lista mostra de novo as respostas já dadas (desde o último "recomeçar")
+    const l = opts.listId && MQ.get('lists', opts.listId);
+    if (l) {
+      const latest = MQ.listStats(l).latest;
+      MQ.session.qids.forEach(id => { if (latest[id]) { MQ.session.sel[id] = latest[id].choice; MQ.session.revealed[id] = true; MQ.session.hideBanner[id] = true; } });
+    }
     if (location.hash === '#/resolver') MQ.render(); else location.hash = '#/resolver';
   };
 
@@ -48,7 +54,8 @@
     const qid = s.qids[s.idx];
     const q = MQ.get('questions', qid);
     const n = s.qids.length;
-    const latestCtx = statusIn(s.ctx);
+    const curList = s.listId && MQ.get('lists', s.listId);
+    const latestCtx = curList ? MQ.listStats(curList).latest : statusIn(s.ctx);
     const hist = (MQ.attemptsByQ()[qid] || []);
     const revealed = !!s.revealed[qid];
     const chosen = s.sel[qid];
@@ -104,13 +111,15 @@
       }
     }
 
+    const okN = s.qids.filter(id => latestCtx[id] && latestCtx[id].correct).length;
+    const badN = s.qids.filter(id => latestCtx[id] && !latestCtx[id].correct).length;
     const idxHtml = s.showIndex ? '<aside class="qindex" aria-label="Índice de questões"><h3>' + n + ' questões</h3><div class="qindex-grid">' +
       s.qids.map((id, i) => {
         const a = latestCtx[id];
         let cls = i === s.idx ? 'cur' : '';
         if (a) cls += a.correct ? ' ok' : ' bad';
         return '<button class="' + cls + '" data-go="' + i + '" aria-label="Questão ' + (i + 1) + (a ? (a.correct ? ', acertou' : ', errou') : '') + '">' + (i + 1) + '</button>';
-      }).join('') + '</div><div class="legend"><span><i style="background:var(--ok-soft);border-color:var(--ok)"></i>acertou</span><span><i style="background:var(--err-soft);border-color:var(--err)"></i>errou</span></div></aside>' : '';
+      }).join('') + '</div><div class="legend"><span><i style="background:var(--ok-soft);border-color:var(--ok)"></i>' + okN + ' ' + (okN === 1 ? 'acerto' : 'acertos') + '</span><span><i style="background:var(--err-soft);border-color:var(--err)"></i>' + badN + ' ' + (badN === 1 ? 'erro' : 'erros') + '</span></div></aside>' : '';
 
     const last = s.idx >= n - 1;
     root.innerHTML =
