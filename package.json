@@ -1,6 +1,6 @@
 {
   "name": "caderno-r1",
-  "productName": "Caderno R1",
+  "productName": "Pulse",
   "version": "1.3.0",
   "description": "Banco de questões, listas, simulados e desempenho para residência médica, com sincronização pela conta Google.",
   "author": "Guilherme",
@@ -12,7 +12,7 @@
     "dist:win": "electron-builder --win portable --publish never",
     "dist:win:admin": "electron-builder --win portable --publish never --config electron-builder.admin.json",
     "android:add": "cap add android",
-    "android:icons": "capacitor-assets generate --android --iconBackgroundColor #1F3A4D --iconBackgroundColorDark #1F3A4D --splashBackgroundColor #F1F5F7 --splashBackgroundColorDark #12191E",
+    "android:icons": "capacitor-assets generate --android --iconBackgroundColor #4338A8 --iconBackgroundColorDark #4338A8 --splashBackgroundColor #F4F4F9 --splashBackgroundColorDark #0B0B12",
     "android:sync": "cap sync android",
     "android:open": "cap open android"
   },
@@ -32,7 +32,7 @@
   },
   "build": {
     "appId": "br.cadernor1.app",
-    "productName": "Caderno R1",
+    "productName": "Pulse",
     "directories": { "output": "dist" },
     "files": ["electron/**/*", "www/**/*", "package.json"],
     "win": {
@@ -40,7 +40,7 @@
       "icon": "icon-1024.png"
     },
     "portable": {
-      "artifactName": "Caderno-R1-Portatil-${version}.${ext}"
+      "artifactName": "Pulse-Portatil-${version}.${ext}"
     }
   }
 }

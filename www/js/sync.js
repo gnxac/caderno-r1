@@ -29,6 +29,7 @@
     const cls = 'sync-dot ' + ({ idle: 'on', busy: 'busy', error: 'err' }[state] || '');
     document.querySelectorAll('.sync-dot').forEach(d => { d.className = cls; });
     document.querySelectorAll('.sync-label').forEach(l => { l.textContent = msg; });
+    document.querySelectorAll('.sync-pill').forEach(p => { p.title = msg; });
   }
 
   /* Requisição HTTP: no Windows passa pelo processo principal (sem CORS);
@@ -254,7 +255,7 @@
         s.lastSync = Date.now();
         MQ.saveLocal();
         setStatus('idle', 'Sincronizado ' + new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }));
-        if (changed && ['questoes', 'listas', 'desempenho', 'configuracoes'].includes(MQ.route().name)) MQ.render();
+        if (changed && ['inicio', 'questoes', 'listas', 'desempenho', 'configuracoes'].includes(MQ.route().name)) MQ.render();
         if (opts.manual) MQ.toast(changed ? 'Sincronizado: ' + changed + ' itens vieram de outro aparelho.' : 'Sincronizado. Tudo em dia.');
         return true;
       } catch (e) {

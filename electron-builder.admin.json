@@ -1,6 +1,6 @@
 {
   "appId": "br.cadernor1.admin",
-  "productName": "Caderno R1 Admin",
+  "productName": "Pulse Admin",
   "directories": { "output": "dist-admin" },
   "files": ["electron/**/*", "www/**/*", "package.json"],
   "extraMetadata": { "mqAdmin": true },
@@ -9,6 +9,6 @@
     "icon": "icon-1024.png"
   },
   "portable": {
-    "artifactName": "Caderno-R1-Admin-${version}.${ext}"
+    "artifactName": "Pulse-Admin-${version}.${ext}"
   }
 }

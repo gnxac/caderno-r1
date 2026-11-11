@@ -29,7 +29,7 @@ jobs:
           CSC_IDENTITY_AUTO_DISCOVERY: false
       - uses: actions/upload-artifact@v4
         with:
-          name: Caderno-R1-Windows
+          name: Pulse-Windows
           path: |
             dist/*.exe
             dist-admin/*.exe
@@ -52,7 +52,7 @@ jobs:
       - name: Criar projeto Android
         run: |
           npx cap add android
-          npx capacitor-assets generate --android --iconBackgroundColor '#1F3A4D' --iconBackgroundColorDark '#1F3A4D' --splashBackgroundColor '#F1F5F7' --splashBackgroundColorDark '#12191E'
+          npx capacitor-assets generate --android --iconBackgroundColor '#4338A8' --iconBackgroundColorDark '#4338A8' --splashBackgroundColor '#F4F4F9' --splashBackgroundColorDark '#0B0B12'
           npx cap sync android
       - name: Assinar sempre com a mesma chave (permite instalar por cima da versão anterior)
         run: |
@@ -66,9 +66,9 @@ jobs:
           chmod +x gradlew
           ./gradlew assembleDebug --no-daemon
       - name: Renomear APK
-        run: cp android/app/build/outputs/apk/debug/app-debug.apk Caderno-R1.apk
+        run: cp android/app/build/outputs/apk/debug/app-debug.apk Pulse.apk
       - uses: actions/upload-artifact@v4
         with:
-          name: Caderno-R1-Android
-          path: Caderno-R1.apk
+          name: Pulse-Android
+          path: Pulse.apk
           if-no-files-found: error

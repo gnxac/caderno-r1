@@ -1,6 +1,6 @@
 {
   "appId": "br.cadernor1.app",
-  "appName": "Caderno R1",
+  "appName": "Pulse",
   "webDir": "www",
   "android": {
     "allowMixedContent": false

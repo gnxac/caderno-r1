@@ -7,7 +7,7 @@ colors:
   title: "#26236B"
   soft: "#E2E0F7"
   on-soft: "#26236B"
-  sec: "#0E7490"
+  sec: "#0C6A84"
   sec-soft: "#D5EEF4"
   paper: "#F4F4F9"
   surface: "#FFFFFF"
@@ -161,7 +161,7 @@ Fonte da verdade do visual do app. Os nomes internos continuam `caderno-r1` (pas
 O enunciado é lido em serifa (Literata), como texto impresso; todo o resto (navegação, filtros, números) em sans (Manrope). Nada pisca nem decora; o movimento só confirma o que o estudante fez.
 
 **Características:**
-- Índigo (`#4338A8`) é a cor de ação; ciano (`#0E7490`) só marca conquistas, nunca vira botão.
+- Índigo (`#4338A8`) é a cor de ação; ciano (`#0C6A84`) só marca conquistas, nunca vira botão.
 - Enunciado, alternativas e comentário em serifa; interface em sans.
 - Escuro quase preto com leve tom índigo; o índigo claro (`#A5A0F5`) vira a cor de ação.
 - Verde e vermelho só para acerto e erro, sempre acompanhados de ✓ e ✗.
@@ -195,7 +195,7 @@ O enunciado é lido em serifa (Literata), como texto impresso; todo o resto (nav
 | `--accent-ink` | `#FFFFFF` | `#15124A` | Texto sobre a cor de ação |
 | `--soft` | `#E2E0F7` | `#27245A` | Chips, botões de filtro, item ativo, alternativa selecionada |
 | `--on-soft` | `#26236B` | `#DCDAFD` | Texto sobre `--soft` |
-| `--sec` | `#0E7490` | `#5CD0E4` | Conquistas: meta batida, sequência, revisões em dia |
+| `--sec` | `#0C6A84` | `#5CD0E4` | Conquistas: meta batida, sequência, revisões em dia |
 | `--sec-soft` | `#D5EEF4` | `#103540` | Fundo das conquistas |
 | `--ok` / `--ok-soft` | `#1F7A4D` / `#E1F3E8` | `#5CC28E` / `#173326` | Certa |
 | `--err` / `--err-soft` | `#B3261E` / `#FBE7E5` | `#F08A80` / `#3B1C1A` | Errada |
@@ -235,7 +235,7 @@ Escala: 12 · 13 · 14 · 16 · 18 · 22 · 28. **Regra da questão impressa:** 
 - **Conjunto único: Lucide** (licença ISC). Nenhuma outra biblioteca no app.
 - **Traço de 2 px em todo o app**, pontas e junções arredondadas (os rótulos ao lado são seminegrito).
 - Tamanhos: 20 px na navegação e nos botões, 16 px dentro de chips e botões pequenos, 18 px nas ações da questão.
-- Embutidos como SVG local (sprite com `<symbol>` + `<use>`), em `currentColor`. Estados (hover, ativo, desabilitado) mudam só cor e opacidade do mesmo SVG; o item ativo da navegação ganha a pílula de fundo `--soft`.
+- Embutidos como SVG local no mapa `ICONS` de `www/js/util.js` (função `MQ.icon(nome)`), em `currentColor`. Estados (hover, ativo, desabilitado) mudam só cor e opacidade do mesmo SVG; o item ativo da navegação ganha a pílula de fundo `--soft`.
 - Busca e download com a skill `better-icons` (`better-icons get lucide:<nome>`); o CLI pinta `circle`/`rect` por dentro, então remover o `fill="currentColor"` desses elementos ao importar.
 
 | Uso | Ícone Lucide |

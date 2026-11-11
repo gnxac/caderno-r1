@@ -19,18 +19,22 @@ Ordem aprovada na fase 1. Marque `[x]` ao concluir cada item. Decisões de visua
 - Ao implementar anotações e revisões: remapear `notes` e `reviews` em `dedupe.js` (como já é feito com `runs.times`)
 
 ## 1. Sistema visual
-- [ ] Tokens da paleta Índigo + ciano (claro e escuro) no `app.css`
-- [ ] Manrope e Literata em `.woff2` locais (`www/fonts/`, subconjunto latino)
-- [ ] Sprite SVG local com os ícones Lucide (traço 2 px, `currentColor`)
-- [ ] Botões, chips, botões de filtro, controle segmentado, cartões, barras e campos com estados de hover, foco, pressionado, desabilitado, carregando e vazio
-- [ ] Nome Pulse exibido (janela, `productName`, `appName`, título)
-- [ ] Ícone novo: `.ico` do Windows e ícones adaptativos do Android (fundo `#4338A8`, monocromático), splash com as cores novas
+- [x] Tokens da paleta Índigo + ciano (claro e escuro) no `app.css`
+- [x] Manrope e Literata em `.woff2` locais (`www/fonts/`, subconjunto latino, licenças OFL junto)
+- [x] Ícones Lucide (traço 2 px, `currentColor`) no mapa `ICONS` de `util.js`
+- [x] Botões, chips, botões de filtro, controle segmentado, cartões, barras e campos com hover, foco, pressionado (`scale .96`) e desabilitado; alvos de 40 px no PC e 44 px no toque
+- [ ] Estados de carregando (esqueleto) e vazio redesenhados: entram junto com cada tela nos passos seguintes
+- [x] Nome Pulse exibido (janela, `productName`, `appName`, título, instaladores `Pulse-*`)
+- [x] Ícone novo: `.ico`/PNG do Windows, ícones adaptativos e splash do Android, cores no workflow
+- [ ] Conferir ícone e splash no .apk gerado pelo workflow
 
 ## 2. Casca responsiva
-- [ ] Barra inferior (< 600 px), rail (600–1199 px) e barra lateral (≥ 1200 px)
-- [ ] Aba Início (vazia) e rota padrão para ela
-- [ ] Atalhos globais (`Ctrl 1–5`, `?`, `Esc`) e busca `Ctrl K`
-- [ ] Pílula de sincronização no pé da navegação
+- [x] Barra inferior (< 600 px), rail de 76 px (600–1199 px) e barra lateral de 220 px (≥ 1200 px); em Resolver o PC recolhe para o rail
+- [x] Aba Início (esqueleto; o painel real é o passo 6) e rota padrão `#/inicio`
+- [x] Atalhos globais `Ctrl 1–5` (não valem digitando nem no simulado) e `?`
+- [x] Busca `Ctrl K` por texto, instituição, ano ou código R1-… (abre as questões achadas no Resolver)
+- [x] Pílula de sincronização no pé da navegação (só o ponto no rail, com o texto no `title`)
+- [ ] Atalho `Esc` para sair do modo foco (entra com o modo foco, no passo 3)
 
 ## 3. Resolver questão
 - [ ] Layout mapa | questão | painel no PC; questão | painel no tablet; tela cheia no celular

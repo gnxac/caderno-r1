@@ -1,15 +1,15 @@
-/* Caderno R1 — rotas e inicialização */
+/* Pulse — rotas e inicialização */
 (function (MQ) {
   'use strict';
   const { $$, icon } = MQ;
 
   MQ.route = function () {
-    const h = (location.hash || '#/questoes').replace(/^#\/?/, '');
+    const h = (location.hash || '#/inicio').replace(/^#\/?/, '');
     const [name, arg] = h.split('/');
-    return { name: name || 'questoes', arg: arg ? decodeURIComponent(arg) : null };
+    return { name: name || 'inicio', arg: arg ? decodeURIComponent(arg) : null };
   };
 
-  const NAV_FOR = { questoes: 'questoes', resolver: 'questoes', listas: 'listas', simulado: 'listas', resultado: 'listas', desempenho: 'desempenho', configuracoes: 'configuracoes', cadastrar: 'configuracoes', sincronizar: 'configuracoes' };
+  const NAV_FOR = { inicio: 'inicio', questoes: 'questoes', resolver: 'questoes', listas: 'listas', simulado: 'listas', resultado: 'listas', desempenho: 'desempenho', configuracoes: 'configuracoes', cadastrar: 'configuracoes', sincronizar: 'configuracoes' };
 
   MQ.isAdmin = function () {
     if (window.mqNative && window.mqNative.admin) return true; // versão Windows Admin
@@ -70,7 +70,7 @@
       cap.Plugins.App.addListener('backButton', () => {
         const m = document.querySelector('.modal-back, .popmenu, .fpage, .sheet-back');
         if (m) { if (m._close) m._close(); else m.remove(); return; }
-        if (location.hash && location.hash !== '#/questoes') history.back();
+        if (location.hash && location.hash !== '#/inicio') history.back();
         else cap.Plugins.App.exitApp();
       });
     }
@@ -82,7 +82,7 @@
     MQ.applyTheme();
     document.documentElement.style.setProperty('--font-scale', MQ.local.fontScale || 1);
     MQ.seedIfEmpty();
-    if (!location.hash) location.hash = '#/questoes';
+    if (!location.hash) location.hash = '#/inicio';
     MQ.render();
     MQ.initSync();
   }
