@@ -42,18 +42,27 @@
     return { total: qids.length, resp, ok, err: resp - ok, latest };
   };
 
-  MQ.createListModal = function (qids, defaultName) {
+  /* Lista inteligente: guarda o filtro e recalcula as questões ao abrir Listas ou a própria lista.
+     shortcut: com filtro "Que não resolvi" a lista encolhe conforme você responde; o ponto de "continuar" é o índice e pode pular uma questão. */
+  MQ.refreshSmart = function () {
+    MQ.alive('lists').filter(l => l.filter).forEach(l => {
+      const ids = MQ.sortQuestions(MQ.filterQuestions(Object.assign(MQ.newFilter(), l.filter))).map(q => q.id);
+      if (JSON.stringify(ids) !== JSON.stringify(l.qids)) { l.qids = ids; MQ.put('lists', l); }
+    });
+  };
+
+  MQ.createListModal = function (qids, defaultName, filter) {
     MQ.modal({
-      title: 'Criar lista',
+      title: filter ? 'Criar lista inteligente' : 'Criar lista',
       body: '<label class="field"><span>Nome da lista</span><input type="text" id="l-name" maxlength="100" value="' + esc(defaultName || '') + '" placeholder="Ex.: Cardio — revisão"></label>' +
         '<label class="field"><span>Salvar em</span><select id="l-folder">' + folderOptions(MQ.currentFolder) + '</select></label>' +
-        '<p class="muted small">' + qids.length + ' questões entram na lista.</p>',
+        '<p class="muted small">' + qids.length + ' questões entram na lista' + (filter ? '. Ela guarda o filtro e se atualiza sozinha quando você abrir Listas.' : '.') + '</p>',
       actions: [
         { label: 'Cancelar', kind: 'ghost' },
-        { label: 'Criar lista', kind: 'primary', onClick: (close, box) => {
+        { label: filter ? 'Criar lista inteligente' : 'Criar lista', kind: 'primary', onClick: (close, box) => {
           const name = $('#l-name', box).value.trim();
           if (!name) { MQ.toast('Dê um nome para a lista.'); return false; }
-          const l = MQ.put('lists', { id: MQ.uid(), kind: 'lista', name, folderId: $('#l-folder', box).value || null, qids: qids.slice() });
+          const l = MQ.put('lists', Object.assign({ id: MQ.uid(), kind: 'lista', name, folderId: $('#l-folder', box).value || null, qids: qids.slice() }, filter ? { filter } : {}));
           MQ.toast('Lista "' + name + '" criada.');
           MQ.currentFolder = l.folderId;
           setTimeout(() => {
@@ -147,6 +156,7 @@
   }
 
   MQ.views.listas = function (root) {
+    MQ.refreshSmart();
     const fid = MQ.currentFolder && MQ.get('folders', MQ.currentFolder) ? MQ.currentFolder : null;
     MQ.currentFolder = fid;
     const show = MQ.local.listShow || (MQ.local.listShow = { pastas: true, listas: true, simulados: true });
@@ -173,7 +183,7 @@
         const st = MQ.listStats(l);
         resp = st.resp; ok = st.ok; er = st.err;
       }
-      return '<tr class="clickable" data-list="' + l.id + '"><td><span class="name">' + icon(l.kind === 'simulado' ? 'clock' : 'list') + '<span>' + esc(l.name) + (status ? ' ' + status : '') + '</span></span></td>' +
+      return '<tr class="clickable" data-list="' + l.id + '"><td><span class="name">' + icon(l.kind === 'simulado' ? 'clock' : l.filter ? 'bolt' : 'list') + '<span>' + esc(l.name) + (l.filter ? ' <span class="badge">Inteligente</span>' : '') + (status ? ' ' + status : '') + '</span></span></td>' +
         '<td class="hide-sm">' + MQ.fmtDate(l.createdAt) + '</td><td class="num">' + total + '</td><td class="num hide-sm">' + resp + '</td>' +
         '<td class="num ok">' + ok + '</td><td class="num err">' + er + '</td>' +
         '<td class="num"><button class="icon-btn" data-lmenu="' + l.id + '" aria-label="Ações de ' + esc(l.name) + '">' + icon('more') + '</button></td></tr>';

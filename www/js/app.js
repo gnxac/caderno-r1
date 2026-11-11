@@ -20,6 +20,7 @@
 
   MQ.render = function () {
     clearInterval(MQ.tick);
+    if (MQ.stopSearch) { MQ.stopSearch(); MQ.stopSearch = null; }
     MQ.hideMarkBar && MQ.hideMarkBar();
     MQ.keyHandler = null;
     MQ.hideTip && MQ.hideTip();
@@ -30,6 +31,7 @@
     if (r.name !== 'resolver') document.body.classList.remove('in-focus');
     const view = MQ.views[r.name] || MQ.views.questoes;
     const root = document.getElementById('view');
+    root.onclick = null; // cada tela define o seu; senão o da tela anterior continua ouvindo
     const navKey = NAV_FOR[r.name] || 'questoes';
     $$('#nav a').forEach(a => { if (a.dataset.route === navKey) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
     try {

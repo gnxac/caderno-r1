@@ -46,8 +46,7 @@
 
   /* ---------- Busca (Ctrl K) ---------- */
   const hay = new Map();
-  const ENT = { nbsp: ' ', amp: '&', lt: '<', gt: '>', quot: '"', apos: "'" };
-  const plain = s => String(s || '').replace(/<[^>]*>/g, ' ').replace(/&(nbsp|amp|lt|gt|quot|apos);/g, (_, n) => ENT[n]).replace(/\s+/g, ' ').trim();
+  const plain = MQ.plain;
   function haystack(q) {
     const c = hay.get(q.id);
     if (c && c.v === q.updatedAt) return c;

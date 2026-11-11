@@ -13,10 +13,15 @@
   ];
   const FILTER_LIST = [['assunto', 'Assunto'], ['instituicao', 'Instituição'], ['ano', 'Ano'], ['uf', 'Região'], ['finalidade', 'Finalidade'], ['banca', 'Banca']];
   const UF_NAMES = { AC: 'Acre', AL: 'Alagoas', AP: 'Amapá', AM: 'Amazonas', BA: 'Bahia', CE: 'Ceará', DF: 'Distrito Federal', ES: 'Espírito Santo', GO: 'Goiás', MA: 'Maranhão', MT: 'Mato Grosso', MS: 'Mato Grosso do Sul', MG: 'Minas Gerais', PA: 'Pará', PB: 'Paraíba', PR: 'Paraná', PE: 'Pernambuco', PI: 'Piauí', RJ: 'Rio de Janeiro', RN: 'Rio Grande do Norte', RS: 'Rio Grande do Sul', RO: 'Rondônia', RR: 'Roraima', SC: 'Santa Catarina', SP: 'São Paulo', SE: 'Sergipe', TO: 'Tocantins' };
+  const ALL_SIT = ['nao', 'resolvi'];
+  const isAllSit = f => f.situacao.length === 2 && ALL_SIT.every(s => f.situacao.includes(s));
+  /* Atalhos de situação: um por vez; tocar no ativo volta para "todas" */
+  const QUICK = [['nao', 'Que não resolvi', ['nao'], false], ['errei', 'Errei', ['errei'], false], ['duvida', 'Chutei ou dúvida', ['resolvi'], true]];
+  const quickOn = (f, q) => !!f.conf === q[3] && f.situacao.length === q[2].length && q[2].every(s => f.situacao.includes(s));
   const SIT_LABEL = { nao: 'Que não resolvi', resolvi: 'Que já resolvi', acertei: 'Que acertei', errei: 'Que errei' };
 
   MQ.newFilter = function () {
-    const f = { paths: [], situacao: ['nao'], tipos: ['multipla', 'certoerrado'], comCom: true, semCom: true, anuladas: false, desatualizadas: false, texto: '' };
+    const f = { paths: [], situacao: ['nao'], conf: false, tipos: ['multipla', 'certoerrado'], comCom: true, semCom: true, anuladas: false, desatualizadas: false, texto: '' };
     FIELDS.forEach(x => { f[x.key] = []; });
     return f;
   };
@@ -27,7 +32,16 @@
     return String(q.uf || '').toUpperCase() === 'BR' || /\b(enare|enamed|revalida)\b/i.test(q.instituicao || '');
   }
 
-  MQ.matchQuestion = function (q, f, latest) {
+  const hayCache = new Map();
+  function hayOf(q) {
+    const c = hayCache.get(q.id);
+    if (c && c.v === q.updatedAt) return c.h;
+    const h = MQ.norm([q.codigo, q.enunciado, q.comentario, (q.alternativas || []).map(a => a.t).join(' ')].join(' '));
+    hayCache.set(q.id, { v: q.updatedAt, h });
+    return h;
+  }
+
+  MQ.matchQuestion = function (q, f, latest, textNorm) {
     if (f.paths.length) {
       const p = pathKey(q);
       if (!f.paths.some(s => p === s || p.startsWith(s + '>'))) return false;
@@ -50,17 +64,17 @@
       const ok = f.situacao.some(s => s === st || (s === 'resolvi' && a));
       if (!ok) return false;
     }
+    if (f.conf) { const a = latest[q.id]; if (!a || (a.conf !== 'chute' && a.conf !== 'duvida')) return false; }
     if (f.texto) {
-      const t = MQ.norm(f.texto);
-      const hay = MQ.norm([q.codigo, q.enunciado, q.comentario, (q.alternativas || []).map(a => a.t).join(' ')].join(' '));
-      if (!hay.includes(t)) return false;
+      if (!hayOf(q).includes(textNorm == null ? MQ.norm(f.texto) : textNorm)) return false;
     }
     return true;
   };
 
-  MQ.filterQuestions = function (f) {
-    const latest = MQ.latestByQ();
-    return MQ.alive('questions').filter(q => MQ.matchQuestion(q, f, latest));
+  MQ.filterQuestions = function (f, latest) {
+    latest = latest || MQ.latestByQ();
+    const t = f.texto ? MQ.norm(f.texto) : '';
+    return MQ.alive('questions').filter(q => MQ.matchQuestion(q, f, latest, t));
   };
 
   MQ.sortQuestions = function (qs) {
@@ -284,7 +298,7 @@
     });
     $('#adv-reset', root).onclick = () => {
       const d = MQ.newFilter();
-      Object.assign(t, { situacao: d.situacao, tipos: d.tipos, comCom: true, semCom: true, anuladas: false, desatualizadas: false, texto: '' });
+      Object.assign(t, { situacao: d.situacao, conf: false, tipos: d.tipos, comCom: true, semCom: true, anuladas: false, desatualizadas: false, texto: '' });
       draw(); MQ.toast('Padrão restaurado. Toque em Confirmar para aplicar.');
     };
     $('#fp-back', root).onclick = () => L.close();
@@ -301,7 +315,9 @@
     const chips = [];
     f.paths.forEach(p => chips.push({ label: p.split('>').join(' › '), kind: 'path', val: p, group: 'assunto' }));
     FIELDS.forEach(x => f[x.key].forEach(v => chips.push({ label: x.key === 'uf' ? (v === 'BR' ? 'Federal' : (UF_NAMES[v] || v)) : v, kind: x.key, val: v, group: x.key })));
-    f.situacao.forEach(v => chips.push({ label: SIT_LABEL[v], kind: 'situacao', val: v, group: 'avancados' }));
+    if (isAllSit(f)) chips.push({ label: 'Todas as situações', kind: 'situacao', val: '__all', group: 'avancados' });
+    else f.situacao.forEach(v => chips.push({ label: SIT_LABEL[v], kind: 'situacao', val: v, group: 'avancados' }));
+    if (f.conf) chips.push({ label: 'Só chutes e dúvidas', kind: 'conf', val: '', group: 'avancados' });
     if (f.tipos.length < 2) f.tipos.forEach(v => chips.push({ label: v === 'multipla' ? 'Só múltipla escolha' : 'Só certo/errado', kind: 'tipos', val: v, group: 'avancados' }));
     if (f.comCom === false) chips.push({ label: 'Sem comentário', kind: 'com', val: '', group: 'avancados' });
     if (f.semCom === false) chips.push({ label: 'Com comentário', kind: 'com', val: '', group: 'avancados' });
@@ -313,7 +329,8 @@
   function removeChip(kind, val) {
     const f = MQ.bankFilter;
     if (kind === 'path') f.paths = f.paths.filter(p => p !== val);
-    else if (kind === 'situacao') { f.situacao = f.situacao.filter(x => x !== val); if (!f.situacao.length) f.situacao = ['nao', 'resolvi']; }
+    else if (kind === 'situacao') { if (val === '__all') f.situacao = ['nao']; else { f.situacao = f.situacao.filter(x => x !== val); if (!f.situacao.length) f.situacao = ['nao', 'resolvi']; } }
+    else if (kind === 'conf') f.conf = false;
     else if (kind === 'tipos') f.tipos = ['multipla', 'certoerrado'];
     else if (kind === 'com') { f.comCom = true; f.semCom = true; }
     else if (kind === 'texto') f.texto = '';
@@ -325,7 +342,7 @@
     if (k === 'assunto') return f.paths.length;
     if (k === 'avancados') {
       return (f.situacao.length === 1 && f.situacao[0] === 'nao' ? 0 : 1) + (f.tipos.length < 2 ? 1 : 0) + (f.comCom === false || f.semCom === false ? 1 : 0) +
-        (f.texto ? 1 : 0) + (f.anuladas ? 1 : 0) + (f.desatualizadas ? 1 : 0);
+        (f.conf ? 1 : 0) + (f.texto ? 1 : 0) + (f.anuladas ? 1 : 0) + (f.desatualizadas ? 1 : 0);
     }
     return f[k].length;
   }
@@ -340,22 +357,70 @@
       return;
     }
     root.innerHTML = '<div class="qhome">' +
-      '<h1 class="qh-count" id="qh-n" aria-live="polite"></h1>' +
-      '<p class="qh-sub">Combine filtros e comece a resolver questões ou crie uma nova lista</p>' +
-      '<p class="qh-zero" id="qh-zero" role="status" hidden></p>' +
+      '<header class="qh-head"><h1>Questões</h1><p class="qh-sub" id="qh-sub"></p></header>' +
+      '<div class="qh-top"><div class="pane-search">' + icon('search') + '<input type="search" id="q-search" placeholder="Filtrar por texto ou código R1-…" aria-label="Filtrar por texto ou código" autocomplete="off"></div>' +
+      '<div class="qh-quick" id="qh-quick" role="group" aria-label="Situação das questões"></div></div>' +
       '<div class="fbtns" id="fbtns"></div>' +
-      '<section class="qh-applied" id="qh-applied" aria-label="Filtros aplicados">' +
-      '<div class="qa-head"><h2>Filtros aplicados</h2><button class="btn ghost" id="f-reset">Limpar filtros</button></div>' +
-      '<div class="qa-sec"><h2 class="qa-mtitle">Filtros selecionados</h2><div id="qa-body"></div><p class="muted qa-empty" id="qa-empty">Nenhum filtro aplicado. Escolha filtros à esquerda.</p></div>' +
-      '<div class="qa-actions">' +
-      '<button class="btn primary" id="a-see">' + icon('clipboard') + ' Ver questões</button>' +
-      '<button class="btn" id="a-sim">' + icon('timer') + ' Criar simulado</button>' +
-      '<button class="btn" id="a-list">' + icon('book') + ' Criar lista</button></div></section></div>';
+      '<section class="qh-preview" id="qh-preview" aria-label="Prévia das questões"></section>' +
+      '<aside class="qh-side">' +
+      '<section class="qh-result" id="qh-applied" aria-label="Resultado">' +
+      '<div class="qa-head"><span class="mk">Resultado</span><button class="btn ghost sm" id="f-reset">Limpar filtros</button></div>' +
+      '<div class="qh-count" id="qh-n" aria-live="polite"></div>' +
+      '<p class="qh-zero" id="qh-zero" role="status" hidden></p>' +
+      '<div class="qa-sec"><div id="qa-body"></div><p class="qa-empty" id="qa-empty">Só o filtro padrão: questões que você ainda não resolveu.</p></div>' +
+      '<button class="btn primary big" id="a-see"></button>' +
+      '<div class="qa-actions"><button class="btn" id="a-list">' + icon('book') + ' Criar lista</button>' +
+      '<button class="btn" id="a-smart">' + icon('bolt') + ' Lista inteligente</button>' +
+      '<button class="btn" id="a-sim">' + icon('timer') + ' Simulado</button></div></section>' +
+      '<section class="qh-card" id="qh-summary" aria-label="Resumo do filtro"></section></aside>' +
+      '<div class="qh-fab"><button class="btn primary big" id="a-see2"></button></div></div>';
+
+    const ids = () => MQ.sortQuestions(MQ.filterQuestions(MQ.bankFilter)).map(q => q.id);
+    const pct = (a, n) => n ? Math.round(a / n * 100) : 0;
+
+    /* Resumo: o assunto/banca escolhidos, sem olhar a situação (senão "não resolvi" sempre daria 0%) */
+    function summary(f, latest) {
+      const set = MQ.filterQuestions(Object.assign({}, f, { situacao: ALL_SIT, conf: false }), latest);
+      let done = 0, ok = 0;
+      const by = new Map();
+      set.forEach(q => {
+        const a = latest[q.id], k = (q.instituicao || '').trim() || 'Sem instituição';
+        const o = by.get(k) || { n: 0, d: 0, ok: 0 };
+        o.n++; if (a) { done++; o.d++; if (a.correct) { ok++; o.ok++; } }
+        by.set(k, o);
+      });
+      const top = Array.from(by).sort((x, y) => y[1].n - x[1].n).slice(0, 4);
+      return '<h3 class="mk">Neste filtro</h3>' +
+        '<div class="row sb"><span class="st">Você já resolveu</span><b class="num">' + pct(done, set.length) + '%</b></div><div class="bar"><i style="width:' + pct(done, set.length) + '%"></i></div>' +
+        '<div class="row sb"><span class="st">Seu acerto aqui</span><b class="num">' + (done ? pct(ok, done) + '%' : '–') + '</b></div><div class="bar"><i class="ok" style="width:' + pct(ok, done) + '%"></i></div>' +
+        (top.length ? '<h3 class="mk" style="margin-top:6px">Por instituição</h3>' + top.map(([k, o]) => '<div class="row sb"><span class="st">' + esc(k) + ' <span class="muted">· ' + o.n + '</span></span><b class="num">' + (o.d ? pct(o.ok, o.d) + '%' : '–') + '</b></div>').join('') : '');
+    }
+
+    function preview(list, latest) {
+      if (!list.length) return '';
+      const rows = list.slice(0, 8).map((q, i) => {
+        const a = latest[q.id];
+        return '<button class="pv-row" data-pv="' + i + '"><span class="dot ' + (a ? (a.correct ? 'ok' : 'err') : '') + '" aria-hidden="true"></span>' +
+          '<span class="pv-t"><span class="pv-m"><b>' + esc(q.codigo || '') + '</b>' + [q.instituicao, q.ano].filter(Boolean).map(t => ' · ' + esc(t)).join('') + '</span>' +
+          '<span class="pv-x">' + esc(MQ.plain(q.enunciado).slice(0, 150)) + '</span></span></button>';
+      }).join('');
+      return '<div class="qa-head"><h3 class="mk">Prévia</h3></div>' + rows + (list.length > 8 ? '<p class="muted small">e mais ' + (list.length - 8).toLocaleString('pt-BR') + ' questões</p>' : '');
+    }
 
     function refresh() {
       const f = MQ.bankFilter;
-      const n = MQ.filterQuestions(f).length;
+      if (!$('#qh-sub', root)) return; // saiu da tela com um atraso pendente
+      const keep = document.activeElement && (document.activeElement.dataset.quick || document.activeElement.dataset.f);
+      const latest = MQ.latestByQ();
+      const matched = MQ.sortQuestions(MQ.filterQuestions(f, latest));
+      const n = matched.length;
+      $('#qh-sub', root).textContent = all.length.toLocaleString('pt-BR') + (all.length === 1 ? ' questão no banco' : ' questões no banco');
       $('#qh-n', root).textContent = n.toLocaleString('pt-BR') + (n === 1 ? ' questão' : ' questões');
+      const label = 'Resolver ' + n.toLocaleString('pt-BR') + (n === 1 ? ' questão' : ' questões');
+      ['a-see', 'a-see2'].forEach(id => { $('#' + id, root).innerHTML = icon('play') + ' ' + label; });
+      const input = $('#q-search', root);
+      if (document.activeElement !== input) input.value = f.texto || '';
+      $('#qh-quick', root).innerHTML = QUICK.map(q => '<button class="qchip' + (quickOn(f, q) ? ' on' : '') + '" data-quick="' + q[0] + '" aria-pressed="' + quickOn(f, q) + '">' + (quickOn(f, q) ? icon('check') : '') + q[1] + '</button>').join('');
       const btn = (k, label, ic, adv) => {
         const c = badgeCount(k);
         return '<button class="fbtn' + (adv ? ' adv' : '') + '" data-f="' + k + '"><span class="fplus">' + icon(ic) + '</span><span class="lb">' + label + '</span>' + (c ? '<span class="badge-n">+' + c + '</span>' : '') + '</button>';
@@ -372,13 +437,16 @@
       $('#qa-empty', root).hidden = !isDefault;
       $('#qh-applied', root).classList.toggle('is-default', isDefault);
       $('#f-reset', root).disabled = isDefault;
+      $('#qh-summary', root).innerHTML = summary(f, latest);
+      $('#qh-preview', root).innerHTML = preview(matched, latest);
+      if (keep) { const el = root.querySelector('[data-quick="' + keep + '"], [data-f="' + keep + '"]'); if (el) el.focus({ preventScroll: true }); }
 
       /* sem questões: diz qual combinação zerou e desativa as ações */
       const zero = $('#qh-zero', root);
       const names = GROUPS.slice(0, 6).filter(([g]) => chips.some(c => c.group === g)).map(x => x[1]).concat(chips.filter(c => c.group === 'avancados').map(c => c.label));
       zero.hidden = n > 0;
       zero.textContent = n > 0 ? '' : 'Nenhuma questão com ' + (names.join(' + ') || 'esses filtros') + '.';
-      ['a-see', 'a-sim', 'a-list'].forEach(id => { $('#' + id, root).disabled = !n; });
+      ['a-see', 'a-see2', 'a-sim', 'a-list', 'a-smart'].forEach(id => { $('#' + id, root).disabled = !n; });
     }
     function open(k) {
       if (k === 'avancados') openAdvanced(refresh);
@@ -387,16 +455,27 @@
     root.onclick = e => { // onclick (não addEventListener): #view é o mesmo elemento entre telas e os handlers se acumulariam
       const rm = e.target.closest('[data-rm]');
       if (rm) { const c = chipList()[+rm.dataset.rm]; removeChip(c.kind, c.val); refresh(); return; }
+      const qk = e.target.closest('[data-quick]');
+      if (qk) {
+        const q = QUICK.find(x => x[0] === qk.dataset.quick), f = MQ.bankFilter;
+        if (quickOn(f, q)) { f.situacao = ALL_SIT.slice(); f.conf = false; } else { f.situacao = q[2].slice(); f.conf = q[3]; }
+        refresh(); return;
+      }
+      const pv = e.target.closest('[data-pv]');
+      if (pv) { MQ.openSolve({ title: 'Banco de questões', qids: ids(), ctx: 'banco', startIndex: +pv.dataset.pv }); return; }
       const op = e.target.closest('[data-open]');
       if (op) { open(op.dataset.open); return; }
       const b = e.target.closest('[data-f]');
       if (b) open(b.dataset.f);
     };
     $('#f-reset', root).onclick = () => { MQ.bankFilter = MQ.newFilter(); refresh(); };
-    const ids = () => MQ.sortQuestions(MQ.filterQuestions(MQ.bankFilter)).map(q => q.id);
     $('#a-sim', root).onclick = () => MQ.simCreateModal(ids());
     $('#a-list', root).onclick = () => MQ.createListModal(ids());
-    $('#a-see', root).onclick = () => MQ.openSolve({ title: 'Banco de questões', qids: ids(), ctx: 'banco' });
+    $('#a-smart', root).onclick = () => MQ.createListModal(ids(), '', JSON.parse(JSON.stringify(MQ.bankFilter)));
+    ['a-see', 'a-see2'].forEach(id => { $('#' + id, root).onclick = () => MQ.openSolve({ title: 'Banco de questões', qids: ids(), ctx: 'banco' }); });
+    let st = 0;
+    $('#q-search', root).addEventListener('input', e => { clearTimeout(st); st = setTimeout(() => { MQ.bankFilter.texto = e.target.value.trim(); refresh(); }, 200); });
+    MQ.stopSearch = () => clearTimeout(st);
     refresh();
   };
 

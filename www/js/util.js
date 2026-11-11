@@ -43,6 +43,10 @@ window.MQ = window.MQ || {};
     return (h ? h + ':' + pad(m) : m) + ':' + pad(s);
   };
 
+  /* Texto puro de um trecho com HTML (para busca e prévias) */
+  const ENT = { nbsp: ' ', amp: '&', lt: '<', gt: '>', quot: '"', apos: "'" };
+  MQ.plain = s => String(s || '').replace(/<[^>]*>/g, ' ').replace(/&(nbsp|amp|lt|gt|quot|apos);/g, (_, n) => ENT[n]).replace(/\s+/g, ' ').trim();
+
   MQ.norm = function (s) {
     return String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
   };
@@ -198,6 +202,8 @@ window.MQ = window.MQ || {};
 
   /* ---------- Ícones: Lucide (ISC), traço de 2 px, 24px ---------- */
   const ICONS = {
+    play: '<path d="M5 5a2 2 0 0 1 3.008-1.728l11.997 6.998a2 2 0 0 1 .003 3.458l-12 7A2 2 0 0 1 5 19z"/>',
+    bolt: '<path d="M15.914 4a1.5 1.5 0 0 0-2.474-1.561l-9 9A1.5 1.5 0 0 0 5.5 14h4.002a.5.5 0 0 1 .471.666L8.086 20a1.5 1.5 0 0 0 2.475 1.56l9-9A1.5 1.5 0 0 0 18.5 10h-3.997a.5.5 0 0 1-.472-.667z"/>',
     maximize: '<path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3m8 0h3a2 2 0 0 0 2-2v-3"/>',
     home: '<path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-6a2 2 0 0 1 2.582 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
     x: '<path d="M18 6L6 18M6 6l12 12"/>',

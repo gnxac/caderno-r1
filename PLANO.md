@@ -49,9 +49,12 @@ Ordem aprovada na fase 1. Marque `[x]` ao concluir cada item. Decisões de visua
 - [ ] Anotações de uma questão removida como repetida em outro aparelho (a remapeação remota de `notes` não existe; a local sim)
 
 ## 4. Questões
-- [ ] Busca, chips rápidos ("Que não resolvi" ligado por padrão) e filtros redesenhados, sem filtro de Professor
-- [ ] Cartão de resultado e resumo do filtro
-- [ ] Salvar como lista inteligente
+- [x] Busca por texto ou código e atalhos de situação (Que não resolvi, Errei, Chutei ou dúvida); "Que não resolvi" ligado por padrão; sem filtro de Professor
+- [x] Botões de filtro (Assunto, Instituição, Ano, Região, Finalidade, Banca) e Filtros avançados, como antes, com o campo novo "só chutes e dúvidas"
+- [x] Cartão de resultado (contagem, filtros aplicados, Resolver, Criar lista, Lista inteligente, Simulado) e resumo "Neste filtro"; prévia das questões no PC; botão Resolver fixo no celular
+- [x] Salvar como lista inteligente (guarda o filtro; atualiza ao abrir Listas ou a lista; selo "Inteligente")
+- [ ] Atalho "Caderno de erros" (entra com o passo 5)
+- [ ] Lista inteligente: o ponto de "continuar" é um índice e pode pular questões quando a lista encolhe; a lista só recalcula ao abrir Listas, então dois aparelhos podem disputar o mesmo registro até sincronizar
 
 ## 5. Caderno de erros e revisão espaçada
 - [ ] Caderno de erros automático (filtro)

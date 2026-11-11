@@ -22,16 +22,17 @@
   };
 
   MQ.openList = function (listId) {
+    if (MQ.refreshSmart) MQ.refreshSmart();
     const l = MQ.get('lists', listId);
     if (!l) { MQ.toast('Lista não encontrada.'); return; }
     const qids = l.qids.filter(id => MQ.get('questions', id));
-    if (!qids.length) { MQ.toast('Esta lista está vazia. Adicione questões pelo banco.'); return; }
+    if (!qids.length) { MQ.toast(l.filter ? 'Nenhuma questão neste filtro agora.' : 'Esta lista está vazia. Adicione questões pelo banco.'); return; }
     const prog = (MQ.local.progress || {})[listId] || 0;
     MQ.openSolve({ title: l.name, qids, ctx: 'lista:' + listId, listId, startIndex: prog });
   };
 
   function addToListMenu(anchor, qid) {
-    const lists = MQ.alive('lists').filter(l => l.kind === 'lista').sort((a, b) => b.updatedAt - a.updatedAt).slice(0, 8);
+    const lists = MQ.alive('lists').filter(l => l.kind === 'lista' && !l.filter).sort((a, b) => b.updatedAt - a.updatedAt).slice(0, 8);
     const items = lists.map(l => ({
       label: (l.qids.includes(qid) ? '✓ ' : '') + l.name,
       onClick: () => {
