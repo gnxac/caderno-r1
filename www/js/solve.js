@@ -155,13 +155,19 @@
 
     const okN = s.qids.filter(id => latestCtx[id] && latestCtx[id].correct).length;
     const badN = s.qids.filter(id => latestCtx[id] && !latestCtx[id].correct).length;
-    const idxHtml = s.showIndex ? '<aside class="qindex" aria-label="Índice de questões"><h3>' + n + ' questões</h3><div class="qindex-grid">' +
+    const respN = okN + badN;
+    const scoreHtml = '<section class="qscore" aria-label="Acertos e erros"><div class="qscore-head"><h3>Resultado</h3><span class="qs-sub">' + respN + ' de ' + n + ' respondidas</span></div>' +
+      '<div class="qscore-tiles"><div class="qs-tile ok">' + icon('check') + '<b>' + okN + '</b><span>' + (okN === 1 ? 'acerto' : 'acertos') + '</span></div>' +
+      '<div class="qs-tile err">' + icon('x') + '<b>' + badN + '</b><span>' + (badN === 1 ? 'erro' : 'erros') + '</span></div></div>' +
+      '<div class="lbar" role="img" aria-label="' + okN + ' acertos e ' + badN + ' erros em ' + n + ' questões"><i class="ok" style="width:' + MQ.pct(okN, n) + '%"></i><i class="err" style="width:' + MQ.pct(badN, n) + '%"></i></div>' +
+      (respN ? '<div class="qs-acc">' + MQ.pct(okN, respN) + '% de acerto</div>' : '') + '</section>';
+    const idxHtml = s.showIndex ? '<div class="qleft"><aside class="qindex" aria-label="Índice de questões"><h3>' + n + ' questões</h3><div class="qindex-grid">' +
       s.qids.map((id, i) => {
         const a = latestCtx[id];
         let cls = i === s.idx ? 'cur' : '';
         if (a) cls += a.correct ? ' ok' : ' bad';
         return '<button class="' + cls + '" data-go="' + i + '" aria-label="Questão ' + (i + 1) + (a ? (a.correct ? ', acertou' : ', errou') : '') + '">' + (i + 1) + '</button>';
-      }).join('') + '</div><div class="legend"><span><i style="background:var(--ok-soft);border-color:var(--ok)"></i>' + okN + ' ' + (okN === 1 ? 'acerto' : 'acertos') + '</span><span><i style="background:var(--err-soft);border-color:var(--err)"></i>' + badN + ' ' + (badN === 1 ? 'erro' : 'erros') + '</span></div></aside>' : '';
+      }).join('') + '</div></aside>' + scoreHtml + '</div>' : '';
 
     const secsDone = revealed ? Math.round(s.time[qid] || (att && att.timeSec) || 0) : 0;
     const avg = MQ.avgTime();

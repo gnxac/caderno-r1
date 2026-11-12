@@ -292,12 +292,13 @@ Cada cartão responde "o que faço agora?" e tem uma ação só. Ordem: **Contin
 - Filtros na ordem de uso: Grande área → Especialidade → Tema e subtema, Instituição, Ano, UF, Tipo de prova. **Sem filtro de Professor.** "Filtros avançados" (botão cheio): anuladas, desatualizadas, com imagem, com comentário.
 - Resultado (cartão de destaque): contagem, filtros aplicados e **Resolver**; abaixo, Criar lista, Lista inteligente, Simulado.
 - Menu ⋯: ordem (aleatória, ano, recentes), limpar filtros, salvar como padrão; para o administrador, Cadastrar questão.
-- PC: filtros \| prévia das questões \| resultado + resumo do filtro. Celular: Resolver fixo acima da barra.
+- PC e tablet: filtros (em 2 colunas no PC) \| resultado + resumo do filtro; sem prévia das questões. Celular: Resolver fixo acima da barra.
 
 ### Resolver (dentro de Questões e Listas)
 - Topo: contexto, "18 de 40", cronômetro e barra de progresso.
 - Centro: código e classificação, enunciado, alternativas com tesoura, **Sabia / Tive dúvida / Chutei**, Confirmar.
 - Depois de confirmar: gabarito, comentário, motivo do erro (Não sabia · Confundi conceito · Li errado) e Próxima. **Não existe ver gabarito sem responder.**
+- Mapa (à esquerda, PC): grade de questões e, abaixo dela, o cartão **Resultado** (acertos e erros em blocos grandes com ✓ e ✗, barra e % de acerto). Histórico de respostas só no painel; abaixo de 860 px o botão no cartão da questão.
 - Painel (PC e tablet): tempo, histórico nesta questão, anotação, ações (adicionar à lista, flashcard Anki), marca-texto. No celular vão para o menu ⋯; ferramentas numa pílula flutuante.
 - PC: mapa da lista \| questão \| painel.
 

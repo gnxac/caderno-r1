@@ -375,7 +375,6 @@
       '<div class="qh-top"><div class="pane-search">' + icon('search') + '<input type="search" id="q-search" placeholder="Filtrar por texto ou código R1-…" aria-label="Filtrar por texto ou código" autocomplete="off"></div>' +
       '<div class="qh-quick" id="qh-quick" role="group" aria-label="Situação das questões"></div></div>' +
       '<div class="fbtns" id="fbtns"></div>' +
-      '<section class="qh-preview" id="qh-preview" aria-label="Prévia das questões"></section>' +
       '<aside class="qh-side">' +
       '<section class="qh-result" id="qh-applied" aria-label="Resultado">' +
       '<div class="qa-head"><span class="mk">Resultado</span><button class="btn ghost sm" id="f-reset">Limpar filtros</button></div>' +
@@ -410,17 +409,6 @@
         (top.length ? '<h3 class="mk" style="margin-top:6px">Por instituição</h3>' + top.map(([k, o]) => '<div class="row sb"><span class="st">' + esc(k) + ' <span class="muted">· ' + o.n + '</span></span><b class="num">' + (o.d ? pct(o.ok, o.d) + '%' : '–') + '</b></div>').join('') : '');
     }
 
-    function preview(list, latest) {
-      if (!list.length) return '';
-      const rows = list.slice(0, 8).map((q, i) => {
-        const a = latest[q.id];
-        return '<button class="pv-row" data-pv="' + i + '"><span class="dot ' + (a ? (a.correct ? 'ok' : 'err') : '') + '" aria-hidden="true"></span>' +
-          '<span class="pv-t"><span class="pv-m"><b>' + esc(q.codigo || '') + '</b>' + [q.instituicao, q.ano].filter(Boolean).map(t => ' · ' + esc(t)).join('') + '</span>' +
-          '<span class="pv-x">' + esc(MQ.plain(q.enunciado).slice(0, 150)) + '</span></span></button>';
-      }).join('');
-      return '<div class="qa-head"><h3 class="mk">Prévia</h3></div>' + rows + (list.length > 8 ? '<p class="muted small">e mais ' + (list.length - 8).toLocaleString('pt-BR') + ' questões</p>' : '');
-    }
-
     function refresh() {
       const f = MQ.bankFilter;
       if (!$('#qh-sub', root)) return; // saiu da tela com um atraso pendente
@@ -453,7 +441,6 @@
       $('#qh-applied', root).classList.toggle('is-default', isDefault);
       $('#f-reset', root).disabled = isDefault;
       $('#qh-summary', root).innerHTML = summary(f, latest);
-      $('#qh-preview', root).innerHTML = preview(matched, latest);
       if (keep) { const el = root.querySelector('[data-quick="' + keep + '"], [data-f="' + keep + '"]'); if (el) el.focus({ preventScroll: true }); }
 
       /* sem questões: diz qual combinação zerou e desativa as ações */
@@ -476,8 +463,6 @@
         if (quickOn(f, q)) quickOff(f); else quickOnApply(f, q);
         refresh(); return;
       }
-      const pv = e.target.closest('[data-pv]');
-      if (pv) { MQ.openSolve({ title: 'Banco de questões', qids: ids(), ctx: 'banco', startIndex: +pv.dataset.pv }); return; }
       const op = e.target.closest('[data-open]');
       if (op) { open(op.dataset.open); return; }
       const b = e.target.closest('[data-f]');
