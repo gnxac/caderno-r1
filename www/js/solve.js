@@ -187,16 +187,14 @@
       '<button class="icon-btn" id="q-focus" title="Modo foco (F)" aria-label="' + (s.focus ? 'Sair do modo foco' : 'Modo foco') + '" aria-pressed="' + !!s.focus + '">' + icon('maximize') + '</button>' +
       '<span class="pager"><input type="number" id="q-page" min="1" max="' + n + '" value="' + (s.idx + 1) + '" aria-label="Ir para a questão"><span class="muted">de ' + n + '</span></span>' +
       '<button class="icon-btn" id="q-index" title="Índice" aria-label="Mostrar índice" aria-pressed="' + s.showIndex + '">' + icon('grid') + '</button>' +
-      (s.listId ? '<button class="icon-btn" id="q-print" title="Imprimir lista" aria-label="Imprimir lista">' + icon('printer') + '</button>' : '') +
       '</div></div>' + banner +
-      '<div class="solve-wrap screen-only' + (s.showIndex ? ' with-index' : '') + '"><div class="qmain">' + body +
+      '<div class="solve-wrap' + (s.showIndex ? ' with-index' : '') + '"><div class="qmain">' + body +
       '<div class="solve-foot"><div class="sf-count">' + (s.idx + 1) + ' de ' + n + '<span class="hide-m"> · escolha com o toque ou as teclas A–E</span></div>' +
       '<div class="sf-row"><button class="round" id="q-prev" aria-label="Questão anterior"' + (s.idx === 0 ? ' disabled' : '') + '>' + icon('left') + '</button>' +
       (revealed || !q
         ? '<button class="btn primary big" id="q-next-main"' + (last ? ' disabled' : '') + '>' + (last ? 'Fim da lista' : 'Próxima') + '</button>'
         : '<button class="btn primary big" id="q-answer"' + (chosen ? '' : ' disabled') + '>Responder</button>') +
-      '<button class="round" id="q-next" aria-label="Próxima questão"' + (last ? ' disabled' : '') + '>' + icon('right') + '</button></div></div></div>' + idxHtml + panel + '</div>' +
-      '<div class="print-only" id="print-area"></div>';
+      '<button class="round" id="q-next" aria-label="Próxima questão"' + (last ? ' disabled' : '') + '>' + icon('right') + '</button></div></div></div>' + idxHtml + panel + '</div>';
 
     function go(i) {
       if (i < 0 || i >= n) return;
@@ -209,7 +207,6 @@
     if ($('#q-banner-x', root)) $('#q-banner-x', root).onclick = () => { s.hideBanner[qid] = true; $('.answer-banner', root).remove(); };
     $('#q-page', root).onchange = e => go(Math.max(1, Math.min(n, parseInt(e.target.value, 10) || 1)) - 1);
     $('#q-index', root).onclick = () => { s.showIndex = !s.showIndex; MQ.render(); };
-    if ($('#q-print', root)) $('#q-print', root).onclick = () => printList(s);
     $$('[data-go]', root).forEach(b => b.onclick = () => go(parseInt(b.dataset.go, 10)));
     $('#q-focus', root).onclick = () => { s.focus = !s.focus; MQ.render(); };
     if (!q) return;
@@ -299,16 +296,6 @@
     return (t === 'sim' ? 'simulado ' : 'lista ') + name;
   }
   MQ.ctxLabel = ctxLabel;
-
-  function printList(s) {
-    const area = $('#print-area');
-    const qs = s.qids.map(id => MQ.get('questions', id)).filter(Boolean);
-    area.innerHTML = '<h1>' + esc(s.title) + '</h1><p>' + qs.length + ' questões</p>' +
-      qs.map((q, i) => '<div class="pq"><h4>Questão ' + (i + 1) + ' — ' + esc([q.instituicao, q.ano].filter(Boolean).join(', ')) + '</h4>' +
-        MQ.para(q.enunciado) + (q.imagens || []).map(id => MQ.imgHtml(id)).join('') + (q.alternativas || []).map(a => '<div>(' + esc(a.l) + ') ' + esc(a.t) + (a.img ? MQ.imgHtml(a.img) : '') + '</div>').join('') + '</div>').join('') +
-      '<div style="break-before:page"><h2>Gabarito</h2><p>' + qs.map((q, i) => (i + 1) + '-' + esc(q.gabarito)).join('&nbsp;&nbsp; ') + '</p></div>';
-    window.print();
-  }
 
   MQ.setFontScale = function (v) {
     v = Math.max(0.8, Math.min(1.6, v));

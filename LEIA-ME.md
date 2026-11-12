@@ -6,7 +6,7 @@ App de questões para residência médica, para **Windows** e **Android**, com s
 
 - **Banco de questões** com filtros combináveis: especialidade e assunto em árvore (área › especialidade › tema › subtema), instituição, ano, UF, finalidade, banca, professor, situação (não resolvi, resolvi, acertei, errei), tipo, com/sem comentário, anuladas e desatualizadas, busca por texto ou código.
 - **Resolver questões** com correção na hora, comentário, histórico de respostas, riscar alternativas, tamanho da letra, índice e atalhos de teclado (A–E, Enter, ← →).
-- **Listas e pastas**: criar, mover, renomear, imprimir, recomeçar e duplicar só com erros, acertos, não respondidas ou respondidas.
+- **Listas e pastas**: criar, mover, renomear, recomeçar e duplicar só com erros, acertos, não respondidas ou respondidas.
 - **Simulados cronometrados**: até 1.000 questões, cota por grande área, tempo por questão, mapa do simulado, marcar para revisar, resultado por área, revisão, refazer e lista com os erros. Dá para começar no PC e continuar no celular.
 - **Meu desempenho**: período (7 dias a 2 anos ou datas), origem (banco, lista ou simulado), evolução, barras por matéria com detalhamento, bolhas Q1–Q4 (acerto × volume × peso no seu banco), assuntos com mais erros e botão "Treinar".
 - **Cadastrar**: formulário, importação de planilha CSV, backup completo e exportação.

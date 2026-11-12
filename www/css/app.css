@@ -502,19 +502,6 @@ button.bar-row:hover { background: var(--sunk); }
 .kv dt { color: var(--ink-3); }
 .kv dd { margin: 0; }
 
-/* ---------- Impressão ---------- */
-.print-only { display: none; }
-@media print {
-  body { background: #fff; color: #000; }
-  .rail, .solve-bar, .qnav, .qindex, .qleft, .solve-foot, .answer-banner, .toolbar, .page-head .toolbar, #toast { display: none !important; }
-  .shell { display: block; }
-  main { padding: 0; }
-  .print-only { display: block; }
-  .screen-only { display: none !important; }
-  .pq { break-inside: avoid; margin-bottom: 18px; font-family: var(--serif); }
-  .pq h4 { margin: 0 0 4px; font-family: var(--sans); }
-}
-
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } :active { scale: none !important; } }
 main:focus { outline: none; }
 .table-wrap { overflow-x: auto; }
