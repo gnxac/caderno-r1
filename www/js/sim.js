@@ -94,6 +94,7 @@
           areas.forEach(a => { chosen = chosen.concat(MQ.shuffle(byArea[a]).slice(0, quota[a] || 0)); });
           chosen = MQ.shuffle(chosen);
           const durationMin = Math.max(1, parseInt($('#s-total-min', box).value, 10) || t * 3);
+          MQ.local.listTab = 'simulados'; MQ.saveLocal(); // o simulado novo precisa aparecer
           const l = MQ.put('lists', { id: MQ.uid(), kind: 'simulado', name, folderId: $('#s-folder', box).value || null, qids: chosen, durationMin });
           setTimeout(() => {
             MQ.confirm('Simulado criado', name + ': ' + chosen.length + ' questões, ' + durationMin + ' minutos. Começar agora? O cronômetro dispara assim que você começar.', 'Começar agora')
@@ -150,6 +151,68 @@
     });
   };
 
+
+  /* ---------- Provas por instituição/ano (a tela Listas chama estas duas) ---------- */
+  MQ.provaPresets = function () {
+    const g = {};
+    MQ.alive('questions').forEach(q => {
+      if (!q.instituicao || !q.ano) return;
+      const k = q.instituicao + '|' + q.ano;
+      (g[k] = g[k] || { key: k, instituicao: q.instituicao, ano: q.ano, qs: [] }).qs.push(q);
+    });
+    return Object.keys(g).map(k => g[k]).filter(x => x.qs.length >= 10).map(x => {
+      const qids = MQ.sortQuestions(x.qs).map(q => q.id).slice(0, MAX_Q); // mesmo limite dos simulados comuns
+      return { key: x.key, instituicao: x.instituicao, ano: x.ano, qids, count: qids.length, minutes: qids.length * 3 };
+    }).sort((a, b) => (Number(b.ano) - Number(a.ano)) || String(a.instituicao).localeCompare(String(b.instituicao), 'pt-BR'));
+  };
+  MQ.provaDialog = function (preset) {
+    MQ.modal({
+      title: 'Modo prova',
+      body: '<p><b>' + esc(preset.instituicao) + ' ' + esc(preset.ano) + '</b> · ' + preset.count + ' questões, na ordem do banco.</p>' +
+        '<label class="field"><span>Minutos por questão</span><input type="number" id="p-mpq" min="0.5" max="10" step="0.5" value="3"></label>' +
+        '<p class="small">Tempo total: <b id="p-total" style="font-variant-numeric:tabular-nums"></b></p>',
+      onOpen: box => {
+        const inp = $('#p-mpq', box);
+        const sync = () => { $('#p-total', box).textContent = Math.max(1, Math.round(preset.count * (parseFloat(inp.value) || 3))) + ' min'; };
+        sync(); inp.addEventListener('input', sync);
+      },
+      actions: [
+        { label: 'Cancelar', kind: 'ghost' },
+        { label: 'Começar prova', kind: 'primary', onClick: (close, box) => {
+          const mpq = Math.min(10, Math.max(0.5, parseFloat($('#p-mpq', box).value) || 3));
+          const durationMin = Math.max(1, Math.round(preset.count * mpq));
+          let l = MQ.alive('lists').find(x => x.kind === 'simulado' && x.prova === preset.key);
+          if (l) l = MQ.put('lists', Object.assign({}, l, { qids: preset.qids.slice(), durationMin }));
+          else l = MQ.put('lists', { id: MQ.uid(), kind: 'simulado', name: preset.instituicao + ' ' + preset.ano + ' — prova', folderId: null, qids: preset.qids.slice(), durationMin, prova: preset.key });
+          MQ.startOrResume(l.id);
+        } }
+      ]
+    });
+  };
+
+  /* ---------- Cartão-resposta ---------- */
+  function sheetCell(run, i, idx, mode) {
+    const id = run.qids[i], a = run.answers[id], fl = run.flags.includes(id);
+    let cls = 'sc', lab = 'Questão ' + (i + 1);
+    if (mode === 'res') {
+      const q = MQ.get('questions', id);
+      const right = a && q && a === q.gabarito;
+      cls += !a ? ' blank' : right ? ' ok' : ' bad';
+      lab += !a ? ', em branco' : right ? ', certa, letra ' + a : ', errada, letra ' + a;
+    } else {
+      if (a) { cls += ' ans'; lab += ', respondida, letra ' + a; } else lab += ', em branco';
+      if (fl) { cls += ' flag'; lab += ', marcada para revisar'; }
+      if (i === idx) { cls += ' cur'; lab += ', questão atual'; }
+    }
+    return '<button class="' + cls + '" data-' + (mode === 'res' ? 'rev' : 'go') + '="' + i + '" aria-label="' + esc(lab) + '"' + (mode !== 'res' && i === idx ? ' aria-current="true"' : '') + '><span class="n">' + (i + 1) + '</span><span class="l">' + (a ? esc(a) : '') + '</span></button>';
+  }
+  function sheetHtml(run, idx) {
+    const blank = run.qids.filter(id => !run.answers[id]).length;
+    return '<div class="sc-grid">' + run.qids.map((_, i) => sheetCell(run, i, idx, 'sim')).join('') + '</div>' +
+      '<p class="sc-sum small">' + blank + ' em branco · ' + run.flags.filter(id => run.qids.includes(id)).length + ' marcadas</p>' +
+      '<button class="btn sm sc-next" data-nextblank' + (blank ? '' : ' disabled') + '>Ir para a próxima em branco</button>';
+  }
+
   MQ.views.simulado = function (root, runId) {
     const run = MQ.get('runs', runId);
     if (!run) { root.innerHTML = '<div class="empty"><h2>Simulado não encontrado</h2><a class="btn" href="#/listas">Voltar às listas</a></div>'; return; }
@@ -170,25 +233,24 @@
     const answered = Object.keys(run.answers).filter(k => run.answers[k]).length;
 
     root.innerHTML =
-      '<div class="solve-bar"><div style="display:flex;align-items:center;gap:8px;min-width:0"><span class="title">' + esc(l.name || 'Simulado') + '</span></div>' +
+      '<div class="solve-bar"><div style="display:flex;align-items:center;gap:8px;min-width:0"><button class="icon-btn" id="sim-exit" aria-label="Sair da prova (o tempo continua correndo)" title="Sair da prova (o tempo continua correndo)">' + icon('arrowleft') + '</button><span class="title">' + esc(l.name || 'Simulado') + '</span></div>' +
       '<div class="toolbar"><span class="timer" id="sim-timer" role="timer" aria-live="off">' + icon('clock') + '<span>' + MQ.fmtDuration(remainingMs(run) / 1000) + '</span></span>' +
-      '<span class="muted small">' + answered + '/' + n + ' respondidas</span>' +
+      '<span class="muted small sc-count">' + answered + '/' + n + ' respondidas</span>' +
       '<button class="icon-btn" id="q-fminus" aria-label="Diminuir letra">' + icon('textdown') + '</button><button class="icon-btn" id="q-fplus" aria-label="Aumentar letra">' + icon('textup') + '</button>' +
       '<button class="btn primary" id="sim-finish">Finalizar</button></div></div>' +
-      '<div class="solve-wrap with-index"><div>' +
+      '<div class="sim-wrap"><div class="sim-main">' +
       (q ? '<article class="qcard"><div class="qmeta"><span class="num">Questão ' + (idx + 1) + ' de ' + n + '</span>' +
         [q.instituicao, q.ano].filter(Boolean).map(t => '<span class="tag">' + esc(t) + '</span>').join('') +
-        '<div class="qtools">' + (MQ.hasMarks(qid) ? '<button class="icon-btn" id="q-unmark" title="Apagar marcações desta questão" aria-label="Apagar marcações desta questão">' + icon('eraser') + '</button>' : '') + '<button class="icon-btn" id="sim-flag" aria-pressed="' + flagged + '" title="Marcar para revisar" aria-label="Marcar para revisar">' + icon('flag') + '</button></div></div>' +
+        '<div class="qtools">' + (MQ.hasMarks(qid) ? '<button class="icon-btn" id="q-unmark" title="Apagar marcações desta questão" aria-label="Apagar marcações desta questão">' + icon('eraser') + '</button>' : '') + '<button class="icon-btn" id="sim-flag" aria-pressed="' + flagged + '" title="Marcar para revisar (M)" aria-label="Marcar para revisar">' + icon('flag') + '</button></div></div>' +
         '<div class="stem" style="margin-top:12px"><div data-mk="stem">' + MQ.para(q.enunciado) + '</div>' + (q.imagens || []).map(id => MQ.imgHtml(id)).join('') + '</div>' +
         '<div class="alts" role="radiogroup" aria-label="Alternativas">' + (q.alternativas || []).map(a =>
           '<div class="alt' + (a.l === chosen ? ' sel' : '') + (cut.includes(a.l) ? ' cut-on' : '') + '" role="radio" tabindex="0" aria-checked="' + (a.l === chosen) + '" data-alt="' + esc(a.l) + '"><span class="letter">' + esc(a.l) + '</span><span class="txt"><span data-mk="' + esc(a.l) + '">' + MQ.para(a.t) + '</span>' + (a.img ? MQ.imgHtml(a.img, 'Imagem da alternativa ' + a.l) : '') + '</span>' +
           '<button class="icon-btn cut" data-cut="' + esc(a.l) + '" aria-pressed="' + cut.includes(a.l) + '" aria-label="' + (cut.includes(a.l) ? 'Trazer de volta' : 'Descartar') + ' a alternativa ' + esc(a.l) + '" title="' + (cut.includes(a.l) ? 'Trazer de volta' : 'Descartar alternativa') + '">' + icon('scissors') + '</button></div>').join('') +
-        '</div>' + (chosen ? '<button class="btn ghost sm" id="sim-clear">Limpar resposta</button>' : '<span class="muted small">Sem correção até finalizar. Teclas A–E para marcar.</span>') + '</article>'
+        '</div>' + (chosen ? '<button class="btn ghost sm" id="sim-clear">Limpar resposta</button>' : '<span class="muted small">Sem correção até finalizar. Teclas A–E para marcar, M para marcar a questão.</span>') + '</article>'
         : '<div class="qcard"><p class="muted">Questão excluída.</p></div>') +
       '<div class="qnav"><button class="btn" id="sim-prev"' + (idx === 0 ? ' disabled' : '') + '>' + icon('left') + ' Anterior</button><button class="btn" id="sim-next"' + (idx >= n - 1 ? ' disabled' : '') + '>Próxima ' + icon('right') + '</button></div></div>' +
-      '<aside class="qindex" aria-label="Mapa do simulado"><h3>Mapa do simulado</h3><div class="qindex-grid">' +
-      run.qids.map((id, i) => '<button class="' + (i === idx ? 'cur' : '') + (run.answers[id] ? ' ans' : '') + (run.flags.includes(id) ? ' flag' : '') + '" data-go="' + i + '" aria-label="Questão ' + (i + 1) + (run.answers[id] ? ', respondida' : '') + (run.flags.includes(id) ? ', marcada' : '') + '">' + (i + 1) + '</button>').join('') +
-      '</div><div class="legend"><span><i style="background:var(--accent-soft);border-color:var(--accent)"></i>respondida</span><span><i style="background:var(--warn)"></i>marcada para revisar</span></div></aside></div>';
+      '<aside class="sim-sheet" aria-label="Cartão-resposta"><h3>Cartão-resposta</h3>' + sheetHtml(run, idx) + '</aside></div>' +
+      '<div class="sim-bar"><button class="btn" id="sim-card">Cartão <span class="tnum">' + (idx + 1) + '/' + n + '</span></button><button class="btn primary" id="sim-next2"' + (idx >= n - 1 ? ' disabled' : '') + '>Próxima ' + icon('right') + '</button></div>';
 
     function save() { MQ.put('runs', run); }
     function go(i) { if (i < 0 || i >= n) return; run.idx = i; save(); MQ.render(); window.scrollTo(0, 0); }
@@ -208,6 +270,26 @@
       el.onkeydown = e => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); pick(el.dataset.alt); } };
     });
     $$('[data-go]', root).forEach(b => b.onclick = () => go(parseInt(b.dataset.go, 10)));
+    function nextBlank() {
+      for (let k = 1; k < n; k++) { const i = (idx + k) % n; if (!run.answers[run.qids[i]]) return i; }
+      return -1;
+    }
+    $('[data-nextblank]', root).onclick = () => { const i = nextBlank(); if (i >= 0) go(i); };
+    function openCard() {
+      const m = MQ.modal({
+        title: 'Cartão-resposta',
+        body: sheetHtml(run, idx),
+        onOpen: box => {
+          $$('[data-go]', box).forEach(b => b.onclick = () => { m.close(); go(parseInt(b.dataset.go, 10)); });
+          $('[data-nextblank]', box).onclick = () => { const i = nextBlank(); if (i >= 0) { m.close(); go(i); } };
+        }
+      });
+    }
+    $('#sim-card', root).onclick = openCard;
+    $('#sim-next2', root).onclick = () => go(idx + 1);
+    $('#sim-exit', root).onclick = async () => {
+      if (await MQ.confirm('Sair da prova', 'O tempo continua correndo. Você pode voltar pela tela de simulados enquanto houver tempo.', 'Sair') && MQ.get('runs', run.id).status === 'andamento') location.hash = '#/listas';
+    };
     $('#sim-prev', root).onclick = () => go(idx - 1);
     $('#sim-next', root).onclick = () => go(idx + 1);
     $('#q-fplus', root).onclick = () => MQ.setFontScale((MQ.local.fontScale || 1) + 0.08);
@@ -218,13 +300,14 @@
       save(); MQ.render();
     };
     if ($('#sim-clear', root)) $('#sim-clear', root).onclick = () => { delete run.answers[qid]; save(); MQ.render(); };
-    $('#sim-finish', root).onclick = async () => {
+    async function askFinish() {
       const blank = n - Object.keys(run.answers).filter(k => run.answers[k]).length;
       const ok = await MQ.confirm('Finalizar simulado', blank ? 'Ainda há ' + blank + ' questões em branco. Finalizar mesmo assim?' : 'Todas as questões foram respondidas. Finalizar e ver o resultado?', 'Finalizar');
       if (!ok) return;
       MQ.finishRun(run);
       location.hash = '#/resultado/' + run.id;
-    };
+    }
+    $('#sim-finish', root).onclick = askFinish;
 
     const tEl = $('#sim-timer span', root);
     MQ.tick = setInterval(() => {
@@ -240,10 +323,13 @@
     }, 1000);
 
     MQ.keyHandler = function (e) {
-      if (e.target.matches('input, textarea, select') || e.ctrlKey || e.metaKey || e.altKey) return;
-      if (document.querySelector('.modal-back, .popmenu')) return;
+      if (e.target.matches('input, textarea, select') || document.querySelector('.modal-back, .popmenu')) return;
+      if (e.ctrlKey && e.key === 'Enter') { e.preventDefault(); askFinish(); return; }
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
       const k = e.key.toUpperCase();
-      if (q && /^[A-E]$/.test(k) && (q.alternativas || []).some(a => a.l === k)) pick(k);
+      if (e.shiftKey && k === 'C') openCard(); // C puro é a alternativa C
+      else if (q && /^[A-E]$/.test(k) && (q.alternativas || []).some(a => a.l === k)) pick(k);
+      else if (k === 'M' && q) $('#sim-flag', root).click();
       else if (e.key === 'ArrowRight') go(idx + 1);
       else if (e.key === 'ArrowLeft') go(idx - 1);
     };
@@ -261,9 +347,33 @@
       return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib);
     });
     const runs = MQ.alive('runs').filter(r => r.listId === run.listId && r.status === 'concluido').sort((a, b) => a.finishedAt - b.finishedAt);
+    const wrong = run.qids.filter(id => { const q = MQ.get('questions', id); return q && run.answers[id] && run.answers[id] !== q.gabarito; });
+    function review(qids, startIndex) {
+      MQ.openSolve({ title: (l.name || 'Simulado') + ' — revisão', qids, ctx: 'revisao', startIndex: startIndex || 0 });
+      const s = MQ.session;
+      qids.forEach(id => { s.sel[id] = run.answers[id]; s.revealed[id] = true; });
+      MQ.render();
+    }
+    const times = run.times || {};
+    const timed = Object.keys(times).filter(id => run.qids.includes(id) && times[id] > 0);
+    let timeCard = '';
+    if (timed.length) {
+      const totalT = timed.reduce((s2, id) => s2 + times[id], 0);
+      const respT = run.qids.filter(id => run.answers[id] && times[id]);
+      const avg = respT.length ? respT.reduce((s2, id) => s2 + times[id], 0) / respT.length : 0;
+      const top = timed.sort((x, y) => times[y] - times[x]).slice(0, 5);
+      timeCard = '<section class="panel span-12"><h2>Tempo</h2><div class="sub">Quanto cada questão ficou na tela</div>' +
+        '<dl class="sim-times"><dt>Tempo total nas questões</dt><dd>' + MQ.fmtDuration(totalT) + '</dd><dt>Média por questão respondida</dt><dd>' + (respT.length ? MQ.fmtDuration(avg) : '—') + '</dd></dl>' +
+        '<h3 class="small" style="margin:12px 0 6px">As 5 que mais demoraram</h3><div class="sim-slow">' +
+        top.map(id => {
+          const i = run.qids.indexOf(id), q = MQ.get('questions', id), a = run.answers[id];
+          const st = !a ? 'em branco' : (q && a === q.gabarito) ? 'certa' : 'errada';
+          return '<button class="sim-slow-row" data-rev="' + i + '"><span>Questão ' + (i + 1) + '</span><span class="tnum">' + MQ.fmtDuration(times[id]) + '</span><span class="badge ' + (st === 'certa' ? 'ok' : st === 'errada' ? 'err' : '') + '">' + st + '</span></button>';
+        }).join('') + '</div></section>';
+    }
     root.innerHTML =
       '<div class="page-head"><div><h1>' + esc(l.name || 'Simulado') + '</h1><p>Finalizado em ' + MQ.fmtDateTime(run.finishedAt) + '</p></div>' +
-      '<div class="toolbar"><a class="btn ghost" href="#/listas">' + icon('left') + ' Listas</a><button class="btn" id="r-errs">Criar lista com os erros</button><button class="btn" id="r-redo">Refazer simulado</button><button class="btn primary" id="r-review">Revisar questões</button></div></div>' +
+      '<div class="toolbar"><a class="btn ghost" href="#/listas">' + icon('left') + ' Listas</a><button class="btn" id="r-errs">Criar lista com os erros</button><button class="btn" id="r-redo">Refazer simulado</button><button class="btn" id="r-wrong">Revisar só as erradas</button><button class="btn primary" id="r-review">Revisar questões</button></div></div>' +
       '<div class="perf-grid">' +
       '<section class="panel span-5"><h2>Resultado</h2><div class="sub">' + sc.total + ' questões</div><div class="totals"><div class="big-pct">' + p + '%</div>' +
       '<dl><dt>Certas</dt><dd style="color:var(--ok)">' + sc.ok + '</dd><dt>Erradas</dt><dd style="color:var(--err)">' + (sc.resp - sc.ok) + '</dd><dt>Em branco</dt><dd>' + (sc.total - sc.resp) + '</dd><dt>Tempo usado</dt><dd>' + MQ.fmtDuration(used) + ' de ' + run.durationMin + ' min</dd></dl></div></section>' +
@@ -275,14 +385,13 @@
       (runs.length > 1 ? '<section class="panel span-12"><h2>Tentativas deste simulado</h2><div class="table-wrap" style="border:0"><table class="tbl"><thead><tr><th>Data</th><th class="num">Acertos</th><th class="num">%</th></tr></thead><tbody>' +
         runs.map(r => { const s = MQ.runScore(r); return '<tr class="clickable" data-run="' + r.id + '"><td>' + MQ.fmtDateTime(r.finishedAt) + (r.id === run.id ? ' <span class="badge">esta</span>' : '') + '</td><td class="num">' + s.ok + '/' + s.total + '</td><td class="num">' + MQ.pct(s.ok, s.total) + '%</td></tr>'; }).join('') +
         '</tbody></table></div></section>' : '') +
+      (timeCard ? timeCard : '') +
+      '<section class="panel span-12"><h2>Cartão-resposta</h2><div class="sub">Toque numa questão para revisar</div><div class="sc-grid sc-res">' + run.qids.map((_, i) => sheetCell(run, i, -1, 'res')).join('') + '</div></section>' +
       '</div>';
+    $$('[data-rev]', root).forEach(b => b.onclick = () => review(run.qids, parseInt(b.dataset.rev, 10)));
     $$('[data-run]', root).forEach(tr => tr.onclick = () => { location.hash = '#/resultado/' + tr.dataset.run; });
-    $('#r-review', root).onclick = () => {
-      MQ.openSolve({ title: (l.name || 'Simulado') + ' — revisão', qids: run.qids, ctx: 'revisao' });
-      const s = MQ.session;
-      run.qids.forEach(id => { s.sel[id] = run.answers[id]; s.revealed[id] = true; });
-      MQ.render();
-    };
+    $('#r-review', root).onclick = () => review(run.qids, 0);
+    $('#r-wrong', root).onclick = () => { if (!wrong.length) MQ.toast('Você não errou nenhuma questão.'); else review(wrong, 0); };
     $('#r-errs', root).onclick = () => {
       const ids = run.qids.filter(id => { const q = MQ.get('questions', id); return q && run.answers[id] && run.answers[id] !== q.gabarito; });
       const blank = run.qids.filter(id => !run.answers[id]);

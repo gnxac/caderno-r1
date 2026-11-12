@@ -3,7 +3,9 @@
   'use strict';
   const { esc, $, $$, icon } = MQ;
 
-  MQ.currentFolder = null;
+  /* Pasta aberta em Listas: '__all' (todas, padrão), '__smart' (inteligentes), null (sem pasta) ou o id de uma pasta */
+  MQ.currentFolder = '__all';
+  const realFolder = () => (MQ.currentFolder && MQ.get('folders', MQ.currentFolder) ? MQ.currentFolder : null);
 
   function folderPath(id) {
     const out = [];
@@ -55,13 +57,14 @@
     MQ.modal({
       title: filter ? 'Criar lista inteligente' : 'Criar lista',
       body: '<label class="field"><span>Nome da lista</span><input type="text" id="l-name" maxlength="100" value="' + esc(defaultName || '') + '" placeholder="Ex.: Cardio — revisão"></label>' +
-        '<label class="field"><span>Salvar em</span><select id="l-folder">' + folderOptions(MQ.currentFolder) + '</select></label>' +
+        '<label class="field"><span>Salvar em</span><select id="l-folder">' + folderOptions(realFolder()) + '</select></label>' +
         '<p class="muted small">' + qids.length + ' questões entram na lista' + (filter ? '. Ela guarda o filtro e se atualiza sozinha quando você abrir Listas.' : '.') + '</p>',
       actions: [
         { label: 'Cancelar', kind: 'ghost' },
         { label: filter ? 'Criar lista inteligente' : 'Criar lista', kind: 'primary', onClick: (close, box) => {
           const name = $('#l-name', box).value.trim();
           if (!name) { MQ.toast('Dê um nome para a lista.'); return false; }
+          MQ.local.listTab = 'listas'; MQ.saveLocal(); // a lista nova precisa aparecer
           const l = MQ.put('lists', Object.assign({ id: MQ.uid(), kind: 'lista', name, folderId: $('#l-folder', box).value || null, qids: qids.slice() }, filter ? { filter } : {}));
           MQ.toast('Lista "' + name + '" criada.');
           MQ.currentFolder = l.folderId;
@@ -155,81 +158,202 @@
     ]);
   }
 
+  /* ---------- Tela Listas: segmento Listas | Simulados, pastas, cartões com progresso, detalhe no PC ---------- */
+  const ALL = '__all', SMART = '__smart';
+  let selId = null, provasAll = false;
+  const tabNow = () => (MQ.local.listTab === 'simulados' ? 'simulados' : 'listas');
+  const sortNow = () => MQ.local.listSort || 'recentes';
+  const scopeNow = () => (MQ.currentFolder === undefined ? ALL : MQ.currentFolder);
+  const inTab = l => (tabNow() === 'simulados') === (l.kind === 'simulado');
+  const inScope = l => { const sc = scopeNow(); return sc === ALL ? true : sc === SMART ? !!l.filter : sc === null ? !l.folderId : l.folderId === sc; };
+  const wide = () => window.innerWidth >= 1200;
+
+  /* Números de uma lista (ou do último resultado de um simulado) */
+  function info(l) {
+    const total = l.qids.filter(id => MQ.get('questions', id)).length;
+    if (l.kind === 'simulado') {
+      const run = MQ.activeRun(l.id), last = MQ.lastRun(l.id);
+      const r = last ? MQ.runScore(last) : null;
+      return { total, resp: r ? r.resp : 0, ok: r ? r.ok : 0, err: r ? r.resp - r.ok : 0, run, last, st: null };
+    }
+    const st = MQ.listStats(l);
+    return { total, resp: st.resp, ok: st.ok, err: st.err, st };
+  }
+  const acc = n => (n.resp ? MQ.pct(n.ok, n.resp) : -1);
+  const done = n => (n.total ? MQ.pct(n.resp, n.total) : 0);
+
+  function sortLists(items) {
+    const by = sortNow();
+    const arr = items.map(l => ({ l, n: info(l) }));
+    arr.sort((x, y) => by === 'nome' ? x.l.name.localeCompare(y.l.name, 'pt-BR')
+      : by === 'progresso' ? done(y.n) - done(x.n)
+      : by === 'acerto' ? acc(y.n) - acc(x.n)
+      : (y.l.createdAt || 0) - (x.l.createdAt || 0));
+    return arr;
+  }
+
+  function openItem(l) {
+    if (l.kind === 'simulado') {
+      const run = MQ.activeRun(l.id), last = MQ.lastRun(l.id);
+      if (!run && last) location.hash = '#/resultado/' + last.id; else MQ.startOrResume(l.id);
+    } else MQ.openList(l.id);
+  }
+  function actionLabel(l, n) {
+    if (l.kind === 'simulado') return n.run ? 'Continuar' : n.last ? 'Ver resultado' : 'Iniciar';
+    return !n.resp ? 'Resolver' : n.resp < n.total ? 'Continuar' : 'Revisar';
+  }
+  const bar = n => '<div class="lbar" role="img" aria-label="' + n.ok + ' certas, ' + n.err + ' erradas, de ' + n.total + ' questões"><i class="ok" style="width:' + MQ.pct(n.ok, n.total) + '%"></i><i class="err" style="width:' + MQ.pct(n.err, n.total) + '%"></i></div>';
+
+  function card(l, n, sel) {
+    const folder = l.folderId && MQ.get('folders', l.folderId);
+    let badge = '';
+    if (l.filter) badge = '<span class="badge">' + icon('bolt') + 'Inteligente</span>';
+    if (l.kind === 'simulado') badge = n.run ? '<span class="badge live">Em andamento</span>' : n.last ? '<span class="badge done">Concluído</span>' : '<span class="badge">Não iniciado</span>';
+    const a = acc(n);
+    return '<article class="lcard' + (sel ? ' sel' : '') + '" data-list="' + esc(l.id) + '">' +
+      '<div class="lc-top"><button class="lc-name" aria-label="' + esc(l.name) + (wide() ? ', ver detalhes' : ', abrir') + '">' + icon(l.kind === 'simulado' ? 'clock' : l.filter ? 'bolt' : 'list') + '<b>' + esc(l.name) + '</b></button>' +
+      '<button class="icon-btn" data-lmenu="' + esc(l.id) + '" aria-label="Ações de ' + esc(l.name) + '">' + icon('more') + '</button></div>' +
+      '<div class="st">' + n.total + (n.total === 1 ? ' questão' : ' questões') + (folder ? ' · ' + esc(folder.name) : '') + '</div>' + (badge ? '<div>' + badge + '</div>' : '') +
+      bar(n) +
+      '<div class="lc-foot"><span class="st">' + (l.kind === 'simulado' ? (n.last ? 'Nota ' + MQ.pct(n.ok, n.total) + '%' : 'Sem tentativa') : done(n) + '% feito') + '</span>' +
+      (l.kind === 'simulado' ? '' : '<span class="pct' + (a >= 0 && a < 60 ? ' low' : '') + '">' + (a >= 0 ? a + '% acerto' : '–') + '</span>') + '</div>' +
+      '<button class="btn sm primary" data-act="open" data-id="' + esc(l.id) + '">' + icon('play') + actionLabel(l, n) + '</button></article>';
+  }
+
+  /* Caderno de erros: filtro automático (não é uma lista salva) */
+  function errosIds() {
+    return MQ.sortQuestions(MQ.filterQuestions(Object.assign(MQ.newFilter(), { situacao: ['resolvi'], erros: true }))).map(q => q.id);
+  }
+  function errosCard(ids) {
+    return '<article class="lcard lc-erros"><div class="lc-top"><span class="lc-name">' + icon('target') + '<b>Caderno de erros</b></span></div>' +
+      '<div class="st">' + ids.length + (ids.length === 1 ? ' questão' : ' questões') + ' · automático</div><div><span class="badge err">Automática</span></div>' +
+      '<div class="st">Última resposta errada ou acerto no chute. Sai daqui quando você acerta.</div>' +
+      '<button class="btn sm primary" data-act="erros"' + (ids.length ? '' : ' disabled') + '>' + icon('play') + 'Revisar</button></article>';
+  }
+
+  function detail(l, n) {
+    if (!l) return '<div class="lc-detail"><div class="mk">Detalhe</div><div class="st">Escolha uma ' + (tabNow() === 'simulados' ? 'simulado' : 'lista') + ' para ver o progresso e as ações.</div></div>';
+    const folder = l.folderId && MQ.get('folders', l.folderId);
+    const a = acc(n), blank = Math.max(0, n.total - n.resp);
+    let topics = '';
+    if (n.st) {
+      const g = new Map();
+      l.qids.forEach(id => {
+        const q = MQ.get('questions', id), at = n.st.latest[id];
+        if (!q || !at) return;
+        const p = MQ.qPath(q), k = p[2] || p[1] || p[0] || 'Sem assunto';
+        const o = g.get(k) || { n: 0, ok: 0 };
+        o.n++; if (at.correct) o.ok++;
+        g.set(k, o);
+      });
+      const top = Array.from(g).sort((x, y) => y[1].n - x[1].n).slice(0, 4);
+      if (top.length) topics = '<div class="mk" style="margin-top:4px">Acerto por tema</div><div class="hbars">' + top.map(([k, o]) => {
+        const p = MQ.pct(o.ok, o.n);
+        return '<div class="hbar"><span>' + esc(k) + ' <span class="muted">· ' + o.n + '</span></span><b>' + p + '%</b><div class="bar"><i class="' + (p < 55 ? 'err' : '') + '" style="width:' + p + '%"></i></div></div>';
+      }).join('') + '</div>';
+    }
+    const prog = (MQ.local.progress || {})[l.id] || 0;
+    return '<div class="lc-detail"><div class="mk">' + (l.kind === 'simulado' ? 'Simulado selecionado' : 'Lista selecionada') + '</div>' +
+      '<div class="lc-dtitle">' + esc(l.name) + '</div><div class="st">' + (folder ? 'Pasta ' + esc(folder.name) + ' · ' : '') + 'criada em ' + MQ.fmtDate(l.createdAt) + '</div>' +
+      '<div class="row sb"><span class="st">' + n.resp + ' de ' + n.total + (l.kind === 'simulado' ? ' respondidas na última prova' : ' respondidas') + '</span><b class="num">' + done(n) + '%</b></div>' + bar(n) +
+      '<div class="row sb"><span class="st">' + n.ok + ' certas · ' + n.err + ' erradas · ' + blank + ' em branco</span><span class="pct' + (a >= 0 && a < 60 ? ' low' : '') + '">' + (a >= 0 ? a + '%' : '–') + '</span></div>' +
+      '<button class="btn primary big" data-act="open" data-id="' + esc(l.id) + '">' + icon('play') + (l.kind === 'simulado' ? actionLabel(l, n) : (n.resp && n.resp < n.total ? 'Continuar da ' + Math.min(prog + 1, n.total) : actionLabel(l, n))) + '</button>' +
+      (l.kind === 'simulado' ? '' : '<div class="row"><button class="btn sm" data-act="redo" data-id="' + esc(l.id) + '"' + (n.err ? '' : ' disabled') + '>Refazer erradas</button><button class="btn sm" data-act="sim" data-id="' + esc(l.id) + '">Criar simulado</button></div>') +
+      topics + '</div>';
+  }
+
+  function folderNav() {
+    const items = MQ.alive('lists').filter(inTab), sc = scopeNow();
+    const cnt = f => items.filter(l => (l.folderId || null) === f).length;
+    const rows = [[ALL, 'Todas', items.length, 'list', 0, true]];
+    if (tabNow() === 'listas') rows.push([SMART, 'Inteligentes', items.filter(l => l.filter).length, 'bolt', 0, true]);
+    rows.push(['root', 'Sem pasta', cnt(null), 'folder', 0, true]);
+    (function walk(pid, d) {
+      MQ.alive('folders').filter(f => (f.parentId || null) === pid).sort((a, b) => a.name.localeCompare(b.name, 'pt-BR')).forEach(f => { rows.push([f.id, f.name, cnt(f.id), 'folder', d, false]); walk(f.id, d + 1); });
+    })(null, 0);
+    return rows.map(([id, label, n, ic, d, fixed]) => {
+      const on = id === 'root' ? sc === null : sc === id;
+      return '<div class="lst-f' + (on ? ' on' : '') + '" style="--d:' + d + '"><button class="lst-fb" data-folder="' + esc(id) + '" aria-pressed="' + on + '">' + icon(ic) + '<span>' + esc(label) + '</span><em>' + n + '</em></button>' +
+        (fixed ? '' : '<button class="icon-btn" data-fmenu="' + esc(id) + '" aria-label="Ações da pasta ' + esc(label) + '">' + icon('more') + '</button>') + '</div>';
+    }).join('');
+  }
+
+  function provasSection() {
+    const ps = MQ.provaPresets ? MQ.provaPresets() : [];
+    if (!ps.length) return '';
+    const list = provasAll ? ps : ps.slice(0, 4);
+    return '<section class="lst-provas" aria-label="Provas por instituição"><div class="mk">Provas por instituição</div><div class="lgrid2">' +
+      list.map((p, i) => '<article class="lcard"><div class="lc-top"><span class="lc-name">' + icon('timer') + '<b>' + esc(p.instituicao) + ' ' + esc(p.ano) + '</b></span></div>' +
+        '<div class="st">' + p.count + ' questões · ' + MQ.fmtDuration(p.minutes * 60) + ' de prova</div><button class="btn sm" data-prova="' + i + '">Fazer prova</button></article>').join('') +
+      '</div>' + (ps.length > 4 ? '<button class="btn ghost sm" data-act="provas">' + (provasAll ? 'Mostrar menos' : 'Mostrar todas (' + ps.length + ')') + '</button>' : '') + '</section>';
+  }
+
   MQ.views.listas = function (root) {
     MQ.refreshSmart();
-    const fid = MQ.currentFolder && MQ.get('folders', MQ.currentFolder) ? MQ.currentFolder : null;
-    MQ.currentFolder = fid;
-    const show = MQ.local.listShow || (MQ.local.listShow = { pastas: true, listas: true, simulados: true });
-    const folders = show.pastas ? MQ.alive('folders').filter(f => (f.parentId || null) === fid).sort((a, b) => a.name.localeCompare(b.name, 'pt-BR')) : [];
-    const lists = MQ.alive('lists').filter(l => (l.folderId || null) === fid)
-      .filter(l => (l.kind === 'simulado' ? show.simulados : show.listas))
-      .sort((a, b) => b.createdAt - a.createdAt);
+    if (MQ.currentFolder !== undefined && MQ.currentFolder !== null && MQ.currentFolder !== ALL && MQ.currentFolder !== SMART && !MQ.get('folders', MQ.currentFolder)) MQ.currentFolder = ALL; // pasta que não existe mais
+    const tab = tabNow();
+    const visible = sortLists(MQ.alive('lists').filter(l => inTab(l) && inScope(l)));
+    if (!selId || !visible.some(v => v.l.id === selId)) selId = visible.length ? visible[0].l.id : null;
+    const selItem = visible.find(v => v.l.id === selId);
+    const erros = tab === 'listas' && scopeNow() === ALL ? errosIds() : null;
+    const sortLabel = { recentes: 'Recentes', nome: 'Nome', progresso: 'Progresso', acerto: 'Acerto' }[sortNow()];
+    const cards = (erros ? errosCard(erros) : '') + visible.map(v => card(v.l, v.n, wide() && v.l.id === selId)).join('');
 
-    const crumbs = '<nav class="crumbs" aria-label="Pastas"><button data-crumb="">Listas e simulados</button>' +
-      folderPath(fid).map(f => '<span class="sep">/</span><button data-crumb="' + f.id + '">' + esc(f.name) + '</button>').join('') + '</nav>';
+    root.innerHTML = '<div class="lst">' +
+      '<header class="lst-head"><div class="lst-title"><h1>' + (tab === 'listas' ? 'Listas' : 'Simulados') + '</h1>' +
+      '<div class="seg" role="group" aria-label="Tipo"><button data-tab="listas" aria-pressed="' + (tab === 'listas') + '">Listas</button><button data-tab="simulados" aria-pressed="' + (tab === 'simulados') + '">Simulados</button></div></div>' +
+      '<div class="toolbar"><button class="btn" id="l-sort">' + icon('sort') + ' ' + sortLabel + '</button><button class="btn primary" id="l-create">' + icon('plus') + ' Criar</button></div></header>' +
+      '<nav class="lst-folders" aria-label="Pastas">' + folderNav() + '</nav>' +
+      '<div class="lst-main">' + (tab === 'simulados' ? provasSection() : '') +
+      (cards ? '<div class="lgrid2">' + cards + '</div>' : '<div class="empty"><h2>' + (tab === 'simulados' ? 'Nenhum simulado aqui' : 'Nenhuma lista aqui') + '</h2><p>Filtre questões no banco e use "Criar lista" ou "Criar simulado". Para organizar, crie pastas.</p><a class="btn primary" href="#/questoes">Ir para o banco de questões</a></div>') + '</div>' +
+      '<aside class="lst-detail" aria-label="Detalhe">' + detail(selItem && selItem.l, selItem && selItem.n) + '</aside></div>';
 
-    const rows = folders.map(f => {
-      const nItems = MQ.alive('lists').filter(l => l.folderId === f.id).length + MQ.alive('folders').filter(x => x.parentId === f.id).length;
-      return '<tr class="clickable" data-folder="' + f.id + '"><td><span class="name">' + icon('folder') + esc(f.name) + '</span></td>' +
-        '<td class="hide-sm">' + MQ.fmtDate(f.createdAt) + '</td><td class="num muted" colspan="4">' + nItems + ' ' + (nItems === 1 ? 'item' : 'itens') + '</td>' +
-        '<td class="num"><button class="icon-btn" data-fmenu="' + f.id + '" aria-label="Ações da pasta ' + esc(f.name) + '">' + icon('more') + '</button></td></tr>';
-    }).concat(lists.map(l => {
-      let status = '', resp = '—', ok = '—', er = '—', total = l.qids.filter(id => MQ.get('questions', id)).length;
-      if (l.kind === 'simulado') {
-        const run = MQ.activeRun(l.id), last = MQ.lastRun(l.id);
-        status = run ? '<span class="badge live">Em andamento</span>' : last ? '<span class="badge done">Concluído</span>' : '<span class="badge">Não iniciado</span>';
-        if (last) { const r = MQ.runScore(last); resp = r.resp; ok = r.ok; er = r.resp - r.ok; }
-      } else {
-        const st = MQ.listStats(l);
-        resp = st.resp; ok = st.ok; er = st.err;
+    const onChip = root.querySelector('.lst-f.on'); // no celular a faixa de pastas rola até a pasta aberta
+    if (onChip && !wide()) onChip.scrollIntoView({ inline: 'center', block: 'nearest' });
+
+    root.onclick = async e => {
+      const t = e.target;
+      const tabB = t.closest('[data-tab]');
+      if (tabB) { MQ.local.listTab = tabB.dataset.tab; MQ.saveLocal(); selId = null; if (scopeNow() === SMART && tabB.dataset.tab === 'simulados') MQ.currentFolder = ALL; MQ.render(); return; }
+      const fm = t.closest('[data-fmenu]');
+      if (fm) { folderMenu(fm, MQ.get('folders', fm.dataset.fmenu)); return; }
+      const fb = t.closest('[data-folder]');
+      if (fb) { MQ.currentFolder = fb.dataset.folder === 'root' ? null : fb.dataset.folder; selId = null; MQ.render(); return; }
+      const lm = t.closest('[data-lmenu]');
+      if (lm) { listMenu(lm, MQ.get('lists', lm.dataset.lmenu)); return; }
+      const act = t.closest('[data-act]');
+      if (act) {
+        const a = act.dataset.act, l = act.dataset.id && MQ.get('lists', act.dataset.id);
+        if (a === 'open' && l) openItem(l);
+        else if (a === 'erros') MQ.openSolve({ title: 'Caderno de erros', qids: errosIds(), ctx: 'banco' });
+        else if (a === 'redo' && l) duplicate(l, 'erros');
+        else if (a === 'sim' && l) MQ.simCreateModal(l.qids.filter(id => MQ.get('questions', id)), l.name + ' — simulado');
+        else if (a === 'provas') { provasAll = !provasAll; MQ.render(); }
+        return;
       }
-      return '<tr class="clickable" data-list="' + l.id + '"><td><span class="name">' + icon(l.kind === 'simulado' ? 'clock' : l.filter ? 'bolt' : 'list') + '<span>' + esc(l.name) + (l.filter ? ' <span class="badge">Inteligente</span>' : '') + (status ? ' ' + status : '') + '</span></span></td>' +
-        '<td class="hide-sm">' + MQ.fmtDate(l.createdAt) + '</td><td class="num">' + total + '</td><td class="num hide-sm">' + resp + '</td>' +
-        '<td class="num ok">' + ok + '</td><td class="num err">' + er + '</td>' +
-        '<td class="num"><button class="icon-btn" data-lmenu="' + l.id + '" aria-label="Ações de ' + esc(l.name) + '">' + icon('more') + '</button></td></tr>';
-    }));
-
-    root.innerHTML =
-      '<div class="page-head"><div><h1>Listas e simulados</h1><p>Organize suas listas em pastas, refaça só os erros e acompanhe os simulados.</p></div>' +
-      '<div class="toolbar"><button class="btn" id="l-show">Exibir ' + icon('down') + '</button><button class="btn primary" id="l-create">' + icon('plus') + ' Criar</button></div></div>' +
-      crumbs +
-      (rows.length ? '<div class="table-wrap"><table class="tbl"><thead><tr><th>Nome</th><th class="hide-sm">Criação</th><th class="num">Questões</th><th class="num hide-sm">Respondidas</th><th class="num">Certas</th><th class="num">Erradas</th><th><span class="sr">Ações</span></th></tr></thead><tbody>' + rows.join('') + '</tbody></table></div>'
-        : '<div class="empty"><h2>' + (fid ? 'Pasta vazia' : 'Nenhuma lista ainda') + '</h2><p>Filtre questões no banco e use "Criar lista" ou "Criar simulado". Para organizar, crie pastas aqui.</p><a class="btn primary" href="#/questoes">Ir para o banco de questões</a></div>');
-
-    $$('[data-crumb]', root).forEach(b => b.onclick = () => { MQ.currentFolder = b.dataset.crumb || null; MQ.render(); });
-    $$('tr[data-folder]', root).forEach(tr => tr.addEventListener('click', e => { if (e.target.closest('button')) return; MQ.currentFolder = tr.dataset.folder; MQ.render(); }));
-    $$('tr[data-list]', root).forEach(tr => tr.addEventListener('click', e => {
-      if (e.target.closest('button')) return;
-      const l = MQ.get('lists', tr.dataset.list);
-      if (l.kind === 'simulado') {
-        const run = MQ.activeRun(l.id), last = MQ.lastRun(l.id);
-        if (!run && last) location.hash = '#/resultado/' + last.id; else MQ.startOrResume(l.id);
-      } else MQ.openList(l.id);
-    }));
-    $$('[data-lmenu]', root).forEach(b => b.onclick = e => { e.stopPropagation(); listMenu(b, MQ.get('lists', b.dataset.lmenu)); });
-    $$('[data-fmenu]', root).forEach(b => b.onclick = e => {
-      e.stopPropagation();
-      const f = MQ.get('folders', b.dataset.fmenu);
-      MQ.menu(b, [
-        { label: 'Abrir', onClick: () => { MQ.currentFolder = f.id; MQ.render(); } },
-        { label: 'Renomear', onClick: () => rename('folders', f) },
-        { label: 'Mover para pasta', onClick: () => move('folders', f) },
-        '-',
-        { label: 'Excluir pasta', danger: true, onClick: () => delFolder(f) }
-      ]);
-    });
-    $('#l-show', root).onclick = e => {
-      const lab = (k, t) => (show[k] ? '✓ ' : '  ') + t;
-      const tog = k => () => { show[k] = !show[k]; MQ.saveLocal(); MQ.render(); };
-      MQ.menu(e.currentTarget, [{ label: lab('pastas', 'Pastas'), onClick: tog('pastas') }, { label: lab('listas', 'Listas'), onClick: tog('listas') }, { label: lab('simulados', 'Simulados'), onClick: tog('simulados') }]);
+      const pv = t.closest('[data-prova]');
+      if (pv) { MQ.provaDialog(MQ.provaPresets()[+pv.dataset.prova]); return; }
+      const c = t.closest('[data-list]');
+      if (c) { const l = MQ.get('lists', c.dataset.list); if (!l) return; if (wide()) { selId = l.id; MQ.render(); } else openItem(l); }
     };
+    $('#l-sort', root).onclick = e => MQ.menu(e.currentTarget, [['recentes', 'Recentes'], ['nome', 'Nome'], ['progresso', 'Progresso'], ['acerto', 'Acerto']].map(([k, label]) => ({ label: (sortNow() === k ? '✓ ' : '   ') + label, onClick: () => { MQ.local.listSort = k; MQ.saveLocal(); MQ.render(); } })));
     $('#l-create', root).onclick = e => MQ.menu(e.currentTarget, [
       { label: 'Nova pasta', onClick: async () => {
         const v = await MQ.prompt('Nova pasta', 'Nome da pasta', '', 'Criar pasta');
-        if (v) { MQ.put('folders', { id: MQ.uid(), name: v, parentId: MQ.currentFolder || null }); MQ.render(); }
+        if (v) { MQ.put('folders', { id: MQ.uid(), name: v, parentId: realFolder() }); MQ.render(); }
       } },
       { label: 'Nova lista (escolher questões no banco)', onClick: () => { location.hash = '#/questoes'; MQ.toast('Filtre as questões e clique em "Criar lista".'); } },
       { label: 'Novo simulado (escolher questões no banco)', onClick: () => { location.hash = '#/questoes'; MQ.toast('Filtre as questões e clique em "Criar simulado".'); } }
     ]);
   };
+
+  function folderMenu(anchor, f) {
+    if (!f) return;
+    MQ.menu(anchor, [
+      { label: 'Renomear', onClick: () => rename('folders', f) },
+      { label: 'Mover para pasta', onClick: () => move('folders', f) },
+      '-',
+      { label: 'Excluir pasta', danger: true, onClick: () => delFolder(f) }
+    ]);
+  }
 })(window.MQ);

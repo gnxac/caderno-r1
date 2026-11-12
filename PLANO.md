@@ -77,13 +77,16 @@ Ordem aprovada na fase 1. Marque `[x]` ao concluir cada item. Decisões de visua
 - [ ] A meta de hoje mostra "Meta batida!" no mesmo cartão; falta decidir se a sequência e a meta destacam a conquista com mais ênfase (ciano hoje só no número, nas bolinhas e no anel cheio)
 
 ## 7. Listas e Simulados
-- [ ] Segmento Listas | Simulados
-- [ ] Progresso e acerto por lista
-- [ ] Ordenar, duplicar e mover entre pastas
-- [ ] Listas inteligentes
-- [ ] Modo prova por instituição (predefinições publicadas pelo admin)
-- [ ] Cartão-resposta
-- [ ] Revisão pós-prova
+- [x] Segmento Listas | Simulados; cartões com progresso (barra de certas e erradas, % feito, % acerto) e botão Continuar
+- [x] Caderno de erros fixo no topo de Listas (automático); pasta virtual "Inteligentes"
+- [x] Pastas em coluna (PC) ou chips (tablet e celular), ordenar (recentes, nome, progresso, acerto), duplicar, mover, renomear, excluir, recomeçar
+- [x] PC em 3 colunas (pastas | cartões | detalhe com "Continuar da N", Refazer erradas, Criar simulado e acerto por tema)
+- [x] Modo prova por instituição e ano: provas montadas a partir do banco (mínimo de 10 questões), na ordem do banco, com minutos por questão editáveis
+- [x] Simulado sem navegação do app, com botão Sair, atalhos `M` (marcar), `Shift C` (cartão) e `Ctrl Enter` (finalizar); cartão-resposta com letra marcada, em branco, marcadas e "próxima em branco"; barra fixa no celular
+- [x] Revisão pós-prova: nota, acerto por área, cartão de tempo (total, média e as 5 mais demoradas), grade clicável, "Revisar só as erradas" e criar lista com os erros
+- [ ] Predefinições de prova editadas e publicadas pelo administrador (hoje as provas saem do banco sem edição; publicar junto com o banco mexe no fluxo de publicação, ainda não testado com o Google real)
+- [ ] `provaPresets()` varre o banco a cada abertura de Listas; criar cache se o banco passar de alguns milhares de questões
+- [ ] Teste do toque real (tap) em tablet com toque nas telas novas
 
 ## 8. Desempenho
 - [ ] Evolução semanal (`multiLineChart`)
