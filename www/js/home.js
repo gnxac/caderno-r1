@@ -17,6 +17,7 @@
     const h = Math.round(m / 60);
     if (h < 24) return 'há ' + h + (h === 1 ? ' hora' : ' horas');
     const d = Math.round(h / 24);
+    if (d === 1) return 'ontem';
     return 'há ' + d + (d === 1 ? ' dia' : ' dias');
   }
   const plural = (n, a, b) => n + ' ' + (n === 1 ? a : b);
@@ -102,11 +103,11 @@
     const last = MQ.local.last;
     const l = last && last.listId && MQ.get('lists', last.listId);
     const lastIds = last && !last.listId && last.qids ? last.qids.filter(id => MQ.get('questions', id)) : [];
-    if (last && ((last.listId && l && l.qids.length) || lastIds.length)) {
-      const total = l ? l.qids.filter(id => MQ.get('questions', id)).length : lastIds.length;
-      const idx = Math.min(last.idx || 0, Math.max(total - 1, 0));
+    const total = l ? l.qids.filter(id => MQ.get('questions', id)).length : lastIds.length;
+    const idx = Math.min(last && last.idx || 0, Math.max(total - 1, 0));
+    if (last && total && idx < total - 1) { // sessão que já chegou à última questão não é oferecida de novo
       let st = 'Questão ' + (idx + 1) + ' de ' + total;
-      if (l) { const s = MQ.listStats(l); st += ' · ' + plural(s.ok, 'acerto', 'acertos') + ', ' + plural(s.err, 'erro', 'erros'); }
+      if (l) { const s = MQ.listStats(l); if (s.ok + s.err) st += ' · ' + plural(s.ok, 'acerto', 'acertos') + ', ' + plural(s.err, 'erro', 'erros'); }
       return '<div class="mk">Continuar de onde parei</div><div class="tt">' + esc(last.title || 'Questões') + '</div>' +
         '<div class="st">' + (l ? 'Lista' : 'Banco de questões') + ' · ' + st + '</div><div class="bar"><i style="width:' + MQ.pct(idx, total) + '%"></i></div>' +
         '<div class="row sb"><span class="st">' + ago(last.at) + '</span><button class="btn primary act-fixed" data-act="last">' + icon('play') + 'Continuar</button></div>';
@@ -215,7 +216,7 @@
     const weak = weakTopic(rows);
     const first = !rows.length && !MQ.alive('lists').length;
     const hour = new Date().getHours();
-    const greet = hour < 5 || hour >= 18 ? 'Boa noite' : hour < 12 ? 'Bom dia' : 'Boa tarde';
+    const greet = hour >= 18 ? 'Boa noite' : hour < 5 ? 'Boa madrugada' : hour < 12 ? 'Bom dia' : 'Boa tarde';
     const date = new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' });
     const st = MQ.syncStatus || { state: 'off', msg: 'Sem sincronização' };
     const hello = '<div class="hm hm-hello"><div><div class="st">' + esc(date.charAt(0).toUpperCase() + date.slice(1)) + '</div><h1>' + greet + '</h1></div>' +

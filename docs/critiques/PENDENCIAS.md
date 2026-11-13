@@ -172,8 +172,8 @@ Data: 2026-11-13 · Fonte: `Início`, `Questões`, `Resolverquestão`, `ListaseS
 Compartilhados: C-1, C-4, C-5, C-8, C-10, C-13, C-14.
 
 **P1**
-- **INI-1 · "Continuar de onde parei" nunca expira.** `home.js:102-116`; `solve.js:94-97` grava `last` em toda sessão e nada o limpa. Aparece "Continuar: Sessão rápida · Questão 10 de 10". Limpar `last` ao terminar, ou só oferecer se `idx < total-1`.
-- **INI-2 · Ação principal fora da zona do polegar.** "Continuar" a 25% da altura, "Revisar agora" a 69%. Resolve com C-4.
+- [x] **INI-1 · "Continuar de onde parei" nunca expira.** `home.js:102-116`; `solve.js:94-97` grava `last` em toda sessão e nada o limpa. Aparece "Continuar: Sessão rápida · Questão 10 de 10". Limpar `last` ao terminar, ou só oferecer se `idx < total-1`.
+- [x] **INI-2 · Ação principal fora da zona do polegar.** "Continuar" a 25% da altura, "Revisar agora" a 69%. Resolve com C-4.
 
 **P2**
 - **INI-3 · Primeiro uso no PC e tablet.** `.hm-grid.first` (900 px) deixa ~70% vazio, "Meta 0/20" é ruído e não diz que o banco é de exemplo (12 questões). Passos concretos e "Banco: N questões".
@@ -183,9 +183,9 @@ Compartilhados: C-1, C-4, C-5, C-8, C-10, C-13, C-14.
 
 **P3**
 - "Em dia" em verde, DESIGN.md pede ciano (`home.js:134`).
-- "0 acertos, 0 erros" com contadores zerados (`home.js:109`).
-- `ago()` diz "há 24 horas" em vez de "ontem".
-- "Boa noite" de 0h às 5h (`home.js:218`).
+- [x] "0 acertos, 0 erros" com contadores zerados (`home.js:109`).
+- [x] `ago()` diz "há 24 horas" em vez de "ontem".
+- [x] "Boa noite" de 0h às 5h (`home.js:218`).
 - No PC o botão de "Continuar" fica a ~700 px do título.
 - Sem skip-link nem atalho da ação principal.
 
