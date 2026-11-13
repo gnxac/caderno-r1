@@ -83,6 +83,7 @@
   async function init() {
     $$('[data-icon]').forEach(s => { s.outerHTML = icon(s.dataset.icon); });
     await MQ.loadData();
+    MQ.bankFilter = MQ.newFilter(); // depois de carregar os dados: o filtro padrão vem de MQ.local.filtroPadrao
     MQ.applyTheme();
     document.documentElement.style.setProperty('--font-scale', MQ.local.fontScale || 1);
     MQ.seedIfEmpty();

@@ -105,10 +105,13 @@ Ordem aprovada na fase 1. Marque `[x]` ao concluir cada item. Decisões de visua
 - [ ] Tooltips por toque no celular (hoje só reagem ao mouse)
 
 ## 9. Configurações
-- [ ] Status de sincronização detalhado
-- [ ] Backup e restauração (restaurar mescla, nunca apaga)
-- [ ] Meta diária e lembrete
-- [ ] Tela de atalhos
+- [x] Índice de seções (coluna no PC, chips no tablet e celular) e as seções: Conta e sincronização, Aparência, Estudo, Dados e backup, Atalhos, Administrador, Sobre
+- [x] Aparência: tema e tamanho do enunciado com prévia ao vivo (80% a 160%)
+- [x] Estudo: meta diária e filtro padrão em Questões ("Que não resolvi" ou "Todas")
+- [x] Dados e backup: exportar backup completo, restaurar (mescla; não apaga o que é mais novo que o arquivo), exportar respostas em CSV (separador ponto e vírgula, para o Excel em português); a mesma ação também na tela de cadastro do administrador
+- [x] Tela de atalhos e "Sobre" com a versão (`tests/versao.test.js` confere com o package.json)
+- [ ] Status de sincronização detalhado (alterações pendentes, erro legível) — adiado a pedido, junto com o teste de sincronização entre dois aparelhos
+- [ ] Lembrete diário (entra com os extras, só no Android)
 
 ## 10. Extras
 - [ ] Gerar flashcard Anki (.txt; AnkiConnect no Windows)

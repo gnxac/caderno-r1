@@ -200,24 +200,8 @@
       MQ.touch();
       MQ.toast(added + (added === 1 ? ' questão importada, ' : ' questões importadas, ') + dups + ' repetidas ignoradas (dados mesclados).');
     };
-    $('#i-bkp', body).onclick = () => MQ.saveFile('caderno-r1-backup-' + new Date().toISOString().slice(0, 10) + '.json', JSON.stringify(Object.assign({}, MQ.data, { media: MQ.media })), 'application/json');
-    $('#i-rest', body).onclick = async () => {
-      const f = await MQ.pickFile('.json,application/json');
-      if (!f) return;
-      let d;
-      try { d = JSON.parse(f.text); } catch (e) { MQ.toast('Arquivo inválido: não é um backup do Caderno R1.', 'err'); return; }
-      if (!d || !d.questions) { MQ.toast('Arquivo inválido: não é um pacote nem um backup do Caderno R1.', 'err'); return; }
-      const pre = MQ.mergeDeduped(d, true);
-      const nq = pre.added;
-      const nl = Object.keys(d.lists || {}).filter(id => !MQ.data.lists[id]).length;
-      const ok = await MQ.confirm('Importar ' + (d.formato === 'caderno-r1-pacote' ? 'pacote' : 'backup'),
-        (d.nome ? d.nome + ': ' : '') + nq + ' questões novas' + (pre.dup ? ', ' + pre.dup + ' repetidas (serão ignoradas)' : '') + (nl ? ', ' + nl + (nl === 1 ? ' lista nova' : ' listas novas') : '') + (d.media ? ' e ' + Object.keys(d.media).length + ' imagens' : '') + '. Continuar?', 'Importar');
-      if (!ok) return;
-      const res = MQ.mergeDeduped(d);
-      const m = MQ.mergeMedia(d.media, true);
-      MQ.touch();
-      MQ.toast(res.added + (res.added === 1 ? ' questão importada, ' : ' questões importadas, ') + res.dup + ' repetidas ignoradas (dados mesclados)' + (m ? '; ' + m + ' imagens' : '') + '.');
-    };
+    $('#i-bkp', body).onclick = MQ.backupExport;
+    $('#i-rest', body).onclick = MQ.backupRestore;
     $('#i-qcsv', body).onclick = () => {
       const rows = [CSV_COLS].concat(MQ.alive('questions').map(q => {
         const alt = l => ((q.alternativas || []).find(a => a.l === l) || {}).t || '';
@@ -226,6 +210,26 @@
       MQ.saveFile('caderno-r1-questoes.csv', '﻿' + MQ.toCSV(rows), 'text/csv;charset=utf-8');
     };
   }
+
+  /* Backup completo e restauração (também em Configurações): restaurar mescla com os dados atuais, nunca apaga */
+  MQ.backupExport = () => MQ.saveFile('pulse-backup-' + new Date().toISOString().slice(0, 10) + '.json', JSON.stringify(Object.assign({}, MQ.data, { media: MQ.media })), 'application/json');
+  MQ.backupRestore = async () => {
+    const f = await MQ.pickFile('.json,application/json');
+    if (!f) return;
+    let d;
+    try { d = JSON.parse(f.text); } catch (e) { MQ.toast('Arquivo inválido: não é um backup do Pulse.', 'err'); return; }
+    if (!d || !d.questions) { MQ.toast('Arquivo inválido: não é um pacote nem um backup do Pulse.', 'err'); return; }
+    const pre = MQ.mergeDeduped(d, true);
+    const nq = pre.added;
+    const nl = Object.keys(d.lists || {}).filter(id => !MQ.data.lists[id]).length;
+    const ok = await MQ.confirm('Importar ' + (d.formato === 'caderno-r1-pacote' ? 'pacote' : 'backup'),
+    (d.nome ? d.nome + ': ' : '') + nq + ' questões novas' + (pre.dup ? ', ' + pre.dup + ' repetidas (serão ignoradas)' : '') + (nl ? ', ' + nl + (nl === 1 ? ' lista nova' : ' listas novas') : '') + (d.media ? ' e ' + Object.keys(d.media).length + ' imagens' : '') + '. Continuar?', 'Importar');
+    if (!ok) return;
+    const res = MQ.mergeDeduped(d);
+    const m = MQ.mergeMedia(d.media, true);
+    MQ.touch();
+    MQ.toast(res.added + (res.added === 1 ? ' questão importada, ' : ' questões importadas, ') + res.dup + ' repetidas ignoradas (dados mesclados)' + (m ? '; ' + m + ' imagens' : '') + '.');
+  };
 
   /* ---------- Gerenciar ---------- */
   let mq = '';

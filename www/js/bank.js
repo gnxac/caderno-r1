@@ -29,7 +29,7 @@
   const SIT_LABEL = { nao: 'Que não resolvi', resolvi: 'Que já resolvi', acertei: 'Que acertei', errei: 'Que errei' };
 
   MQ.newFilter = function () {
-    const f = { paths: [], situacao: ['nao'], erros: false, revisao: false, tipos: ['multipla', 'certoerrado'], comCom: true, semCom: true, anuladas: false, desatualizadas: false, texto: '' };
+    const f = { paths: [], situacao: MQ.local.filtroPadrao === 'todas' ? ['nao', 'resolvi'] : ['nao'], erros: false, revisao: false, tipos: ['multipla', 'certoerrado'], comCom: true, semCom: true, anuladas: false, desatualizadas: false, texto: '' };
     FIELDS.forEach(x => { f[x.key] = []; });
     return f;
   };
@@ -340,7 +340,7 @@
   function removeChip(kind, val) {
     const f = MQ.bankFilter;
     if (kind === 'path') f.paths = f.paths.filter(p => p !== val);
-    else if (kind === 'situacao') { if (val === '__all') f.situacao = ['nao']; else { f.situacao = f.situacao.filter(x => x !== val); if (!f.situacao.length) f.situacao = ['nao', 'resolvi']; } }
+    else if (kind === 'situacao') { if (val === '__all') f.situacao = MQ.newFilter().situacao; else { f.situacao = f.situacao.filter(x => x !== val); if (!f.situacao.length) f.situacao = ['nao', 'resolvi']; } }
     else if (kind === 'erros' || kind === 'revisao') f[kind] = false;
     else if (kind === 'tipos') f.tipos = ['multipla', 'certoerrado'];
     else if (kind === 'com') { f.comCom = true; f.semCom = true; }
