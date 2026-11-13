@@ -21,8 +21,10 @@
       clientSecret: s.clientSecret || c.googleClientSecret || ''
     };
   }
-  MQ.syncConfigured = () => !!(cfg().clientId && cfg().clientSecret);
-  MQ.syncLoggedIn = () => !!(MQ.local.sync && MQ.local.sync.refreshToken);
+  /* No site (navegador) o login é o do Google Identity Services, em auth.js; nos apps nativos, o fluxo de código abaixo */
+  const web = () => !!(MQ.auth && MQ.auth.web);
+  MQ.syncConfigured = () => (web() ? MQ.auth.configured() : !!(cfg().clientId && cfg().clientSecret));
+  MQ.syncLoggedIn = () => (web() ? !!MQ.auth.user() : !!(MQ.local.sync && MQ.local.sync.refreshToken));
 
   function setStatus(state, msg) {
     MQ.syncStatus = { state, msg };
@@ -54,6 +56,7 @@
   }
 
   async function token() {
+    if (web()) return MQ.auth.getToken();
     const s = MQ.local.sync;
     if (s.accessToken && s.expiresAt - 60000 > Date.now()) return s.accessToken;
     const c = cfg();
@@ -351,7 +354,24 @@
   }
 
   /* Seção "Conta e sincronização" da tela Configurações */
+  function webSection(root) {
+    const s = MQ.local.sync || {};
+    root.innerHTML =
+      '<section class="sync-card"><h2>Conta Google</h2><dl class="kv"><dt>Conta</dt><dd>' + esc(s.email || 'sem conta neste navegador') + '</dd><dt>Última sincronização</dt><dd>' + (s.lastSync ? MQ.fmtDateTime(s.lastSync) : 'ainda não') + '</dd></dl>' +
+      '<p class="muted small">' + (MQ.syncLoggedIn() ? 'Sincroniza sozinho com a pasta oculta do app no seu Drive. Se o mesmo item mudar em dois aparelhos, vale a edição mais recente.' : 'Sem conta, seus dados ficam só neste navegador.') + '</p>' +
+      '<div class="toolbar">' + (MQ.syncLoggedIn()
+        ? '<button class="btn primary" id="sy-now">' + icon('sync') + ' Sincronizar agora</button><button class="btn" id="sy-re">Reconectar</button><button class="btn ghost" id="sy-out">Sair</button><button class="btn ghost" id="sy-wipe">Sair e apagar dados daqui</button>'
+        : '<button class="btn primary" id="sy-in">' + icon('cloud') + ' Entrar com o Google</button>') + '</div></section>';
+    const on = (id, fn) => { if ($(id, root)) $(id, root).onclick = fn; };
+    on('#sy-now', async () => { await MQ.syncNow({ manual: true }); MQ.render(); });
+    on('#sy-re', async () => { try { if (await MQ.auth.signIn()) { await MQ.syncNow({ manual: true }); MQ.render(); } } catch (e) { MQ.toast('Não foi possível reconectar.', 'err'); } });
+    on('#sy-out', () => MQ.auth.signOut(false));
+    on('#sy-wipe', () => MQ.auth.signOut(true));
+    on('#sy-in', async () => { try { if (await MQ.auth.signIn()) { await MQ.syncNow({ manual: true }); MQ.render(); } } catch (e) { MQ.toast('Não foi possível entrar.', 'err'); } });
+  }
+
   MQ.syncSection = function (root) {
+    if (web()) return webSection(root);
     const s = MQ.local.sync || {};
     const c = cfg();
     const fromFile = !!(window.MQ_CONFIG && window.MQ_CONFIG.googleClientId);

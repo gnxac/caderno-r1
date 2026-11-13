@@ -100,6 +100,13 @@
     return idbSet(KEY_DATA, MQ.data);
   };
   MQ.saveLocal = function () { return idbSet(KEY_LOCAL, MQ.local); };
+  /* Apaga tudo deste navegador (troca de conta ou "sair e apagar"); mantém só o id do aparelho */
+  MQ.resetData = async function () {
+    clearTimeout(saveTimer);
+    MQ.data = emptyData(); MQ.media = {};
+    MQ.local = { fontScale: 1, theme: 'auto', sync: {}, deviceId: MQ.local.deviceId, lastSync: 0, seeded: false };
+    await idbSet(KEY_DATA, MQ.data); await idbSet(KEY_MEDIA, MQ.media); await idbSet(KEY_LOCAL, MQ.local);
+  };
 
   /* Registra/atualiza um item numa coleção */
   MQ.put = function (coll, obj) {

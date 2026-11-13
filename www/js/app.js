@@ -83,6 +83,8 @@
   async function init() {
     $$('[data-icon]').forEach(s => { s.outerHTML = icon(s.dataset.icon); });
     await MQ.loadData();
+    MQ.applyTheme();
+    if (MQ.auth) await MQ.auth.gate(); // no site, só abre depois do login com Google
     if (MQ.reminderApply) MQ.reminderApply(); // reagenda o lembrete com a meta atual
     MQ.bankFilter = MQ.newFilter(); // depois de carregar os dados: o filtro padrão vem de MQ.local.filtroPadrao
     MQ.applyTheme();
@@ -91,6 +93,8 @@
     if (!location.hash) location.hash = '#/inicio';
     MQ.render();
     MQ.initSync();
+    /* Site: funciona offline depois da primeira visita (só em https ou localhost; nunca no Electron/Capacitor) */
+    if (MQ.auth && MQ.auth.web && 'serviceWorker' in navigator && /^(https:|http:\/\/localhost)/.test(location.href)) navigator.serviceWorker.register('sw.js').catch(e => console.error(e));
   }
   init().catch(e => {
     console.error(e);

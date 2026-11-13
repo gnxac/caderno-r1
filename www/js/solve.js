@@ -127,7 +127,6 @@
         '<button class="icon-btn" id="q-fminus" title="Diminuir letra" aria-label="Diminuir letra">' + icon('textdown') + '</button>' +
         '<button class="icon-btn" id="q-fplus" title="Aumentar letra" aria-label="Aumentar letra">' + icon('textup') + '</button>' +
         '<button class="qb qb-note" id="q-note-btn" title="Anotação (N)" aria-label="Anotação">' + icon('edit') + '<span>Anotação' + (noteOf(qid) ? ' ✓' : '') + '</span></button>' +
-        '<button class="qb" id="q-anki" title="Gerar flashcard para o Anki" aria-label="Gerar flashcard para o Anki">' + icon('layers') + '<span>Anki</span></button>' +
         '<button class="qb" id="q-sol" title="Solução e comentário" aria-label="Ir para a solução">' + icon('bulb') + '<span>Solução</span></button>' +
         '<button class="qb" id="q-unmark" title="Apagar marcações desta questão" aria-label="Apagar marcações desta questão"' + (hasMk ? '' : ' disabled') + '>' + icon('eraser') + '<span>Limpar marcas</span></button>' +
         (MQ.isAdmin() ? '<button class="qb" id="q-edit" title="Editar questão" aria-label="Editar questão">' + icon('edit') + '<span>Editar</span></button>' : '') +
@@ -228,7 +227,6 @@
       if (c) c.scrollIntoView({ behavior: 'smooth', block: 'start' }); else MQ.toast('Responda a questão para ver a solução.');
     };
     $('#q-add', root).onclick = e => addToListMenu(e.currentTarget, qid);
-    $('#q-anki', root).onclick = () => MQ.ankiExport([qid], q.codigo);
     $('#q-topics', root).onclick = () => { s.showTopics = !s.showTopics; MQ.render(); };
     MQ.enableMarker(root, qid);
     if ($('#q-edit', root)) $('#q-edit', root).onclick = () => { location.hash = '#/cadastrar/' + qid; };

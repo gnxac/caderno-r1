@@ -114,10 +114,9 @@ Ordem aprovada na fase 1. Marque `[x]` ao concluir cada item. Decisões de visua
 - [ ] Lembrete diário (entra com os extras, só no Android)
 
 ## 10. Extras
-- [x] Gerar flashcard Anki (.txt de importação, um cartão por questão: frente com enunciado e alternativas, verso com gabarito, comentário e a sua anotação; baralho `Pulse::área::especialidade::tema`; reimportar atualiza em vez de duplicar). Botão no Resolver, no menu da lista, no Caderno de erros e em Anotações. Teste: `node tests/anki.test.js`
+- [x] Flashcard Anki: feito e depois removido a pedido do usuário
 - [x] Lembrete diário por notificação no Android (plugin `@capacitor/local-notifications`; liga e escolhe o horário em Configurações; reagenda ao abrir o app e ao mudar a meta). Testado no navegador com o plugin simulado
 - [ ] Lembrete testado em um aparelho Android de verdade (permissão de notificações, ícone da notificação, horário); só dá para confirmar com o .apk gerado pelo workflow
-- [ ] Envio direto ao Anki pelo AnkiConnect no Windows (não feito: exige configurar o CORS do AnkiConnect); o .txt cobre o caso
 - [ ] Imagens das questões não vão nos flashcards
 
 ## 11. Revisão final de acabamento

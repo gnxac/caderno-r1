@@ -1,10 +1,11 @@
 # Caderno R1
 
-App de banco de questões para residência médica: resolver questões, listas, simulados cronometrados, marca-texto e desempenho. JS puro, sem build, tudo no objeto global `MQ`. Roda no Windows (Electron), no Android (Capacitor 7) e no navegador. Dados no IndexedDB, sincronizados pela conta Google (pasta oculta do Drive).
+App de banco de questões para residência médica: resolver questões, listas, simulados cronometrados, marca-texto e desempenho. JS puro, sem build, tudo no objeto global `MQ`. Agora é um **site responsivo** (computador, celular e tablet) publicado no GitHub Pages, com login Google (`www/js/auth.js`), manifesto e `www/sw.js` (offline). Windows (Electron) e Android (Capacitor 7) ficam como legado. Dados no IndexedDB, sincronizados pela conta Google (pasta oculta do Drive).
 
 ## Estrutura
 - `www/` — o app: `index.html`, `css/app.css`, `js/` (um arquivo por tela: `bank`, `solve`, `lists`, `sim`, `perf`, `settings`, `editor`; `db.js` dados e mesclagem; `sync.js` Drive e banco publicado; `config.js` credenciais, admin e `bankManifestId`).
 - `electron/` — janela do Windows e requisições ao Google (lista de hosts permitidos em `main.js`).
+- `.github/workflows/publicar-site.yml` — publica `www/` no GitHub Pages (push na `main`).
 - `.github/workflows/gerar-instaladores.yml` — gera .exe e .apk.
 - `.claude/agents/` — subagentes do projeto.
 

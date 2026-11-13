@@ -1,6 +1,6 @@
 # Caderno R1
 
-App de questões para residência médica, para **Windows** e **Android**, com sincronização pela sua **conta Google**.
+Site de questões para residência médica, responsivo para **computador, celular e tablet**, com login e sincronização pela sua **conta Google**. (Os apps Windows e Android continuam disponíveis como legado.)
 
 ## O que tem
 
@@ -12,6 +12,18 @@ App de questões para residência médica, para **Windows** e **Android**, com s
 - **Cadastrar**: formulário, importação de planilha CSV, backup completo e exportação.
 
 O app vem com 12 questões de exemplo escritas para ele. Apague em **Cadastrar → Gerenciar questões** quando quiser. Ele **não** traz questões do Estratégia MED nem de outras plataformas: são conteúdo protegido delas. Você monta seu banco cadastrando ou importando.
+
+---
+
+## 0. Publicar o site (GitHub Pages) e ativar o login
+
+1. Faça o merge da branch na `main` e, no GitHub: **Settings → Pages → Source: GitHub Actions**. O workflow "Publicar site" gera o endereço `https://<usuario>.github.io/pulse/`. (Repositório privado exige plano pago; se for o caso, deixe-o público: o código não tem segredos.)
+2. No **console.cloud.google.com** (projeto e Drive API como na seção 1), **Credenciais → Criar credenciais → ID do cliente OAuth → Aplicativo da Web**.
+3. Em **Origens JavaScript autorizadas** coloque só `https://<usuario>.github.io` (sem caminho). Para testar no PC, adicione também `http://localhost:8765`. Não precisa de URI de redirecionamento nem de chave secreta.
+4. Copie o ID do cliente para `googleWebClientId` em `www/js/config.js`, faça commit na `main` e espere o workflow terminar.
+5. Se a tela de permissão estiver em "Teste", adicione os e-mails dos colegas como usuários de teste, ou publique o app (permissões não sensíveis, sem verificação).
+
+No celular, abra o site e use **Instalar app / Adicionar à tela inicial**.
 
 ---
 

@@ -298,7 +298,7 @@ Cada cartão responde "o que faço agora?" e tem uma ação só. Ordem: **Contin
 - Centro: código e classificação, enunciado, alternativas com tesoura, Confirmar.
 - Depois de confirmar: gabarito, comentário, aviso de quando a questão volta na revisão e Próxima. **Não existe ver gabarito sem responder.**
 - Mapa (à esquerda, PC): grade de questões e, abaixo dela, o cartão **Resultado** (acertos e erros em blocos grandes com ✓ e ✗, barra e % de acerto). Histórico de respostas só no painel; abaixo de 860 px o botão no cartão da questão.
-- Painel (PC e tablet): tempo, histórico nesta questão, anotação, ações (adicionar à lista, flashcard Anki), marca-texto. No celular vão para o menu ⋯; ferramentas numa pílula flutuante.
+- Painel (PC e tablet): tempo, histórico nesta questão, anotação, ações (adicionar à lista), marca-texto. No celular vão para o menu ⋯; ferramentas numa pílula flutuante.
 - PC: mapa da lista \| questão \| painel.
 
 ### Listas

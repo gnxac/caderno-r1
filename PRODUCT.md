@@ -4,7 +4,7 @@
 
 ## Platform
 
-web
+Site responsivo (web) para computador, celular e tablet. Entra-se com a conta Google; instalável como app (PWA) e funciona offline. Os apps Windows (Electron) e Android (APK) continuam no repositório como legado.
 
 ## Users
 Residentes e candidatos a residência médica, colegas do administrador (Guilherme), que recebem o app e o banco publicado. Estudam em sessões longas, no celular (muitas vezes com uma mão), no tablet e no computador, resolvendo questões de provas oficiais. O administrador cadastra, importa e publica as questões; os demais só resolvem.
@@ -16,7 +16,7 @@ Pulse é um banco de questões para resolver, organizar em listas e simulados cr
 Controle total do estudo (marca-texto, tesoura, listas, simulados, revisão dos erros e desempenho do jeito do estudante), gratuito e sem anúncios, que funciona offline e sem conta própria: os dados ficam no aparelho e sincronizam pelo Google Drive de cada pessoa, sem servidor nem assinatura.
 
 ## Operating Context
-Windows (Electron portátil), Android (APK, Capacitor 7) e navegador. Layout responsivo em três formatos pela largura da janela: celular (barra inferior), tablet (rail e 2 colunas) e computador (barra lateral, 3 colunas e atalhos de teclado). Sincronização com a pasta oculta do Drive de cada usuário. O administrador publica o banco num arquivo público do próprio Drive (manifesto com versão + banco); os aparelhos baixam só quando a versão muda. Questões são importadas de pacotes `.json`, CSV ou cadastradas à mão.
+WSite publicado no GitHub Pages (pasta `www/`, sem build), responsivo em três formatos pela largura da janela: celular (barra inferior), tablet (rail e 2 colunas) e computador (barra lateral, 3 colunas e atalhos de teclado). Tela de login "Entrar com Google" (Google Identity Services, sem servidor e sem senha; ID de cliente "Aplicativo da Web" em `googleWebClientId`). Manifesto e service worker deixam o site instalável e offline. Legado: Windows (Electron portátil) e Android (APK, Capacitor 7), com o fluxo antigo de código no google.com/device. Sincronização com a pasta oculta do Drive de cada usuário. O administrador publica o banco num arquivo público do próprio Drive (manifesto com versão + banco); os aparelhos baixam só quando a versão muda. Questões são importadas de pacotes `.json`, CSV ou cadastradas à mão.
 
 ## Capabilities and Constraints
 - JS puro, sem build, tudo no objeto global `MQ`; dados no IndexedDB. A stack continua a mesma na reformulação.
@@ -32,7 +32,7 @@ Windows (Electron portátil), Android (APK, Capacitor 7) e navegador. Layout res
 ## Scope of the Redesign
 Funções que entram (plano aprovado: https://claude.ai/artifact/5UEsWEqJe55ZWP6JTiBqVA):
 - **Início:** continuar de onde parei, meta diária, sequência, revisões do dia, ponto mais fraco com "Treinar agora", heatmap, sessão rápida de 10 questões.
-- **Questões:** busca global (`Ctrl K`), caderno de erros automático, revisão espaçada das erradas (Leitner 1-3-7-15-30 dias), anotações por questão, tempo por questão, modo foco, gerar flashcard Anki (.txt; AnkiConnect no Windows), selo de anulada e desatualizada.
+- **Questões:** busca global (`Ctrl K`), caderno de erros automático, revisão espaçada das erradas (Leitner 1-3-7-15-30 dias), anotações por questão, tempo por questão, modo foco, selo de anulada e desatualizada.
 - **Anotações:** aba com todas as anotações das questões, filtro por assunto (hierarquia da questão), busca, editar e excluir.
 - **Listas:** listas inteligentes (filtros salvos), progresso por lista, ordenar, duplicar e mover entre pastas.
 - **Simulados:** modo prova por instituição (predefinições editadas e publicadas pelo admin), cartão-resposta, revisão pós-prova.

@@ -1022,3 +1022,33 @@ body.in-focus .qcard { margin-left: auto; margin-right: auto; }
 .fbtn:hover, .perf-card:hover, button.area-card:hover { filter: none; background-color: color-mix(in srgb, var(--fbtn-bg, var(--accent-soft)), var(--ink) 6%); }
 .fbtn.adv:hover { background-color: color-mix(in srgb, var(--accent), black 10%); }
 @media (prefers-reduced-motion: reduce) { .modal-back, .modal, .fpage-panel { transition: none; } }
+
+/* ================= Tela de login (site) ================= */
+body.logged-out .shell { display: none; }
+#login { min-height: 100dvh; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); background: var(--paper); color: var(--ink); }
+.lg-brand { background: var(--accent); color: var(--accent-ink); padding: 64px 56px; display: flex; flex-direction: column; justify-content: center; gap: 24px; }
+.lg-brand h2 { font-size: 2rem; line-height: 1.15; max-width: 16ch; text-wrap: balance; color: inherit; margin: 0; }
+.lg-brand ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 12px; max-width: 42ch; }
+.lg-brand li { padding-left: 22px; position: relative; opacity: .92; }
+.lg-brand li::before { content: ""; position: absolute; left: 0; top: .6em; width: 8px; height: 8px; border-radius: 50%; background: currentColor; opacity: .7; }
+.lg-mark { display: flex; align-items: center; gap: 12px; font-size: 1.5rem; }
+.lg-mark.sm { display: none; margin-bottom: 8px; color: var(--navy); }
+.lg-card { align-self: center; justify-self: center; width: min(420px, 100%); padding: 32px 24px; display: grid; gap: 16px; }
+.lg-card h1 { margin: 0; font-size: 1.75rem; color: var(--navy); }
+.lg-sub, .lg-fine { margin: 0; color: var(--ink-3); text-wrap: pretty; }
+.lg-fine { font-size: .8125rem; }
+.lg-google { display: inline-flex; align-items: center; justify-content: center; gap: 12px; min-height: 48px; padding: 0 20px; border: 1px solid var(--line-2); border-radius: 10px; background: var(--surface); color: var(--ink); font: inherit; font-weight: 600; cursor: pointer;
+  transition-property: background-color, border-color, scale; transition-duration: var(--t-fast); transition-timing-function: ease-out; }
+.lg-google:hover:not(:disabled) { border-color: var(--ink-3); background: var(--sunk); }
+.lg-google:active:not(:disabled) { scale: .96; }
+.lg-google:disabled { opacity: .6; cursor: progress; }
+.lg-google:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.lg-warn { margin: 0; padding: 12px 14px; border-radius: 8px; background: var(--warn-soft); color: var(--warn); font-size: .875rem; }
+.lg-err { margin: 0; padding: 12px 14px; border-radius: 8px; background: var(--err-soft); color: var(--err); font-size: .875rem; }
+@media (max-width: 860px) {
+  #login { grid-template-columns: 1fr; }
+  .lg-brand { display: none; }
+  .lg-mark.sm { display: flex; }
+  .lg-card { align-self: start; padding-top: max(48px, env(safe-area-inset-top)); }
+}
+@media (prefers-reduced-motion: reduce) { .lg-google { transition: none; } .lg-google:active:not(:disabled) { scale: none; } }
