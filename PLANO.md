@@ -121,6 +121,11 @@ Ordem aprovada na fase 1. Marque `[x]` ao concluir cada item. Decisões de visua
 - [ ] Imagens das questões não vão nos flashcards
 
 ## 11. Revisão final de acabamento
-- [ ] Revisão completa da skill `make-interfaces-feel-better` em todas as telas, nos 3 formatos, claro e escuro
-- [ ] Correções aplicadas
-- [ ] Instaladores gerados (.exe e .apk)
+- [x] Revisão completa da skill `make-interfaces-feel-better` em todas as telas, nos 3 formatos, claro e escuro (nenhum achado grave)
+- [x] Correções aplicadas: alvos de toque (40 px no PC, 44 px no toque), hover e pressionado em linhas e células, foco visível no menu e nas bolhas, `text-wrap` e números tabulares, entrada suave de janelas, hover por cor em cartões largos, cantos concêntricos, contorno da imagem ampliada
+- [x] Versão 1.6.0 e instalador Admin gerado
+- [ ] Estado de carregamento (esqueleto): descartado de propósito, os dados vêm do aparelho e aparecem em menos de 1 s
+- [ ] Ícones fora da grade 16/18/20 (12, 14, 15, 17 px) e traço de espessura visual variável: adiado, risco de regressão visual
+- [ ] Movimento a 10% da velocidade e a tela de Resultado do simulado só foram inspecionados pelo CSS
+- [ ] .apk gerado pelo workflow, com ícone, splash e lembrete conferidos em um aparelho Android
+- [ ] Teste de sincronização entre dois aparelhos (passo 0), adiado a pedido

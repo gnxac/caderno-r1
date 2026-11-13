@@ -38,9 +38,10 @@ body.in-sim .toast { bottom: calc(84px + env(safe-area-inset-bottom)); }
 .sc {
   width: 44px; height: 44px; border-radius: 50%; border: 2px solid transparent; background: var(--sunk); color: var(--ink);
   display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1; padding: 0; cursor: pointer;
-  transition: background-color 120ms ease-out, border-color 120ms ease-out, transform 120ms ease-out;
+  transition-property: background-color, border-color, scale; transition-duration: var(--t-fast); transition-timing-function: ease-out;
 }
-.sc:active { transform: scale(0.96); }
+.sc:hover:not(.cur) { border-color: var(--ink-3); }
+.sc:active { scale: .96; }
 .sc .n { font-size: .8rem; font-weight: 600; }
 .sc .l { font-size: .7rem; font-weight: 800; min-height: .7rem; }
 .sc.ans { background: var(--accent); color: var(--accent-ink); }
@@ -65,4 +66,4 @@ body.in-sim .toast { bottom: calc(84px + env(safe-area-inset-bottom)); }
 }
 .sim-slow-row:hover { background: var(--accent-soft); }
 .sim-slow-row:focus-visible { outline: 2px solid var(--navy); outline-offset: 2px; }
-@media (prefers-reduced-motion: reduce) { .sc, .sim-slow-row { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .sc, .sim-slow-row { transition: none; } .sc:active { scale: none; } }

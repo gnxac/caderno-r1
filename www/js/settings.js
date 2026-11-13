@@ -2,7 +2,7 @@
 (function (MQ) {
   'use strict';
   const { $, $$, esc, icon } = MQ;
-  MQ.VERSION = '1.5.0'; // tests/versao.test.js confere com o package.json
+  MQ.VERSION = '1.6.0'; // tests/versao.test.js confere com o package.json
 
   const SECTIONS = [['conta', 'Conta e sincronização'], ['aparencia', 'Aparência'], ['estudo', 'Estudo'], ['dados', 'Dados e backup'], ['atalhos', 'Atalhos'], ['admin', 'Administrador'], ['sobre', 'Sobre']];
   const KEYS = [

@@ -519,7 +519,7 @@ mark.hl { color: #1D2B33; border-radius: 2px; padding: 0 1px; box-decoration-bre
 .hl-pink { background: #FFCCE8; }
 .mk-bar { position: absolute; z-index: 60; display: flex; align-items: center; gap: 6px; padding: 6px 8px; background: var(--surface); border: 1px solid var(--line-2); border-radius: 999px; box-shadow: 0 6px 20px rgba(0,0,0,.18); }
 .mk-bar button { width: 30px; height: 30px; border-radius: 50%; border: 1px solid rgba(0,0,0,.18); cursor: pointer; padding: 0; display: inline-flex; align-items: center; justify-content: center; }
-.mk-bar button:hover, .mk-bar button:focus-visible { transform: scale(1.12); outline: 2px solid var(--focus); outline-offset: 1px; }
+.mk-bar button:hover, .mk-bar button:focus-visible { scale: 1.08; outline: 2px solid var(--focus); outline-offset: 1px; }
 .mk-bar .mk-erase { background: var(--sunk); color: var(--ink-2); border-color: var(--line-2); margin-left: 2px; }
 .mk-bar .mk-erase .ic { width: 17px; height: 17px; }
 @media (pointer: coarse) { .mk-bar button { width: 44px; height: 44px; } }
@@ -973,3 +973,52 @@ body.in-focus .qcard { margin-left: auto; margin-right: auto; }
 
 /* Interruptores: área de toque de 44 px sem mudar o desenho */
 @media (pointer: coarse), (max-width: 860px) { .sw::before { content: ""; position: absolute; inset: -7px -3px; } }
+
+/* ================= Revisão final de acabamento (make-interfaces-feel-better) =================
+   Regras que vencem as anteriores pela ordem. */
+
+/* Alvos de toque: 40 px no PC (DESIGN.md) e 44 px no toque */
+@media (min-width: 861px) and (pointer: fine) {
+  .btn.sm, .qchip, .chip-t, .chip-x, .lst-fb, .pick, .chip-trail, .set-index a, .seg button, button.bar-row, .fp-open { min-height: 40px; }
+  .lc-name { padding: 10px 0; }
+  #fs-range { min-height: 40px; }
+}
+@media (pointer: coarse), (max-width: 860px) {
+  .qh-top .pane-search input, .nt-search input, .weak-list .btn.sm, .perf-actions .btn, .chip-trail, .fp-open, .lc-name, .seg button, .pick { min-height: 44px; }
+}
+
+/* Cantos concêntricos: botão dentro de uma superfície com pouca folga */
+.answer-banner .icon-btn { border-radius: 4px; }
+.alt .cut { border-radius: 6px; transition-property: opacity, color, background-color, scale; transition-duration: var(--t-fast); transition-timing-function: ease-out; }
+.zoom-img { outline: 1px solid var(--img-outline); outline-offset: -1px; border-radius: 6px; }
+
+/* Texto: sem palavra solta na última linha e números de largura fixa onde mudam */
+.hm-card .st, .lcard .st, .lc-detail .st, .nt-text, .qh-sub, .pc-t small, .modal-body, .toast, .page-head p { text-wrap: pretty; }
+.hm-card .tt, .lc-dtitle, .pc-t b { text-wrap: balance; }
+.dl, .hm-card .st, .lcard .st, .lc-detail .st, .qmeta, .badge, .pc-t small { font-variant-numeric: tabular-nums; }
+
+/* Hover e pressionado em linhas e células clicáveis */
+.fp-row, .opt, .sw-row, .hm-run, .qindex-grid button, .chip-trail, .crumbs button {
+  transition-property: background-color, border-color, color, scale; transition-duration: var(--t-fast); transition-timing-function: ease-out;
+}
+.fp-row:hover, .opt:hover, .sw-row:hover, .hm-run:hover { background-color: var(--sunk); }
+.chip-trail:hover:not(.cur) { border-color: var(--ink-3); color: var(--ink); }
+.qindex-grid button:hover:not(.cur) { border-color: var(--ink-3); }
+.crumbs button:hover { text-decoration: underline; }
+.qindex-grid button:active, .chip-trail:active { scale: .96; }
+
+/* Foco por teclado visível no menu e nas bolhas do gráfico */
+.popmenu button:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; background: var(--sunk); }
+.chart-svg .bubble:focus { outline: none; }
+.chart-svg .bubble:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+/* Entrada de janela e de página de filtro (poucas vezes por sessão); saída continua instantânea */
+.modal-back { transition: opacity var(--t-fast) ease-out; @starting-style { opacity: 0; } }
+.modal { transition: translate var(--t-fast) ease-out; @starting-style { translate: 0 8px; } }
+.fpage-panel { transition: translate var(--t-fast) ease-out; @starting-style { translate: 24px 0; } }
+
+/* Hover por cor em cartões largos (filter repinta a área toda) */
+.fbtn, .perf-card, .area-card { transition-property: background-color, scale; }
+.fbtn:hover, .perf-card:hover, button.area-card:hover { filter: none; background-color: color-mix(in srgb, var(--fbtn-bg, var(--accent-soft)), var(--ink) 6%); }
+.fbtn.adv:hover { background-color: color-mix(in srgb, var(--accent), black 10%); }
+@media (prefers-reduced-motion: reduce) { .modal-back, .modal, .fpage-panel { transition: none; } }
