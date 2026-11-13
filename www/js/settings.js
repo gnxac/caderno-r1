@@ -32,10 +32,11 @@
       '<nav class="set-index" aria-label="Seções">' + secs.map(([k, l]) => '<a href="#/configuracoes" data-go="' + k + '">' + l + '</a>').join('') + '</nav>' +
       '<div class="settings">' +
       '<section class="set-sec" id="s-conta"><h2>Conta e sincronização</h2>' +
-      '<div class="sync-pill set-pill" role="status" aria-label="Sincronização: ' + esc(st.msg) + '"><span class="sync-dot ' + ({ idle: 'on', busy: 'busy', error: 'err' }[st.state] || '') + '"></span><span class="sync-label">' + esc(st.msg) + '</span></div>' +
+      '<div class="sync-pill set-pill" role="status" title="' + esc(st.detail || st.msg) + '" aria-label="Sincronização: ' + esc(st.msg) + '"><span class="sync-dot ' + MQ.syncDot(st.state) + '"></span><span class="sync-label">' + esc(st.msg) + '</span></div>' +
       '<div id="set-sync"></div>' +
-      '<h3 class="set-sub">Banco de questões</h3><p id="bank-info">' + (MQ.local.bank ? 'Banco: versão ' + Number(MQ.local.bank.version) + ', ' + Number(MQ.local.bank.count) + ' questões, atualizado em ' + MQ.fmtDate(MQ.local.bank.updatedAt) : 'Banco: ainda sem versão baixada') + '</p>' +
-      (MQ.isAdmin() ? '<button class="btn" id="bank-pub">Publicar banco para todos</button>' : '') + '</section>' +
+      '<h3 class="set-sub">Banco de questões</h3><p id="bank-info" role="status">' + (MQ.local.bank ? 'Banco: versão ' + Number(MQ.local.bank.version) + ', ' + Number(MQ.local.bank.count) + ' questões, atualizado em ' + MQ.fmtDate(MQ.local.bank.updatedAt)
+        : MQ.isAdmin() || MQ.bankConfigured() ? 'Banco: ainda sem versão baixada.' : 'O banco publicado ainda não está disponível neste app. Você continua com as questões que já tem aqui.') + '</p>' +
+      (MQ.isAdmin() ? '<button class="btn" id="bank-pub">Publicar banco para todos</button>' : MQ.bankConfigured() ? '<button class="btn' + (MQ.local.bank ? '' : ' primary') + '" id="bank-get">' + (MQ.local.bank ? 'Verificar atualização' : 'Baixar banco de questões') + '</button>' : '') + '</section>' +
 
       '<section class="set-sec" id="s-aparencia"><h2>Aparência</h2>' +
       '<div class="set-row"><span>Tema</span><div class="seg" role="group" aria-label="Tema">' +
@@ -67,6 +68,13 @@
 
     if ($('#bank-dedupe', root)) $('#bank-dedupe', root).onclick = MQ.dedupeDialog;
     if ($('#bank-pub', root)) $('#bank-pub', root).onclick = MQ.publishDialog;
+    if ($('#bank-get', root)) $('#bank-get', root).onclick = async e => {
+      const b = e.currentTarget, was = b.textContent;
+      if (b.getAttribute('aria-busy')) return;
+      b.setAttribute('aria-busy', 'true'); b.textContent = 'Verificando…';
+      await MQ.syncBank(true); // avisa por toast o resultado, inclusive o erro e o que fazer
+      b.removeAttribute('aria-busy'); b.textContent = was;
+    };
     MQ.syncSection($('#set-sync', root));
 
     $$('[data-go]', root).forEach(a => a.onclick = e => { e.preventDefault(); const t = $('#s-' + a.dataset.go, root); if (t) { t.scrollIntoView({ behavior: 'smooth', block: 'start' }); t.tabIndex = -1; t.focus({ preventScroll: true }); } });

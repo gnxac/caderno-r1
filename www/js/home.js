@@ -219,7 +219,7 @@
     const date = new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' });
     const st = MQ.syncStatus || { state: 'off', msg: 'Sem sincronização' };
     const hello = '<div class="hm hm-hello"><div><div class="st">' + esc(date.charAt(0).toUpperCase() + date.slice(1)) + '</div><h1>' + greet + '</h1></div>' +
-      '<span class="home-sync" role="status" aria-label="Sincronização: ' + esc(st.msg) + '" title="' + esc(st.msg) + '"><span class="sync-dot ' + ({ idle: 'on', busy: 'busy', error: 'err' }[st.state] || '') + '"></span><span class="sync-label">' + esc(st.msg) + '</span></span></div>';
+      '<span class="home-sync" role="status" aria-label="Sincronização: ' + esc(st.msg) + '" title="' + esc(st.msg) + '"><span class="sync-dot ' + MQ.syncDot(st.state) + '"></span><span class="sync-label">' + esc(st.msg) + '</span></span></div>';
     const card = (cls, html) => '<section class="hm-card ' + cls + '">' + html + '</section>';
     const nQ = MQ.alive('questions').length;
 

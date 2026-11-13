@@ -1043,7 +1043,12 @@ body.logged-out .shell { display: none; }
 .lg-google:disabled, .lg-google[aria-disabled="true"] { opacity: .6; cursor: progress; }
 .lg-google:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 .lg-warn { margin: 0; padding: 12px 14px; border-radius: 8px; background: var(--warn-soft); color: var(--warn); font-size: .875rem; }
-.lg-err { margin: 0; padding: 12px 14px; border-radius: 8px; background: var(--err-soft); color: var(--err); font-size: .875rem; }
+.lg-err, .sync-problem { margin: 0; padding: 12px 14px; border-radius: 8px; background: var(--err-soft); color: var(--err); font-size: .875rem; }
+.sync-problem { margin: 0 0 14px; }
+.sync-problem.soft { background: var(--warn-soft); color: var(--warn); } /* sem internet e sessão expirada: aviso, não falha */
+.lg-google.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.lg-google.primary:hover:not(:disabled) { background: var(--accent); border-color: var(--accent); filter: brightness(1.08); }
+.btn[aria-busy="true"] { opacity: .65; cursor: progress; pointer-events: none; }
 @media (max-width: 860px) {
   #login { grid-template-columns: 1fr; }
   .lg-brand { display: none; }

@@ -28,32 +28,52 @@
       (function wait() {
         const g = window.google && window.google.accounts && window.google.accounts.oauth2;
         if (g) return resolve(g);
-        if (++n > 100) return reject(new Error('offline'));
+        if (++n > 100) return reject(new Error(navigator.onLine ? 'gis' : 'offline')); // online e nada: o script foi bloqueado
         setTimeout(wait, 100);
       })();
     });
   }
   function request(prompt, hint) {
     return gis().then(oauth2 => new Promise((resolve, reject) => {
+      // popup que nunca responde não pode prender o botão; a renovação em silêncio é bloqueada logo ou não vem
+      const t = setTimeout(() => reject(new Error('timeout')), prompt === '' ? 15000 : 120000);
+      const end = (fn, v) => { clearTimeout(t); fn(v); };
       const c = oauth2.initTokenClient({
         client_id: A.clientId(), scope: SCOPE,
-        callback: r => (r.error ? reject(new Error(r.error)) : resolve(r)),
-        error_callback: e => reject(new Error((e && e.type) || 'erro'))
+        callback: r => (r.error ? end(reject, new Error(r.error)) : end(resolve, r)),
+        error_callback: e => end(reject, new Error((e && e.type) || 'erro'))
       });
       c.requestAccessToken({ prompt, hint: hint || undefined });
     }));
   }
 
+  /* Mensagem em português, curta e com a ação, para cada jeito de o login falhar */
+  A.explain = function (e) {
+    const m = String((e && e.message) || e);
+    if (/popup_closed|access_denied/.test(m)) return 'Login cancelado. Toque em "Entrar com Google" para tentar de novo.';
+    if (/popup_failed/.test(m)) return 'O navegador bloqueou a janela do Google. Libere pop-ups para este site e tente de novo.';
+    if (m === 'scope') return 'Para guardar seus dados, permita o acesso à pasta do app no Drive e tente de novo.';
+    if (m === 'gis') return 'O login do Google não carregou. Se você usa um bloqueador de anúncios, libere este site e recarregue a página.';
+    if (m === 'timeout') return 'O Google não respondeu. Feche a janela do Google, se ela ainda estiver aberta, e tente de novo.';
+    if (m === 'userinfo') return 'O Google não informou o seu e-mail. Tente de novo.';
+    if (!navigator.onLine || m === 'offline' || /failed to fetch|networkerror|load failed/i.test(m)) return 'Sem conexão com o Google. Conecte-se à internet e tente de novo.';
+    return 'Não foi possível entrar. Tente de novo; se continuar, recarregue a página.';
+  };
+
   /* Token para a sincronização; renova em silêncio quando vence (se o navegador bloquear, pede para reconectar) */
   let renewing = null, needRelogin = false;
+  /* O Google recusou o token (401): descarta e pede reconexão em vez de repetir o mesmo token até vencer */
+  A.expire = function () { tok = null; tokExp = 0; needRelogin = true; try { sessionStorage.removeItem('pulse-token'); } catch (e) { /* ok */ } };
   A.getToken = async function () {
     if (tok && tokExp - 60000 > Date.now()) return tok;
     const u = A.user();
-    if (!u) throw new Error('Entre com o Google para sincronizar.');
-    const msg = 'A sessão do Google expirou. Toque em "Reconectar" em Configurações.';
-    if (needRelogin) throw new Error(msg); // sem gesto do usuário o navegador bloqueia; não insiste
+    if (!u) throw MQ.problem('auth');
+    if (needRelogin) throw MQ.problem('auth'); // sem gesto do usuário o navegador bloqueia; não insiste
     renewing = renewing || request('', u.email).then(keep).finally(() => { renewing = null; });
-    try { await renewing; return tok; } catch (e) { needRelogin = true; throw new Error(msg); }
+    try { await renewing; return tok; } catch (e) {
+      if (!navigator.onLine || /^(offline|gis)$/.test(e.message)) throw MQ.problem(navigator.onLine ? 'net' : 'offline'); // não é a sessão: não trava a renovação
+      needRelogin = true; throw MQ.problem('auth');
+    }
   };
 
   /* Apaga os dados deste navegador (usado quando outra conta entra ou ao sair e apagar) */
@@ -91,7 +111,10 @@
     const ok = await MQ.confirm(erase ? 'Sair e apagar os dados daqui' : 'Sair deste navegador',
       erase ? 'Seus dados locais serão apagados deste navegador. Tentamos sincronizar antes; o que não chegar ao Google Drive (por exemplo, se estiver sem internet) será perdido.' : 'Você precisará entrar de novo. Seus dados continuam aqui e no seu Google Drive.', erase ? 'Sair e apagar' : 'Sair', !!erase);
     if (!ok) return;
-    if (erase && A.user() && navigator.onLine) { try { await MQ.syncNow(); } catch (e) { /* segue: o usuário já confirmou */ } } // envia o que falta antes de apagar
+    if (erase && A.user() && !(navigator.onLine && await MQ.syncNow())) { // envia o que falta antes de apagar; se não deu, avisa em vez de perder em silêncio
+      const go = await MQ.confirm('Seus dados não foram enviados', 'Não foi possível enviar seus dados ao Google Drive agora. Se apagar, o que não foi sincronizado se perde. Cancele para exportar um backup em Configurações › Dados e backup.', 'Apagar mesmo assim', true);
+      if (!go) return;
+    }
     try { if (tok && window.google && window.google.accounts) window.google.accounts.oauth2.revoke(tok); } catch (e) { /* ok */ }
     try { sessionStorage.removeItem('pulse-token'); } catch (e) { /* ok */ }
     tok = null; tokExp = 0;
@@ -118,27 +141,22 @@
       '<ul class="lg-points"><li>Revisão dos seus erros no dia certo</li><li>Simulados cronometrados e desempenho por tema</li><li>Funciona até sem internet</li></ul>' +
       (configured
         ? '<p class="lg-fine">Pedimos acesso só à pasta oculta do app no seu Drive e ao seu e-mail, para guardar e sincronizar os seus dados.</p><button class="lg-google" id="lg-go">' + G + '<span>Entrar com Google</span></button>'
-        : '<p class="lg-warn" role="status">Entrar com Google ainda não está disponível neste endereço. Você pode usar o Pulse só neste navegador, mas nada será sincronizado: se você limpar os dados do navegador, perde o progresso. Use <b>Configurações › Dados e backup</b> para guardar uma cópia.</p><button class="lg-google" id="lg-local">Continuar sem conta neste navegador</button>') +
+        : '<p class="lg-warn" role="status">Entrar com Google ainda não está disponível neste endereço. Você pode usar o Pulse só neste navegador, sem sincronizar.</p><button class="lg-google primary" id="lg-local">Continuar neste navegador</button><p class="lg-fine">Se você limpar os dados do navegador, perde o progresso. Guarde uma cópia em <b>Configurações › Dados e backup</b>.</p>') +
       '<p class="lg-err" id="lg-err" role="alert" hidden></p></section>';
     document.body.appendChild(el);
-    const err = msg => { const e = el.querySelector('#lg-err'); e.textContent = msg; e.hidden = !msg; };
+    const err = msg => { const e = el.querySelector('#lg-err'); e.textContent = msg; e.hidden = !msg; if (msg) e.scrollIntoView({ block: 'nearest' }); };
     const finish = () => { el.remove(); document.body.classList.remove('logged-out'); done(); };
     const go = el.querySelector('#lg-go');
     if (go) {
       go.onclick = async () => {
         if (go.getAttribute('aria-disabled')) return;
-        err(''); go.setAttribute('aria-disabled', 'true'); // aria-disabled mantém o foco no botão
-        
+        err('');
+        if (!navigator.onLine) { err(A.explain(new Error('offline'))); return; } // não espera 10 s para dizer o óbvio
+        const label = go.querySelector('span'), was = label.textContent;
+        go.setAttribute('aria-disabled', 'true'); go.setAttribute('aria-busy', 'true'); label.textContent = 'Abrindo o Google…'; // aria-disabled mantém o foco no botão
         try { if (await A.signIn()) return finish(); }
-        catch (e) {
-          const m = String(e && e.message);
-          err(m === 'offline' ? 'Sem conexão com o Google. Conecte-se à internet para entrar.'
-            : m === 'scope' ? 'Para guardar seus dados, permita o acesso à pasta do app no Drive e tente de novo.'
-            : /popup_closed|access_denied/.test(m) ? 'O login foi cancelado.'
-            : /popup_failed/.test(m) ? 'O navegador bloqueou a janela do Google. Libere pop-ups para este site e tente de novo.'
-            : 'Não foi possível entrar (' + m + '). Tente de novo.');
-        }
-        go.removeAttribute('aria-disabled');
+        catch (e) { console.error(e); err(A.explain(e)); }
+        go.removeAttribute('aria-disabled'); go.removeAttribute('aria-busy'); label.textContent = was;
       };
     }
     const local = el.querySelector('#lg-local');

@@ -26,14 +26,23 @@
   MQ.syncConfigured = () => (web() ? MQ.auth.configured() : !!(cfg().clientId && cfg().clientSecret));
   MQ.syncLoggedIn = () => (web() ? !!MQ.auth.user() : !!(MQ.local.sync && MQ.local.sync.refreshToken));
 
-  function setStatus(state, msg) {
-    MQ.syncStatus = { state, msg };
-    const cls = 'sync-dot ' + ({ idle: 'on', busy: 'busy', error: 'err' }[state] || '');
+  /* state: off, idle, busy, offline (sem internet: neutro), auth (precisa reconectar), error. detail = explicação com a ação */
+  MQ.syncDot = state => ({ idle: 'on', busy: 'busy', auth: 'busy', error: 'err' }[state] || '');
+  function setStatus(state, msg, detail, kind) {
+    MQ.syncStatus = { state, msg, detail: detail || '', kind: kind || '' };
+    const cls = 'sync-dot ' + MQ.syncDot(state);
     document.querySelectorAll('.sync-dot').forEach(d => { d.className = cls; });
     document.querySelectorAll('.sync-label').forEach(l => { l.textContent = msg; });
-    document.querySelectorAll('.sync-pill, .home-sync').forEach(p => { p.title = msg; p.setAttribute('aria-label', 'Sincronização: ' + msg); });
-    const short = { idle: 'Em dia', busy: 'Sincr.', error: 'Erro' }[state] || 'Local'; // texto curto para a barra lateral estreita
+    document.querySelectorAll('.sync-pill, .home-sync').forEach(p => { p.title = detail || msg; p.setAttribute('aria-label', 'Sincronização: ' + msg); });
+    const short = { idle: 'Em dia', busy: 'Sincr.', error: 'Erro', offline: 'Offline', auth: 'Reconectar' }[state] || 'Local'; // texto curto para a barra lateral estreita
     document.querySelectorAll('.sync-short').forEach(l => { l.textContent = short; });
+  }
+  /* Qualquer falha vira um problema com texto em português; o detalhe técnico fica só no console */
+  function report(e, opts) {
+    const p = e && e.kind ? e : MQ.problem('other');
+    if (p.kind !== 'offline') console.error(e);
+    setStatus(p.kind === 'offline' ? 'offline' : /^(auth|denied)$/.test(p.kind) ? 'auth' : 'error', p.short, p.message, p.kind);
+    if (opts && opts.manual) MQ.toast(p.message, 'err');
   }
 
   /* Requisição HTTP: no Windows passa pelo processo principal (sem CORS);
@@ -43,8 +52,20 @@
     if (window.mqNative && window.mqNative.request) {
       return window.mqNative.request({ url, method: opts.method || 'GET', headers: opts.headers || {}, body: opts.body || null });
     }
-    const r = await fetch(url, { method: opts.method || 'GET', headers: opts.headers || {}, body: opts.body || undefined });
-    return { status: r.status, body: await r.text() };
+    const ctl = new AbortController(), t = setTimeout(() => ctl.abort(), 60000); // sem resposta em 60 s: desiste em vez de ficar "Sincronizando…" para sempre
+    try {
+      const r = await fetch(url, { method: opts.method || 'GET', headers: opts.headers || {}, body: opts.body || undefined, signal: ctl.signal });
+      return { status: r.status, body: await r.text() };
+    } catch (e) { throw MQ.problem(ctl.signal.aborted ? 'slow' : navigator.onLine ? 'net' : 'offline'); }
+    finally { clearTimeout(t); }
+  }
+  /* Resposta de erro do Drive: 401 sessão, 403 acesso ou cota, 429 limite, 5xx instabilidade */
+  function fail(res) {
+    const reason = ((((json(res).error || {}).errors || [])[0]) || {}).reason || '';
+    const kind = res.status === 401 ? 'auth' : /storageQuota/i.test(reason) ? 'quota' : res.status === 429 || /ratelimit/i.test(reason) ? 'rate' : res.status === 403 ? 'denied' : res.status >= 500 ? 'server' : 'other';
+    if (kind === 'auth' && web()) MQ.auth.expire();
+    console.error('Drive', res.status, reason);
+    return MQ.problem(kind);
   }
   function form(obj) {
     return Object.keys(obj).map(k => encodeURIComponent(k) + '=' + encodeURIComponent(obj[k])).join('&');
@@ -70,7 +91,7 @@
     if (res.status !== 200 || !j.access_token) {
       if (j.error === 'invalid_grant') {
         s.refreshToken = null; s.accessToken = null; MQ.saveLocal();
-        throw new Error('A autorização do Google expirou ou foi revogada. Entre de novo em Configurações.');
+        throw MQ.problem('auth');
       }
       throw new Error('Não foi possível renovar o acesso ao Google (' + (j.error_description || j.error || res.status) + ').');
     }
@@ -83,14 +104,16 @@
   async function driveFindFile(tk, name) {
     const q = encodeURIComponent("name='" + (name || FILE_NAME) + "' and trashed=false");
     const res = await http(DRIVE + '/files?spaces=appDataFolder&q=' + q + '&fields=files(id,modifiedTime)&pageSize=10', { headers: { Authorization: 'Bearer ' + tk } });
-    if (res.status !== 200) throw new Error('Google Drive respondeu ' + res.status + ' ao procurar seus dados.');
+    if (res.status !== 200) throw fail(res);
     const files = json(res).files || [];
     return files[0] || null;
   }
   async function driveDownload(tk, id) {
     const res = await http(DRIVE + '/files/' + id + '?alt=media', { headers: { Authorization: 'Bearer ' + tk } });
-    if (res.status !== 200) throw new Error('Google Drive respondeu ' + res.status + ' ao baixar seus dados.');
-    return JSON.parse(res.body);
+    if (res.status !== 200) throw fail(res);
+    let d; try { d = JSON.parse(res.body); } catch (e) { throw MQ.problem('data'); }
+    if (!d || typeof d !== 'object') throw MQ.problem('data');
+    return d;
   }
   /* pub=true: arquivo comum no Drive do administrador, legível por qualquer pessoa com o link (banco publicado) */
   async function driveUpload(tk, id, content, name, pub) {
@@ -98,7 +121,7 @@
       const res = await http(UPLOAD + '/files/' + id + '?uploadType=media&fields=id', {
         method: 'PATCH', headers: { Authorization: 'Bearer ' + tk, 'Content-Type': 'application/json; charset=UTF-8' }, body: content
       });
-      if (res.status !== 200) throw new Error('Google Drive respondeu ' + res.status + ' ao enviar seus dados.');
+      if (res.status !== 200) throw fail(res);
       return id;
     }
     const boundary = 'cadernoR1' + Date.now();
@@ -108,11 +131,11 @@
     const res = await http(UPLOAD + '/files?uploadType=multipart&fields=id', {
       method: 'POST', headers: { Authorization: 'Bearer ' + tk, 'Content-Type': 'multipart/related; boundary=' + boundary }, body
     });
-    if (res.status !== 200) throw new Error('Google Drive respondeu ' + res.status + ' ao criar o arquivo de dados.');
+    if (res.status !== 200) throw fail(res);
     const newId = json(res).id;
     if (pub) {
       const pr = await http(DRIVE + '/files/' + newId + '/permissions', { method: 'POST', headers: { Authorization: 'Bearer ' + tk, 'Content-Type': 'application/json' }, body: JSON.stringify({ role: 'reader', type: 'anyone' }) });
-      if (pr.status !== 200) throw new Error('Google Drive respondeu ' + pr.status + ' ao tornar o arquivo público.');
+      if (pr.status !== 200) throw fail(pr);
     }
     return newId;
   }
@@ -120,29 +143,42 @@
   /* ---------- Banco publicado (admin publica; os outros só baixam) ---------- */
   const PUBLIC_URL = 'https://drive.usercontent.google.com/download?export=download&confirm=t&id=';
   const bankManifestId = () => (MQ.local.sync && MQ.local.sync.bankManifestId) || (window.MQ_CONFIG || {}).bankManifestId || '';
+  const bankErr = m => Object.assign(new Error(m), { kind: 'bank' });
   async function publicGet(id) {
     const res = await http(PUBLIC_URL + encodeURIComponent(id) + '&t=' + Date.now());
-    if (res.status !== 200) throw new Error('Não foi possível baixar o banco publicado (' + res.status + ').');
-    return JSON.parse(res.body);
+    if (res.status === 404) throw bankErr('O banco publicado não foi encontrado. Avise o administrador.');
+    if (res.status === 403 || res.status === 429) throw bankErr('O Google limitou o download do banco por excesso de acessos. Tente de novo mais tarde.');
+    if (res.status !== 200) throw bankErr('Não foi possível baixar o banco (erro ' + res.status + '). Tente de novo mais tarde.');
+    try { return JSON.parse(res.body); } catch (e) { throw bankErr('O Google devolveu uma página no lugar do banco. Tente de novo mais tarde.'); } // aviso de cota do Drive vem em HTML
   }
+  MQ.bankConfigured = () => !!bankManifestId();
 
   /* Baixa o banco só quando a versão do manifesto difere da guardada neste aparelho */
-  let bankRunning = false;
+  let bankRunning = false, bankTold = false;
   MQ.syncBank = async function (manual) {
     const id = bankManifestId();
     if (bankRunning || MQ.isAdmin()) return; // o administrador é a fonte do banco: aplicar as lápides publicadas apagaria questões dele
+    const say = m => { if (manual) MQ.toast(m, 'err'); };
+    if (!id) return say('O banco publicado ainda não foi configurado neste app. Avise o administrador.');
+    if (!navigator.onLine) return say('Sem internet. Tente atualizar o banco de novo quando conectar.');
     bankRunning = true;
-    if (!id || !navigator.onLine) { if (manual) MQ.toast('Banco publicado não configurado ou sem internet.', 'err'); return; }
     try {
       const m = await publicGet(id);
+      if (!m || !m.bankFileId || !Number.isFinite(m.version)) throw bankErr('O manifesto do banco está incompleto. Avise o administrador.');
       if (MQ.local.bank && MQ.local.bank.version === m.version) { if (manual) MQ.toast('O banco já está na versão mais recente.'); return; }
       const bank = await publicGet(m.bankFileId);
+      if (!bank || !bank.questions || typeof bank.questions !== 'object' || Array.isArray(bank.questions)) throw bankErr('O arquivo do banco está incompleto. Tente de novo mais tarde.');
       const changed = MQ.mergeDeduped({ questions: bank.questions }).changed;
       MQ.local.bank = { version: m.version, count: m.count, updatedAt: m.updatedAt };
       await MQ.saveLocal();
       if (manual || changed) MQ.toast('Banco atualizado: versão ' + m.version + ', ' + m.count + ' questões.');
       if (['questoes', 'listas', 'desempenho', 'configuracoes'].includes(MQ.route().name)) MQ.render();
-    } catch (e) { console.error(e); if (manual) MQ.toast(e.message || String(e), 'err'); } finally { bankRunning = false; }
+    } catch (e) {
+      console.error(e);
+      const kept = MQ.local.bank ? ' Você continua com a versão ' + MQ.local.bank.version + '.' : '';
+      // automático: só avisa se o aparelho ainda não tem banco nenhum, e uma vez por sessão
+      if (manual || (!MQ.local.bank && !bankTold)) { bankTold = true; MQ.toast((e.kind ? e.message : 'Não foi possível atualizar o banco. Tente de novo mais tarde.') + kept, 'err'); }
+    } finally { bankRunning = false; }
   };
 
   /* sel: { insts: Set (instituição), lists: Set (ids de listas) }. IDs nunca mudam; o que sai do banco vira deleted:true. */
@@ -202,7 +238,9 @@
         const recount = () => {
           const x = selection(box), ids = new Set();
           x.lists.forEach(l => (MQ.get('lists', l) || { qids: [] }).qids.forEach(q => ids.add(q)));
-          MQ.$('#pub-n', box).textContent = qs.filter(q => x.insts.has((q.instituicao || '').trim()) || ids.has(q.id)).length + ' questões selecionadas.';
+          const n = qs.filter(q => x.insts.has((q.instituicao || '').trim()) || ids.has(q.id)).length;
+          MQ.$('#pub-n', box).textContent = n ? n + ' questões selecionadas.' : 'Marque ao menos uma instituição ou lista. Publicar sem nada tiraria do banco todas as questões já publicadas.';
+          MQ.$('.modal-foot .primary', box).disabled = !n; // 0 selecionadas viraria lápide para todos
         };
         box.addEventListener('change', e => {
           if (e.target.dataset.fl) e.target.dataset.fl.split(',').filter(Boolean).forEach(id => { const c = MQ.$('[data-list="' + id + '"]', box); if (c) c.checked = e.target.checked; });
@@ -218,7 +256,7 @@
             MQ.toast('Banco publicado: versão ' + r.version + ', ' + r.count + ' questões.');
             if (r.isNew) MQ.modal({ title: 'Primeira publicação', body: '<p>Para os outros aparelhos baixarem o banco, copie este código para <b>bankManifestId</b> em <code>www/js/config.js</code> e gere os instaladores de novo:</p><div class="code-box">' + esc(r.manifestId) + '</div>' });
             MQ.render();
-          }).catch(e => MQ.toast(/\b403\b/.test(e.message) ? 'O Google negou o acesso. Desconecte e entre de novo para autorizar a publicação.' : (e.message || String(e)), 'err'));
+          }).catch(e => { console.error(e); MQ.toast(e.kind ? e.message : 'Não foi possível publicar o banco. Tente de novo.', 'err'); });
         }
       }]
     });
@@ -227,8 +265,11 @@
   let running = null;
   MQ.syncNow = function (opts) {
     opts = opts || {};
-    if (!MQ.syncConfigured() || !MQ.syncLoggedIn()) return Promise.resolve(false);
-    if (!navigator.onLine) { setStatus('error', 'Sem internet. Sincroniza quando voltar.'); if (opts.manual) MQ.toast('Sem internet. Sincroniza quando voltar.', 'err'); return Promise.resolve(false); }
+    if (!MQ.syncConfigured() || !MQ.syncLoggedIn()) {
+      if (opts.manual) MQ.toast(MQ.syncConfigured() ? 'Entre com o Google em Configurações para sincronizar.' : 'Entrar com o Google ainda não está disponível neste endereço.', 'err');
+      return Promise.resolve(false);
+    }
+    if (!navigator.onLine) { report(MQ.problem('offline'), opts); return Promise.resolve(false); }
     if (running) return running;
     running = (async () => {
       setStatus('busy', 'Sincronizando…');
@@ -237,11 +278,12 @@
         const s = MQ.local.sync;
         let file = await driveFindFile(tk);
         let changed = 0;
-        if (file) {
-          const remote = await driveDownload(tk, file.id);
-          changed = MQ.mergeData(remote);
-        }
+        if (file) changed = MQ.mergeData(await driveDownload(tk, file.id));
         await MQ.saveNow();
+        if (file) { // outro aparelho gravou entre o download e o envio: junta de novo antes de sobrescrever
+          const now = await driveFindFile(tk);
+          if (now && now.modifiedTime !== file.modifiedTime) { changed += MQ.mergeData(await driveDownload(tk, now.id)); await MQ.saveNow(); }
+        }
         s.fileId = await driveUpload(tk, file ? file.id : null, JSON.stringify(MQ.data));
         /* Imagens: arquivo separado, só baixado quando mudou e só enviado quando há imagem nova */
         const mf = await driveFindFile(tk, MEDIA_NAME);
@@ -264,9 +306,7 @@
         if (opts.manual) MQ.toast(changed ? 'Sincronizado: ' + changed + ' itens vieram de outro aparelho.' : 'Sincronizado. Tudo em dia.');
         return true;
       } catch (e) {
-        console.error(e);
-        setStatus('error', 'Falha ao sincronizar');
-        if (opts.manual) MQ.toast(e.message || String(e), 'err');
+        report(e, opts);
         return false;
       } finally { running = null; }
     })();
@@ -287,6 +327,7 @@
     setInterval(() => { MQ.syncBank(); if (MQ.syncLoggedIn()) MQ.syncNow(); }, 5 * 60000);
     document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden' && MQ.syncLoggedIn()) { clearTimeout(debounce); MQ.syncNow(); } });
     window.addEventListener('online', () => { if (MQ.syncLoggedIn()) MQ.syncNow(); });
+    window.addEventListener('offline', () => { if (MQ.syncLoggedIn()) report(MQ.problem('offline')); });
   };
 
   /* Login: pede um código e o usuário confirma em google.com/device */
@@ -356,20 +397,43 @@
   }
 
   /* Seção "Conta e sincronização" da tela Configurações */
+  /* Explica o problema atual (sem internet, sessão expirada, Drive cheio…) logo acima dos botões */
+  function problemHtml() {
+    const st = MQ.syncStatus;
+    if (!st.detail || !['error', 'offline', 'auth'].includes(st.state)) return '';
+    return '<p class="sync-problem' + (st.state === 'error' ? '' : ' soft') + '" role="status">' + esc(st.detail) + '</p>';
+  }
+  /* Botão em andamento: avisa o leitor de tela, troca o rótulo e não aceita segundo toque */
+  async function working(btn, label, fn) {
+    const was = btn.innerHTML;
+    btn.setAttribute('aria-busy', 'true'); btn.textContent = label;
+    try { await fn(); } finally { btn.removeAttribute('aria-busy'); if (btn.isConnected) btn.innerHTML = was; }
+  }
+  async function reconnect(btn) {
+    await working(btn, 'Abrindo o Google…', async () => {
+      try { if (await MQ.auth.signIn()) { await MQ.syncNow({ manual: true }); MQ.render(); } } catch (e) { console.error(e); MQ.toast(MQ.auth.explain(e), 'err'); }
+    });
+  }
+
   function webSection(root) {
     const s = MQ.local.sync || {};
+    const st = MQ.syncStatus.state, quota = MQ.syncStatus.kind === 'quota';
     root.innerHTML =
       '<section class="sync-card"><h2>Conta Google</h2><dl class="kv"><dt>Conta</dt><dd>' + esc(s.email || 'sem conta neste navegador') + '</dd><dt>Última sincronização</dt><dd>' + (s.lastSync ? MQ.fmtDateTime(s.lastSync) : 'ainda não') + '</dd></dl>' +
-      '<p class="muted small">' + (MQ.syncLoggedIn() ? 'Sincroniza sozinho com a pasta oculta do app no seu Drive. Se o mesmo item mudar em dois aparelhos, vale a edição mais recente.' : 'Sem conta, seus dados ficam só neste navegador.') + '</p>' +
+      '<p class="muted small">' + (MQ.syncLoggedIn() ? 'Sincroniza sozinho com a pasta oculta do app no seu Drive. Se o mesmo item mudar em dois aparelhos, vale a edição mais recente.'
+        : MQ.syncConfigured() ? 'Sem conta, seus dados ficam só neste navegador.' : 'Entrar com Google ainda não está disponível neste endereço. Seus dados ficam só neste navegador: exporte um backup de vez em quando.') + '</p>' +
+      problemHtml() +
       '<div class="toolbar">' + (MQ.syncLoggedIn()
-        ? '<button class="btn' + (MQ.syncStatus.state === 'error' ? ' primary' : '') + '" id="sy-now">' + icon('sync') + ' Sincronizar agora</button><button class="btn" id="sy-re">Reconectar</button><button class="btn ghost" id="sy-out">Sair</button><button class="btn ghost" id="sy-wipe">Sair e apagar dados daqui</button>'
-        : '<button class="btn primary" id="sy-in">' + icon('cloud') + ' Entrar com o Google</button>') + '</div></section>';
+        ? '<button class="btn' + (st === 'auth' ? '' : st === 'error' ? ' primary' : '') + '" id="sy-now">' + icon('sync') + ' ' + (st === 'error' ? 'Tentar de novo' : 'Sincronizar agora') + '</button><button class="btn' + (st === 'auth' ? ' primary' : '') + '" id="sy-re">Reconectar</button>' + (quota ? '<button class="btn" id="sy-quota">Gerenciar espaço do Drive</button>' : '') + '<button class="btn ghost" id="sy-out">Sair</button><button class="btn ghost" id="sy-wipe">Sair e apagar dados daqui</button>'
+        : MQ.syncConfigured() ? '<button class="btn primary" id="sy-in">' + icon('cloud') + ' Entrar com o Google</button>' : '<button class="btn primary" id="sy-bkp">' + icon('download') + ' Exportar backup</button>') + '</div></section>';
     const on = (id, fn) => { if ($(id, root)) $(id, root).onclick = fn; };
-    on('#sy-now', async () => { await MQ.syncNow({ manual: true }); MQ.render(); });
-    on('#sy-re', async () => { try { if (await MQ.auth.signIn()) { await MQ.syncNow({ manual: true }); MQ.render(); } } catch (e) { MQ.toast('Não foi possível reconectar.', 'err'); } });
+    on('#sy-now', e => working(e.currentTarget, 'Sincronizando…', async () => { await MQ.syncNow({ manual: true }); MQ.render(); }));
+    on('#sy-re', e => reconnect(e.currentTarget));
+    on('#sy-in', e => reconnect(e.currentTarget));
+    on('#sy-quota', () => MQ.openExternal('https://one.google.com/storage'));
+    on('#sy-bkp', MQ.backupExport);
     on('#sy-out', () => MQ.auth.signOut(false));
     on('#sy-wipe', () => MQ.auth.signOut(true));
-    on('#sy-in', async () => { try { if (await MQ.auth.signIn()) { await MQ.syncNow({ manual: true }); MQ.render(); } } catch (e) { MQ.toast('Não foi possível entrar.', 'err'); } });
   }
 
   MQ.syncSection = function (root) {
@@ -381,6 +445,7 @@
       (MQ.syncLoggedIn()
         ? '<section class="sync-card"><h2>Conectado</h2><dl class="kv"><dt>Conta</dt><dd>' + esc(s.email || 'conta Google') + '</dd><dt>Última sincronização</dt><dd>' + (s.lastSync ? MQ.fmtDateTime(s.lastSync) : 'ainda não') + '</dd></dl>' +
           '<p class="muted small">Sincroniza sozinho. Se o mesmo item mudar em dois aparelhos, vale a edição mais recente.</p>' +
+          problemHtml() +
           '<div class="toolbar"><button class="btn' + (MQ.syncStatus.state === 'error' ? ' primary' : '') + '" id="sy-now">' + icon('sync') + ' Sincronizar agora</button><button class="btn ghost" id="sy-out">Desconectar este aparelho</button></div></section>'
         : (MQ.syncConfigured()
           ? '<section class="sync-card"><h2>Entrar com o Google</h2><p>Enquanto você não entra, suas respostas, listas e simulados ficam só neste aparelho. Entre com a mesma conta no Windows e no Android para mantê-los iguais. O app só acessa a pasta oculta dele no seu Drive.</p><button class="btn primary" id="sy-in">' + icon('cloud') + ' Entrar com o Google</button></section>'
@@ -391,7 +456,7 @@
       '<label class="field"><span>Chave secreta do cliente</span><input type="password" id="sy-sec" value="' + esc(c.clientSecret) + '" placeholder="GOCSPX-…" autocomplete="off"><small>Tipo de cliente: "TVs e dispositivos de entrada limitada".</small></label>' +
       '<button class="btn" id="sy-save">Salvar credencial</button></details>';
 
-    if ($('#sy-now', root)) $('#sy-now', root).onclick = async () => { await MQ.syncNow({ manual: true }); MQ.render(); };
+    if ($('#sy-now', root)) $('#sy-now', root).onclick = e => working(e.currentTarget, 'Sincronizando…', async () => { await MQ.syncNow({ manual: true }); MQ.render(); });
     if ($('#sy-out', root)) $('#sy-out', root).onclick = logout;
     if ($('#sy-in', root)) $('#sy-in', root).onclick = login;
     $('#sy-save', root).onclick = () => {

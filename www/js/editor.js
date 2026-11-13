@@ -146,6 +146,22 @@
     };
   }
 
+  const pl = (n, one, many) => n + ' ' + (n === 1 ? one : many);
+  const andList = a => (a.length > 1 ? a.slice(0, -1).join(', ') + ' e ' + a[a.length - 1] : a[0] || '');
+  /* Grava já (não espera os 250 ms) e avisa se o navegador recusou, por exemplo sem espaço */
+  async function commit() {
+    MQ.touch();
+    try { await MQ.saveNow(); return true; } catch (e) {
+      console.error(e);
+      MQ.toast(e && e.name === 'QuotaExceededError' ? 'Sem espaço neste navegador para guardar os dados. Libere espaço (ou exporte um backup) e tente de novo.' : 'A importação parou por um erro. Tente o mesmo arquivo de novo: o que já entrou não se duplica.', 'err');
+      return false;
+    }
+  }
+  const downloadTemplate = () => {
+    const rows = [CSV_COLS, ['Mulher de 30 anos com... Qual a conduta?', 'Alternativa A', 'Alternativa B', 'Alternativa C', 'Alternativa D', 'Alternativa E', 'B', 'Comentário explicando o gabarito', 'Clínica Médica', 'Cardiologia', 'Arritmias', 'Fibrilação Atrial', 'Hospital X', 'SP', '2025', 'Residência (Acesso Direto)', 'Banca Y', '', 'multipla', 'nao', 'nao']];
+    MQ.saveFile('modelo-questoes.csv', '﻿' + MQ.toCSV(rows), 'text/csv;charset=utf-8');
+  };
+
   /* ---------- Importar / exportar ---------- */
   function importView(body) {
     body.innerHTML =
@@ -156,20 +172,17 @@
       '<p class="muted">Use para importar um pacote pronto (por exemplo, uma lista convertida de PDF) ou restaurar um backup. Tudo é mesclado com o que já existe: nada é apagado e questões repetidas não se duplicam.</p>' +
       '<div class="toolbar"><button class="btn primary" id="i-rest">' + icon('upload') + ' Importar pacote ou backup</button><button class="btn" id="i-bkp">' + icon('download') + ' Exportar backup</button><button class="btn" id="i-qcsv">' + icon('download') + ' Exportar questões em CSV</button></div></div>';
 
-    $('#i-tpl', body).onclick = () => {
-      const rows = [CSV_COLS, ['Mulher de 30 anos com... Qual a conduta?', 'Alternativa A', 'Alternativa B', 'Alternativa C', 'Alternativa D', 'Alternativa E', 'B', 'Comentário explicando o gabarito', 'Clínica Médica', 'Cardiologia', 'Arritmias', 'Fibrilação Atrial', 'Hospital X', 'SP', '2025', 'Residência (Acesso Direto)', 'Banca Y', '', 'multipla', 'nao', 'nao']];
-      MQ.saveFile('modelo-questoes.csv', '﻿' + MQ.toCSV(rows), 'text/csv;charset=utf-8');
-    };
+    $('#i-tpl', body).onclick = downloadTemplate;
     $('#i-csv', body).onclick = async () => {
       const f = await MQ.pickFile('.csv,.txt,text/csv');
       if (!f) return;
       const rows = MQ.parseCSV(f.text);
-      if (rows.length < 2) { MQ.toast('O arquivo não tem linhas de questões.', 'err'); return; }
+      if (rows.length < 2) { MQ.toast('O arquivo não tem linhas de questões. Baixe o modelo, preencha e escolha o arquivo de novo.', 'err'); return; }
       const head = rows[0].map(h => MQ.norm(h).replace(/[^a-z]/g, ''));
       const col = name => head.indexOf(MQ.norm(name).replace(/[^a-z]/g, ''));
-      const need = ['enunciado', 'gabarito', 'area'];
+      const need = ['enunciado', 'A', 'B', 'gabarito', 'area'];
       const missing = need.filter(n => col(n) < 0);
-      if (missing.length) { MQ.toast('Faltam colunas: ' + missing.join(', ') + '. Baixe o modelo para conferir.', 'err'); return; }
+      if (missing.length) { MQ.toast('Faltam colunas: ' + missing.join(', ') + '. Baixe o modelo para conferir os nomes.', 'err'); return; }
       const ok = [], bad = [];
       rows.slice(1).forEach((r, i) => {
         const g = n => { const k = col(n); return k >= 0 ? (r[k] || '').trim() : ''; };
@@ -186,10 +199,17 @@
           uf: g('uf').toUpperCase(), ano: parseInt(g('ano'), 10) || '', finalidade: g('finalidade'), banca: g('banca'), professor: g('professor'),
           anulada: yes(g('anulada')), desatualizada: yes(g('desatualizada'))
         };
-        if (!q.enunciado || alts.length < 2 || !alts.some(a => a.l === gab) || !q.area) bad.push(i + 2); else ok.push(q);
+        const why = !q.enunciado ? 'sem enunciado' : alts.length < 2 ? 'menos de 2 alternativas' : !alts.some(a => a.l === gab) ? 'o gabarito não bate com as alternativas' : !q.area ? 'sem área' : '';
+        if (why) bad.push([i + 2, why]); else ok.push(q);
       });
-      const yes = await MQ.confirm('Importar questões', ok.length + ' questões prontas para importar' + (bad.length ? '. ' + bad.length + ' linhas foram ignoradas por falta de enunciado, alternativas, gabarito ou área (linhas ' + bad.slice(0, 12).join(', ') + (bad.length > 12 ? '…' : '') + ').' : '.'), 'Importar ' + ok.length);
-      if (!yes || !ok.length) return;
+      const sample = bad.slice(0, 5).map(b => 'linha ' + b[0] + ' (' + b[1] + ')').join('; ') + (bad.length > 5 ? '…' : '');
+      if (!ok.length) { // nenhuma linha serve: diz por quê e oferece o modelo
+        if (await MQ.confirm('Nenhuma questão para importar', 'Nenhuma linha está completa: ' + sample + '. Confira as colunas com o modelo.', 'Baixar modelo')) downloadTemplate();
+        return;
+      }
+      const yes = await MQ.confirm('Importar questões', pl(ok.length, 'questão pronta', 'questões prontas') + ' para importar' + (bad.length ? '. ' + pl(bad.length, 'linha será ignorada', 'linhas serão ignoradas') + ': ' + sample : '.') +
+        (f.text.includes('�') ? ' Atenção: há caracteres quebrados. O arquivo pode não estar em UTF-8; no Excel, salve como "CSV UTF-8".' : ''), 'Importar ' + ok.length);
+      if (!yes) return;
       let added = 0, dups = 0;
       ok.forEach(q => {
         const ex = MQ.dupFind(q);
@@ -197,8 +217,8 @@
         q.codigo = MQ.nextCode(); q.createdAt = MQ.now(); MQ.data.questions[q.id] = Object.assign(q, { updatedAt: MQ.now() });
         MQ.dupIndex().set(MQ.dupKey(q), q.id); added++;
       });
-      MQ.touch();
-      MQ.toast(added + (added === 1 ? ' questão importada, ' : ' questões importadas, ') + dups + ' repetidas ignoradas (dados mesclados).');
+      if (!await commit()) return;
+      MQ.toast(pl(added, 'questão importada', 'questões importadas') + ', ' + pl(dups, 'repetida ignorada', 'repetidas ignoradas') + '.');
     };
     $('#i-bkp', body).onclick = MQ.backupExport;
     $('#i-rest', body).onclick = MQ.backupRestore;
@@ -213,22 +233,55 @@
 
   /* Backup completo e restauração (também em Configurações): restaurar mescla com os dados atuais, nunca apaga */
   MQ.backupExport = () => MQ.saveFile('pulse-backup-' + new Date().toISOString().slice(0, 10) + '.json', JSON.stringify(Object.assign({}, MQ.data, { media: MQ.media })), 'application/json');
+  const ROT = { attempts: ['resposta', 'respostas'], notes: ['anotação', 'anotações'], lists: ['lista', 'listas'], folders: ['pasta', 'pastas'], runs: ['simulado', 'simulados'], reviews: ['revisão', 'revisões'] };
+  const isObj = v => !!v && typeof v === 'object' && !Array.isArray(v);
+  const okQuestion = q => isObj(q) && (q.deleted || (typeof q.id === 'string' && typeof q.enunciado === 'string' && q.enunciado.trim() && Array.isArray(q.alternativas) && q.alternativas.length >= 2));
+  /* O que o arquivo muda aqui, contado como a mesclagem decide (item novo ou edição mais recente): add por coleção e gone = itens que o arquivo remove */
+  function preview(d) {
+    const add = {}; let gone = 0;
+    ['questions'].concat(Object.keys(ROT)).forEach(c => {
+      if (!isObj(d[c])) return;
+      Object.keys(d[c]).forEach(id => {
+        const ro = d[c][id], lo = MQ.data[c][id];
+        if (!isObj(ro) || (lo && (ro.updatedAt || 0) <= (lo.updatedAt || 0))) return;
+        if (ro.deleted) { if (lo && !lo.deleted) gone++; } else if (c !== 'questions') add[c] = (add[c] || 0) + 1;
+      });
+    });
+    return { add, gone };
+  }
   MQ.backupRestore = async () => {
     const f = await MQ.pickFile('.json,application/json');
     if (!f) return;
     let d;
-    try { d = JSON.parse(f.text); } catch (e) { MQ.toast('Arquivo inválido: não é um backup do Pulse.', 'err'); return; }
-    if (!d || !d.questions) { MQ.toast('Arquivo inválido: não é um pacote nem um backup do Pulse.', 'err'); return; }
-    const pre = MQ.mergeDeduped(d, true);
-    const nq = pre.added;
-    const nl = Object.keys(d.lists || {}).filter(id => !MQ.data.lists[id]).length;
-    const ok = await MQ.confirm('Importar ' + (d.formato === 'caderno-r1-pacote' ? 'pacote' : 'backup'),
-    (d.nome ? d.nome + ': ' : '') + nq + ' questões novas' + (pre.dup ? ', ' + pre.dup + ' repetidas (serão ignoradas)' : '') + (nl ? ', ' + nl + (nl === 1 ? ' lista nova' : ' listas novas') : '') + (d.media ? ' e ' + Object.keys(d.media).length + ' imagens' : '') + '. Continuar?', 'Importar');
+    try { d = JSON.parse(f.text); } catch (e) { d = null; }
+    if (!isObj(d) || !isObj(d.questions)) {
+      MQ.toast(/\.csv$/i.test(f.name) ? 'Este é um arquivo CSV. Use "Importar CSV" para planilhas.' : 'Não foi possível ler este arquivo como backup ou pacote do Pulse. Escolha um arquivo pulse-backup-….json.', 'err');
+      return;
+    }
+    const questions = {}; let bad = 0;
+    Object.keys(d.questions).forEach(id => { if (okQuestion(d.questions[id])) questions[id] = d.questions[id]; else bad++; });
+    if (bad && !Object.keys(questions).length) { MQ.toast('Nenhuma questão válida neste arquivo (faltam enunciado ou alternativas). Confira se é um backup ou pacote do Pulse.', 'err'); return; }
+    const media = {}; // só imagens de verdade: o valor vai direto para o src da tag img
+    Object.keys(isObj(d.media) ? d.media : {}).forEach(id => { if (typeof d.media[id] === 'string' && /^data:image\//.test(d.media[id])) media[id] = d.media[id]; });
+    d = Object.assign({}, d, { questions });
+    const pre = MQ.mergeDeduped(d, true), p = preview(d);
+    const nimg = Object.keys(media).filter(id => !MQ.media[id]).length;
+    const parts = [];
+    if (pre.added) parts.push(pl(pre.added, 'questão nova', 'questões novas'));
+    Object.keys(ROT).forEach(c => { if (p.add[c]) parts.push(pl(p.add[c], ROT[c][0], ROT[c][1])); });
+    if (nimg) parts.push(pl(nimg, 'imagem', 'imagens'));
+    if (!parts.length && !p.gone) { MQ.toast('Este arquivo não traz nada novo: tudo o que ele tem já está neste aparelho.'); return; }
+    const kind = d.formato === 'caderno-r1-pacote' ? 'pacote' : 'backup';
+    const ok = await MQ.confirm(kind === 'pacote' ? 'Importar pacote' : 'Restaurar backup',
+      (d.nome ? d.nome + ': ' : '') + (parts.length ? 'Vai entrar ' + andList(parts) + '.' : 'Nada novo para adicionar.') + (pre.dup ? ' Questões que já existem aqui não se duplicam.' : '') +
+      (bad ? ' ' + pl(bad, 'questão incompleta será ignorada', 'questões incompletas serão ignoradas') + '.' : '') +
+      (p.gone ? ' Atenção: ' + pl(p.gone, 'item que o arquivo marca como removido sai', 'itens que o arquivo marca como removidos saem') + ' daqui, porque a remoção é mais recente que a sua última edição.' : '') +
+      ' O resto do que você tem fica como está.', kind === 'pacote' ? 'Importar' : 'Restaurar');
     if (!ok) return;
-    const res = MQ.mergeDeduped(d);
-    const m = MQ.mergeMedia(d.media, true);
-    MQ.touch();
-    MQ.toast(res.added + (res.added === 1 ? ' questão importada, ' : ' questões importadas, ') + res.dup + ' repetidas ignoradas (dados mesclados)' + (m ? '; ' + m + ' imagens' : '') + '.');
+    try { MQ.mergeDeduped(d); MQ.mergeMedia(media, true); } catch (e) { console.error(e); MQ.toast('A importação parou por um erro. Tente o mesmo arquivo de novo: o que já entrou não se duplica.', 'err'); return; }
+    if (!await commit()) return;
+    MQ.toast((kind === 'pacote' ? 'Importado: ' : 'Restaurado: ') + andList(parts) + (p.gone ? '; ' + pl(p.gone, 'item removido', 'itens removidos') : '') + '.');
+    MQ.render(); // os contadores da tela refletem o que entrou
   };
 
   /* ---------- Gerenciar ---------- */

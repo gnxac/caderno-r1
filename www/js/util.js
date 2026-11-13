@@ -74,7 +74,25 @@ window.MQ = window.MQ || {};
     el.className = 'toast show ' + (kind || '');
     el.textContent = msg;
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => { el.className = 'toast'; }, 3200);
+    toastTimer = setTimeout(() => { el.className = 'toast'; }, kind === 'err' ? 7000 : 3200); // erro com ação leva mais tempo para ler
+  };
+
+  /* Problemas de rede e do Google Drive: mensagem curta com a ação (msg) e rótulo para a pílula de status (short) */
+  const PROBLEMS = {
+    offline: ['Sem internet. Seus dados continuam salvos aqui e sincronizam quando a conexão voltar.', 'Sem internet'],
+    net: ['Não foi possível falar com o Google. Confira a internet e tente de novo.', 'Sem conexão'],
+    slow: ['O Google demorou demais para responder. Tente de novo.', 'Conexão lenta'],
+    auth: ['A sessão do Google expirou. Em Configurações, toque em "Reconectar" para voltar a sincronizar.', 'Sessão expirada'],
+    denied: ['O Google negou o acesso à pasta do app. Em Configurações, toque em "Reconectar" e autorize o acesso ao Drive.', 'Acesso negado'],
+    quota: ['Seu Google Drive está sem espaço. Libere espaço no Drive e tente de novo; seus dados continuam salvos aqui.', 'Drive cheio'],
+    rate: ['O Google pediu uma pausa. Tentamos de novo em alguns minutos.', 'Aguardando'],
+    server: ['O Google Drive está instável. Tente de novo em alguns minutos.', 'Drive instável'],
+    data: ['O arquivo guardado no Google Drive está ilegível. Os dados deste aparelho não foram alterados; exporte um backup em Configurações.', 'Dados ilegíveis'],
+    other: ['Não foi possível sincronizar. Tente de novo em instantes.', 'Falha ao sincronizar']
+  };
+  MQ.problem = function (kind) {
+    const p = PROBLEMS[kind] || PROBLEMS.other;
+    return Object.assign(new Error(p[0]), { kind: PROBLEMS[kind] ? kind : 'other', short: p[1] });
   };
 
   /* ---------- Modal ---------- */
@@ -328,9 +346,10 @@ window.MQ = window.MQ || {};
       inp.addEventListener('change', () => {
         const f = inp.files && inp.files[0];
         if (!f) return resolve(null);
+        if (f.size > 100e6) { MQ.toast('O arquivo tem mais de 100 MB. Escolha um arquivo menor.', 'err'); return resolve(null); }
         const rd = new FileReader();
         rd.onload = () => resolve({ name: f.name, text: rd.result });
-        rd.onerror = () => resolve(null);
+        rd.onerror = () => { MQ.toast('Não foi possível ler o arquivo. Escolha-o de novo.', 'err'); resolve(null); };
         rd.readAsText(f, 'utf-8');
       });
       inp.click();

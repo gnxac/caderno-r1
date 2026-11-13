@@ -90,10 +90,12 @@
   MQ.onChange = fn => changeListeners.push(fn);
 
   /* Marca alteração: salva em seguida e avisa a sincronização */
+  /* Falha ao gravar (disco cheio, navegador em modo restrito): sem aviso o estudante acha que está salvo */
+  const saveFailed = e => { console.error(e); MQ.toast('Não foi possível salvar neste navegador (talvez sem espaço). Exporte um backup em Configurações › Dados e backup.', 'err'); };
   MQ.touch = function () {
     clearTimeout(saveTimer);
     dirty = true;
-    saveTimer = setTimeout(() => { dirty = false; idbSet(KEY_DATA, MQ.data).catch(e => console.error(e)); }, 250);
+    saveTimer = setTimeout(() => { dirty = false; idbSet(KEY_DATA, MQ.data).catch(saveFailed); }, 250);
     changeListeners.forEach(fn => { try { fn(); } catch (e) { console.error(e); } });
   };
   MQ.saveNow = function () {
@@ -102,7 +104,7 @@
     return idbSet(KEY_DATA, MQ.data);
   };
   /* Fechar ou recarregar a aba logo depois de responder não perde o dado do debounce de 250 ms */
-  const flush = () => { if (dirty) MQ.saveNow().catch(e => console.error(e)); };
+  const flush = () => { if (dirty) MQ.saveNow().catch(saveFailed); };
   window.addEventListener('pagehide', flush);
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flush(); });
   MQ.saveLocal = function () { return idbSet(KEY_LOCAL, MQ.local); };
