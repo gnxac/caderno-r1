@@ -217,10 +217,10 @@ Compartilhados: C-1, C-8, C-9, C-10, C-11, C-13, C-17.
 Compartilhados: C-1, C-2, C-3, C-6, C-9, C-11, C-13, C-16, C-17.
 
 **P1**
-- **RES-1 · Depois de errar, o comentário fica fora da tela e a ação oferecida é pular.** `#q-comment` em y=730, atrás da barra fixa (y≈747); a lâmpada "Solução" está no topo. Rodapé com "Ver solução" primária e "Próxima" ao lado, ou comentário já aberto sob as alternativas.
+- [x] **RES-1 · Depois de errar, o comentário fica fora da tela e a ação oferecida é pular.** `#q-comment` em y=730, atrás da barra fixa (y≈747); a lâmpada "Solução" está no topo. Rodapé com "Ver solução" primária e "Próxima" ao lado, ou comentário já aberto sob as alternativas.
 
 **P2**
-- **RES-2 · Tablet 960×640: o cromo ocupa a tela.** Cabeçalho, ferramentas, "Limpar marcas" desabilitado numa 2ª linha de 48 px, chips e rodapé deixam 1 de 5 alternativas visível. Esconder "Limpar marcas" quando desabilitado (como já é no celular).
+- [x] **RES-2 · Tablet 960×640: o cromo ocupa a tela.** Cabeçalho, ferramentas, "Limpar marcas" desabilitado numa 2ª linha de 48 px, chips e rodapé deixam 1 de 5 alternativas visível. Esconder "Limpar marcas" quando desabilitado (como já é no celular).
 - **RES-3 · Sete ferramentas só com ícone, no topo do celular.** `solve.js:125-132`, `app.css:1068`. A lâmpada só dispara um toast antes de responder. Voltar, foco e cronômetro somem ao rolar (`#q-back`, `#q-focus`, `#q-index` em y18–62). Esconder "Solução" até haver resposta, mover Lista e Anotação para "⋯" ou para o rodapé.
 - **RES-4 · "Fim da lista" é botão desabilitado.** No último item virar "Ver resultado" com acertos, erros e rota de revisão.
 - **RES-5 · Responder desabilitado sem motivo no celular.** `#q-answer` a 3,09:1 e a dica "escolha com o toque ou A–E" some (`.hide-m`).

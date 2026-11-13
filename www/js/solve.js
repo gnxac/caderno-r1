@@ -9,7 +9,7 @@
     if (!opts.qids || !opts.qids.length) { MQ.toast('Nenhuma questão para abrir.'); return; }
     MQ.session = {
       title: opts.title || 'Questões', qids: opts.qids.slice(), ctx: opts.ctx || 'banco', listId: opts.listId || null,
-      idx: Math.min(opts.startIndex || 0, opts.qids.length - 1), sid: MQ.uid(), sel: {}, attempt: {}, time: {}, focus: false, revealed: {}, cut: {}, hideBanner: {}, showTopics: false, showHist: {},
+      idx: Math.min(opts.startIndex || 0, opts.qids.length - 1), sid: MQ.uid(), sel: {}, attempt: {}, time: {}, focus: false, revealed: {}, cut: {}, hideBanner: {}, solSeen: {}, showTopics: false, showHist: {},
       showIndex: window.innerWidth > 1100, shownAt: Date.now()
     };
     // Reabrir a lista mostra de novo as respostas já dadas (desde o último "recomeçar")
@@ -187,7 +187,9 @@
       '<div class="solve-wrap' + (s.showIndex ? ' with-index' : '') + '"><div class="qmain">' + body +
       '<div class="solve-foot"><div class="sf-count">' + (s.idx + 1) + ' de ' + n + '<span class="hide-m"> · escolha com o toque ou as teclas A–E</span></div>' +
       '<div class="sf-row"><button class="round" id="q-prev" aria-label="Questão anterior"' + (s.idx === 0 ? ' disabled' : '') + '>' + icon('left') + '</button>' +
-      (revealed || !q
+      (revealed && q && chosen !== q.gabarito && !s.solSeen[qid]
+        ? '<button class="btn primary big" id="q-sol-main">Ver solução</button>'
+        : revealed || !q
         ? '<button class="btn primary big" id="q-next-main"' + (last ? ' disabled' : '') + '>' + (last ? 'Fim da lista' : 'Próxima') + '</button>'
         : '<button class="btn primary big" id="q-answer"' + (chosen ? '' : ' disabled') + '>Responder</button>') +
       '<button class="round" id="q-next" aria-label="Próxima questão"' + (last ? ' disabled' : '') + '>' + icon('right') + '</button></div></div></div>' + idxHtml + panel + '</div>';
@@ -199,6 +201,10 @@
     $('#q-back', root).onclick = () => { history.length > 1 ? history.back() : (location.hash = '#/questoes'); };
     $('#q-prev', root).onclick = () => go(s.idx - 1);
     $('#q-next', root).onclick = () => go(s.idx + 1);
+    if ($('#q-sol-main', root)) $('#q-sol-main', root).onclick = e => {
+      s.solSeen[qid] = true; $('#q-comment', root).scrollIntoView({ behavior: 'smooth', block: 'start' });
+      e.target.id = 'q-next-main'; e.target.textContent = last ? 'Fim da lista' : 'Próxima'; e.target.disabled = last; e.target.onclick = () => go(s.idx + 1);
+    };
     if ($('#q-next-main', root)) $('#q-next-main', root).onclick = () => go(s.idx + 1);
     if ($('#q-banner-x', root)) $('#q-banner-x', root).onclick = () => { s.hideBanner[qid] = true; $('.answer-banner', root).remove(); };
     $('#q-page', root).onchange = e => go(Math.max(1, Math.min(n, parseInt(e.target.value, 10) || 1)) - 1);
@@ -225,7 +231,7 @@
     $('#q-fminus', root).onclick = () => MQ.setFontScale((MQ.local.fontScale || 1) - 0.08);
     $('#q-sol', root).onclick = () => {
       const c = $('#q-comment', root);
-      if (c) c.scrollIntoView({ behavior: 'smooth', block: 'start' }); else MQ.toast('Responda a questão para ver a solução.');
+      if (c) { s.solSeen[qid] = true; c.scrollIntoView({ behavior: 'smooth', block: 'start' }); } else MQ.toast('Responda a questão para ver a solução.');
     };
     $('#q-add', root).onclick = e => addToListMenu(e.currentTarget, qid);
     $('#q-topics', root).onclick = () => { s.showTopics = !s.showTopics; MQ.render(); };

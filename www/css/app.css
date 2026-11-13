@@ -203,7 +203,7 @@ main { min-width: 0; padding: 28px 36px 60px; }
 :is(.btn, .icon-btn, .fbtn, .chip-t, .chip-x, .chip-trail, .round, .pick, .qb, .seg button, .area-card, .perf-card, .set-link):not(:disabled):active { scale: .96; }
 .btn.sm { min-height: 32px; padding: 0 10px; font-size: 13px; }
 .icon-btn {
-  display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px;
+  display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px;
   border-radius: 8px; border: 1px solid transparent; background: transparent; cursor: pointer; color: var(--ink-2);
   transition-property: background-color, color, scale; transition-duration: var(--t-fast); transition-timing-function: ease-out;
 }
@@ -628,7 +628,7 @@ details.quad ul { margin: 6px 0 0; padding-left: 1.1em; font-size: .9rem; }
 .qb { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 12px; border: 1px solid transparent; border-radius: 8px; transition-property: background-color, color, scale; transition-duration: var(--t-fast); transition-timing-function: ease-out; background: transparent; color: var(--accent); font-size: .88rem; font-weight: 600; cursor: pointer; }
 .qb:hover { background: var(--sunk); }
 .qb[aria-pressed="true"] { background: var(--accent-soft); color: var(--on-soft); }
-.qb:disabled { opacity: .35; cursor: default; }
+.qb:disabled { display: none; }
 .qb .ic { width: 20px; height: 20px; }
 .qrow .icon-btn { width: 44px; height: 44px; }
 .qmeta { font-size: .88rem; color: var(--ink-2); }
