@@ -217,8 +217,9 @@
     $$('button[data-bar]', root).forEach(b => b.onclick = () => { p.drill.push(groups[+b.dataset.bar].name); MQ.render(); });
     $$('[data-bar]', root).forEach(b => {
       const g = groups[+b.dataset.bar];
-      b.addEventListener('mousemove', e => MQ.showTip(e.clientX, e.clientY, '<b>' + esc(g.name) + '</b><br>' + g.ok + ' certas de ' + g.n + ' (' + MQ.pct(g.ok, g.n) + '%)'));
-      b.addEventListener('mouseleave', MQ.hideTip);
+      // no toque o valor já está na linha e o toque detalha; a dica fica só para o mouse
+      b.addEventListener('pointermove', e => { if (e.pointerType !== 'touch') MQ.showTip(e.clientX, e.clientY, '<b>' + esc(g.name) + '</b><br>' + g.ok + ' certas de ' + g.n + ' (' + MQ.pct(g.ok, g.n) + '%)'); });
+      b.addEventListener('pointerleave', MQ.hideTip);
     });
 
     // Bolhas e tabela (seção "Onde focar")

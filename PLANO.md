@@ -86,7 +86,7 @@ Ordem aprovada na fase 1. Marque `[x]` ao concluir cada item. Decisões de visua
 - [x] Revisão pós-prova: nota, acerto por área, cartão de tempo (total, média e as 5 mais demoradas), grade clicável, "Revisar só as erradas" e criar lista com os erros
 - [ ] Predefinições de prova editadas e publicadas pelo administrador (hoje as provas saem do banco sem edição; publicar junto com o banco mexe no fluxo de publicação, ainda não testado com o Google real)
 - [ ] `provaPresets()` varre o banco a cada abertura de Listas; criar cache se o banco passar de alguns milhares de questões
-- [ ] Teste do toque real (tap) em tablet com toque nas telas novas
+- [x] Teste do toque real (tap) em tablet com toque nas telas novas
 
 ## 7b. Aba Anotações (pedido posterior)
 - [x] Aba Anotações na navegação (Ctrl 4; Desempenho passa a Ctrl 5 e Configurações a Ctrl 6)
@@ -102,7 +102,7 @@ Ordem aprovada na fase 1. Marque `[x]` ao concluir cada item. Decisões de visua
 - [x] ~~Acerto real sem chutes~~ (removido junto com o recurso de chute)
 - [x] Comparação com o período anterior em Questões, Acerto e Tempo médio (verde melhorou, vermelho piorou; some em "todo o histórico")
 - [x] Tooltips das barras, do mapa e do gráfico e a mensagem de "sem tema elegível", testados no navegador com mouse
-- [ ] Tooltips por toque no celular (hoje só reagem ao mouse)
+- [x] Tooltips por toque no celular (hoje só reagem ao mouse)
 
 ## 9. Configurações
 - [x] Índice de seções (coluna no PC, chips no tablet e celular) e as seções: Conta e sincronização, Aparência, Estudo, Dados e backup, Atalhos, Administrador, Sobre

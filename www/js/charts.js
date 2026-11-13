@@ -17,6 +17,10 @@
     tipEl.style.top = top + 'px';
   };
   MQ.hideTip = function () { if (tipEl) tipEl.style.display = 'none'; };
+  // no toque não existe mouseleave: toque fora do gráfico (ou 4 s) fecha a dica
+  let tipTimer = 0;
+  MQ.touchTip = function (x, y, html) { MQ.showTip(x, y, html); clearTimeout(tipTimer); tipTimer = setTimeout(MQ.hideTip, 4000); };
+  document.addEventListener('pointerdown', e => { if (!e.target.closest || !e.target.closest('.chart-svg,[data-bar]')) MQ.hideTip(); }, true);
 
   function niceMax(v) {
     if (v <= 5) return 5;
@@ -78,12 +82,17 @@
         const b = c.getBoundingClientRect();
         MQ.showTip(e && e.clientX != null ? e.clientX : b.left + b.width / 2, e && e.clientY != null ? e.clientY : b.top, it.tip);
       };
-      c.addEventListener('mousemove', show);
+      let armed = false; // toque: 1º toque mostra a dica, 2º detalha
+      c.addEventListener('pointermove', e => { if (e.pointerType !== 'touch') show(e); });
+      c.addEventListener('pointerdown', e => { armed = e.pointerType === 'touch' && !(tipEl && tipEl.style.display === 'block' && tipEl.dataset.id === it.label); });
       c.addEventListener('focus', () => show());
-      c.addEventListener('mouseleave', MQ.hideTip);
+      c.addEventListener('pointerleave', e => { if (e.pointerType !== 'touch') MQ.hideTip(); });
       c.addEventListener('blur', MQ.hideTip);
       if (it.onClick) {
-        c.addEventListener('click', () => { MQ.hideTip(); it.onClick(); });
+        c.addEventListener('click', () => {
+          if (armed) { armed = false; const b = c.getBoundingClientRect(); MQ.touchTip(b.left + b.width / 2, b.top, it.tip); tipEl.dataset.id = it.label; return; }
+          MQ.hideTip(); it.onClick();
+        });
         c.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); MQ.hideTip(); it.onClick(); } });
       }
       svg.appendChild(g);
@@ -125,12 +134,13 @@
       let best = 0, bd = Infinity;
       for (let i = 0; i < n; i++) { const dd = Math.abs(sx(i) - x); if (dd < bd) { bd = dd; best = i; } }
       cross.setAttribute('x1', sx(best)); cross.setAttribute('x2', sx(best)); cross.setAttribute('visibility', 'visible');
-      MQ.showTip(e.clientX, e.clientY, '<b>' + esc(cfg.labels[best]) + '</b>' + cfg.series.map(s =>
+      (e.pointerType === 'touch' ? MQ.touchTip : MQ.showTip)(e.clientX, e.clientY, '<b>' + esc(cfg.labels[best]) + '</b>' + cfg.series.map(s =>
         '<br><span style="color:' + s.color + '">●</span> ' + esc(s.name) + ': ' + (s.values[best] == null ? 'sem questões' : s.values[best] + unit + (s.tips && s.tips[best] ? ' · ' + esc(s.tips[best]) : ''))).join(''));
     }
     hit.addEventListener('pointermove', show);
     hit.addEventListener('pointerdown', show);
-    hit.addEventListener('pointerleave', () => { cross.setAttribute('visibility', 'hidden'); MQ.hideTip(); });
+    hit.addEventListener('pointerleave', e => { if (e.pointerType !== 'touch') { cross.setAttribute('visibility', 'hidden'); MQ.hideTip(); } });
+    hit.style.touchAction = 'pan-y';
     container.innerHTML = '';
     container.appendChild(svg);
   };
@@ -138,7 +148,7 @@
   /* Linha: evolução do % de acerto por semana */
   MQ.lineChart = function (container, points, opts) {
     opts = opts || {};
-    const W = 640, H = 220, m = { l: 40, r: 40, t: 14, b: 30 };
+    const W = Math.max(320, Math.min(640, container.clientWidth || 640)), H = W < 500 ? 220 : 240, m = { l: 40, r: 40, t: 14, b: 30 };
     const iw = W - m.l - m.r, ih = H - m.t - m.b;
     const n = points.length;
     const sx = i => m.l + (n <= 1 ? iw / 2 : (i / (n - 1)) * iw);
@@ -164,16 +174,19 @@
     svg.appendChild(cross);
     const hit = el('rect', { x: m.l - 10, y: m.t, width: iw + 20, height: ih, fill: 'transparent' });
     svg.appendChild(hit);
-    hit.addEventListener('mousemove', e => {
+    hit.style.touchAction = 'pan-y'; // arrastar na horizontal move o cursor; na vertical rola a página
+    const move = e => {
       const r = svg.getBoundingClientRect();
       const x = ((e.clientX - r.left) / r.width) * W;
       let best = 0, bd = Infinity;
       points.forEach((p, i) => { const dd = Math.abs(sx(i) - x); if (dd < bd) { bd = dd; best = i; } });
       const p = points[best];
       cross.setAttribute('x1', sx(best)); cross.setAttribute('x2', sx(best)); cross.setAttribute('visibility', 'visible');
-      MQ.showTip(e.clientX, e.clientY, '<b>' + esc(p.tipLabel || p.label) + '</b><br>' + (p.value == null ? 'Sem questões' : p.value + '% de acerto · ' + p.n + ' questões'));
-    });
-    hit.addEventListener('mouseleave', () => { cross.setAttribute('visibility', 'hidden'); MQ.hideTip(); });
+      (e.pointerType === 'touch' ? MQ.touchTip : MQ.showTip)(e.clientX, e.clientY, '<b>' + esc(p.tipLabel || p.label) + '</b><br>' + (p.value == null ? 'Sem questões' : p.value + '% de acerto · ' + p.n + ' questões'));
+    };
+    hit.addEventListener('pointermove', move);
+    hit.addEventListener('pointerdown', move);
+    hit.addEventListener('pointerleave', e => { if (e.pointerType !== 'touch') { cross.setAttribute('visibility', 'hidden'); MQ.hideTip(); } });
     container.innerHTML = '';
     container.appendChild(svg);
   };
