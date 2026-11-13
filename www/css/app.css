@@ -698,7 +698,11 @@ body.in-focus .qcard { margin-left: auto; margin-right: auto; }
 .qh-result .mk, .qh-card .mk { font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); margin: 0; }
 .qh-result .mk, .qh-result .qh-count, .qh-result .qa-empty { color: var(--on-soft); }
 .qh-count { font-size: 30px; font-weight: 800; letter-spacing: -.02em; color: var(--navy); font-variant-numeric: tabular-nums; line-height: 1.1; }
-.qh-zero { margin: 0; color: var(--err); font-weight: 600; }
+.qh-zero { color: var(--err); font-weight: 600; }
+.qh-zero.done { color: var(--on-soft); }
+.qh-zero p { margin: 0; }
+.qh-zero-acts { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.qh-zero-acts .btn { font-weight: 600; }
 .qa-empty { margin: 0; font-size: 13px; }
 .qa-group h3 { color: var(--on-soft); opacity: .8; }
 .qh-result .chip { background: var(--surface); }
@@ -713,7 +717,7 @@ body.in-focus .qcard { margin-left: auto; margin-right: auto; }
 .qh-card .bar i.ok { background: var(--ok); }
 .qh-fab { display: none; }
 /* Tablet e PC: filtros | resultado e resumo */
-@media (min-width: 860px) {
+@media (min-width: 861px) {
   .qhome { grid-template-columns: minmax(0, 1fr) 340px; grid-template-areas: "head side" "top side" "filters side"; grid-template-rows: auto auto 1fr; }
   .qh-side { position: sticky; top: 16px; align-self: start; max-height: calc(100vh - 32px); overflow: auto; }
 }
@@ -725,11 +729,18 @@ body.in-focus .qcard { margin-left: auto; margin-right: auto; }
 }
 /* Celular e tablet estreito: Resolver fixo acima da barra */
 @media (max-width: 860px) {
+  /* resultado e chips logo abaixo da busca; filtros depois; resumo por último */
+  .qhome { grid-template-areas: "head" "top" "result" "filters" "sum"; }
+  .qh-side { display: contents; }
+  .qh-result { grid-area: result; margin-bottom: 14px; }
+  .qh-card { grid-area: sum; margin-top: 14px; }
+}
+@media (max-width: 860px) {
   .qh-fab { display: block; position: fixed; left: var(--rail); right: 0; bottom: var(--bar, 0px); z-index: 20; padding: 10px 16px calc(10px + env(safe-area-inset-bottom)); background: var(--paper); border-top: 1px solid var(--line); }
   .shell { --bar: 0px; }
   .qh-result #a-see { display: none; }
   .qhome { padding-bottom: 80px; }
-  .qa-actions .btn, #f-reset, .chip-t, .chip-x { min-height: 44px; }
+  .qa-actions .btn, #f-reset, .chip-t, .chip-x, .qh-zero-acts .btn { min-height: 44px; }
   .chip-x { min-width: 44px; justify-content: center; }
 }
 @media (max-width: 599px) {

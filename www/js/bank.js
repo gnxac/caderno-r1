@@ -376,7 +376,7 @@
       '<section class="qh-result" id="qh-applied" aria-label="Resultado">' +
       '<div class="qa-head"><span class="mk">Resultado</span><button class="btn ghost sm" id="f-reset">Limpar filtros</button></div>' +
       '<div class="qh-count" id="qh-n" aria-live="polite"></div>' +
-      '<p class="qh-zero" id="qh-zero" role="status" hidden></p>' +
+      '<div class="qh-zero" id="qh-zero" role="status" hidden></div>' +
       '<div class="qa-sec"><div id="qa-body"></div><p class="qa-empty" id="qa-empty">Só o filtro padrão: questões que você ainda não resolveu.</p></div>' +
       '<button class="btn primary big" id="a-see"></button>' +
       '<div class="qa-actions"><button class="btn" id="a-list">' + icon('book') + ' Criar lista</button>' +
@@ -444,7 +444,18 @@
       const zero = $('#qh-zero', root);
       const names = GROUPS.slice(0, 6).filter(([g]) => chips.some(c => c.group === g)).map(x => x[1]).concat(chips.filter(c => c.group === 'avancados').map(c => c.label));
       zero.hidden = n > 0;
-      zero.textContent = n > 0 ? '' : 'Nenhuma questão com ' + (names.join(' + ') || 'esses filtros') + '.';
+      zero.textContent = '';
+      if (n === 0) {
+        const onlyNew = isDefault && Object.keys(latest).length > 0; // só o filtro padrão, e já há respostas
+        const p = document.createElement('p');
+        p.textContent = onlyNew ? 'Você resolveu tudo o que há para resolver.' : 'Nenhuma questão com ' + (names.join(' + ') || 'esses filtros') + '.';
+        zero.classList.toggle('done', onlyNew);
+        zero.appendChild(p);
+        const acts = [];
+        if (f.situacao.length < ALL_SIT.length) acts.push('<button class="btn sm" data-zero="todas">Incluir já resolvidas</button>');
+        if (!quickOn(f, QUICK[1])) acts.push('<button class="btn sm" data-zero="errei">Refazer erradas</button>');
+        if (acts.length) { const d = document.createElement('div'); d.className = 'qh-zero-acts'; d.innerHTML = acts.join(''); zero.appendChild(d); }
+      }
       ['a-see', 'a-see2', 'a-sim', 'a-list', 'a-smart'].forEach(id => { $('#' + id, root).disabled = !n; });
     }
     function open(k) {
@@ -452,6 +463,8 @@
       else openFilterPage(k, FILTER_LIST.find(x => x[0] === k)[1], refresh);
     }
     root.onclick = e => { // onclick (não addEventListener): #view é o mesmo elemento entre telas e os handlers se acumulariam
+      const zb = e.target.closest('[data-zero]');
+      if (zb) { const f = MQ.bankFilter = MQ.newFilter(); if (zb.dataset.zero === 'errei') quickOnApply(f, QUICK[1]); else f.situacao = ALL_SIT.slice(); refresh(); return; }
       const rm = e.target.closest('[data-rm]');
       if (rm) { const c = chipList()[+rm.dataset.rm]; removeChip(c.kind, c.val); refresh(); return; }
       const qk = e.target.closest('[data-quick]');

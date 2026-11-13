@@ -194,8 +194,8 @@ Compartilhados: C-1, C-4, C-5, C-8, C-10, C-13, C-14.
 Compartilhados: C-1, C-8, C-9, C-10, C-11, C-13, C-17.
 
 **P1**
-- **QST-1 · Beco sem saída quando tudo já foi resolvido.** `bank.js:430-448`. "0 questões" em vermelho, "Limpar filtros", Resolver, Lista e Simulado desabilitados, sem CTA. É o estado normal de quem estuda de verdade. Trocar por "Você resolveu tudo" com "Incluir já resolvidas" e "Refazer erradas".
-- **QST-2 · Celular: resultado e chips abaixo de ~600 px de filtros, e o FAB cobre o contador.** `.fbtns` vai até y≈630; `.qh-fab` (y707–776) cobre `#qh-n`; `#qh-summary` em y924. Resumo e chips logo abaixo da busca, filtros em grade ou acordeão.
+- [x] **QST-1 · Beco sem saída quando tudo já foi resolvido.** `bank.js:430-448`. "0 questões" em vermelho, "Limpar filtros", Resolver, Lista e Simulado desabilitados, sem CTA. É o estado normal de quem estuda de verdade. Trocar por "Você resolveu tudo" com "Incluir já resolvidas" e "Refazer erradas".
+- [x] **QST-2 · Celular: resultado e chips abaixo de ~600 px de filtros, e o FAB cobre o contador.** `.fbtns` vai até y≈630; `.qh-fab` (y707–776) cobre `#qh-n`; `#qh-summary` em y924. Resumo e chips logo abaixo da busca, filtros em grade ou acordeão.
 
 **P2**
 - **QST-3 · Checkbox "marcar tudo" de 22×22** (celular e tablet). `bank.js:249`, `app.css:304`. A linha inteira não é `label` nessas linhas.
