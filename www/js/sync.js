@@ -31,7 +31,9 @@
     const cls = 'sync-dot ' + ({ idle: 'on', busy: 'busy', error: 'err' }[state] || '');
     document.querySelectorAll('.sync-dot').forEach(d => { d.className = cls; });
     document.querySelectorAll('.sync-label').forEach(l => { l.textContent = msg; });
-    document.querySelectorAll('.sync-pill').forEach(p => { p.title = msg; });
+    document.querySelectorAll('.sync-pill, .home-sync').forEach(p => { p.title = msg; p.setAttribute('aria-label', 'Sincronização: ' + msg); });
+    const short = { idle: 'Em dia', busy: 'Sincr.', error: 'Erro' }[state] || 'Local'; // texto curto para a barra lateral estreita
+    document.querySelectorAll('.sync-short').forEach(l => { l.textContent = short; });
   }
 
   /* Requisição HTTP: no Windows passa pelo processo principal (sem CORS);
@@ -226,7 +228,7 @@
   MQ.syncNow = function (opts) {
     opts = opts || {};
     if (!MQ.syncConfigured() || !MQ.syncLoggedIn()) return Promise.resolve(false);
-    if (!navigator.onLine) { setStatus('error', 'Sem internet. Sincroniza quando voltar.'); return Promise.resolve(false); }
+    if (!navigator.onLine) { setStatus('error', 'Sem internet. Sincroniza quando voltar.'); if (opts.manual) MQ.toast('Sem internet. Sincroniza quando voltar.', 'err'); return Promise.resolve(false); }
     if (running) return running;
     running = (async () => {
       setStatus('busy', 'Sincronizando…');
@@ -360,7 +362,7 @@
       '<section class="sync-card"><h2>Conta Google</h2><dl class="kv"><dt>Conta</dt><dd>' + esc(s.email || 'sem conta neste navegador') + '</dd><dt>Última sincronização</dt><dd>' + (s.lastSync ? MQ.fmtDateTime(s.lastSync) : 'ainda não') + '</dd></dl>' +
       '<p class="muted small">' + (MQ.syncLoggedIn() ? 'Sincroniza sozinho com a pasta oculta do app no seu Drive. Se o mesmo item mudar em dois aparelhos, vale a edição mais recente.' : 'Sem conta, seus dados ficam só neste navegador.') + '</p>' +
       '<div class="toolbar">' + (MQ.syncLoggedIn()
-        ? '<button class="btn primary" id="sy-now">' + icon('sync') + ' Sincronizar agora</button><button class="btn" id="sy-re">Reconectar</button><button class="btn ghost" id="sy-out">Sair</button><button class="btn ghost" id="sy-wipe">Sair e apagar dados daqui</button>'
+        ? '<button class="btn' + (MQ.syncStatus.state === 'error' ? ' primary' : '') + '" id="sy-now">' + icon('sync') + ' Sincronizar agora</button><button class="btn" id="sy-re">Reconectar</button><button class="btn ghost" id="sy-out">Sair</button><button class="btn ghost" id="sy-wipe">Sair e apagar dados daqui</button>'
         : '<button class="btn primary" id="sy-in">' + icon('cloud') + ' Entrar com o Google</button>') + '</div></section>';
     const on = (id, fn) => { if ($(id, root)) $(id, root).onclick = fn; };
     on('#sy-now', async () => { await MQ.syncNow({ manual: true }); MQ.render(); });
@@ -379,7 +381,7 @@
       (MQ.syncLoggedIn()
         ? '<section class="sync-card"><h2>Conectado</h2><dl class="kv"><dt>Conta</dt><dd>' + esc(s.email || 'conta Google') + '</dd><dt>Última sincronização</dt><dd>' + (s.lastSync ? MQ.fmtDateTime(s.lastSync) : 'ainda não') + '</dd></dl>' +
           '<p class="muted small">Sincroniza sozinho. Se o mesmo item mudar em dois aparelhos, vale a edição mais recente.</p>' +
-          '<div class="toolbar"><button class="btn primary" id="sy-now">' + icon('sync') + ' Sincronizar agora</button><button class="btn ghost" id="sy-out">Desconectar este aparelho</button></div></section>'
+          '<div class="toolbar"><button class="btn' + (MQ.syncStatus.state === 'error' ? ' primary' : '') + '" id="sy-now">' + icon('sync') + ' Sincronizar agora</button><button class="btn ghost" id="sy-out">Desconectar este aparelho</button></div></section>'
         : (MQ.syncConfigured()
           ? '<section class="sync-card"><h2>Entrar com o Google</h2><p>Enquanto você não entra, suas respostas, listas e simulados ficam só neste aparelho. Entre com a mesma conta no Windows e no Android para mantê-los iguais. O app só acessa a pasta oculta dele no seu Drive.</p><button class="btn primary" id="sy-in">' + icon('cloud') + ' Entrar com o Google</button></section>'
           : '<section class="sync-card"><h2>Entrar com o Google não está disponível</h2><p>Esta versão do app ainda não tem o acesso ao Google configurado. Seus dados continuam salvos neste aparelho.' + (MQ.isAdmin() ? '' : ' Peça ao administrador a versão atualizada do app.') + '</p></section>')) +

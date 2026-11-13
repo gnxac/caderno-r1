@@ -23,7 +23,7 @@
 
   MQ.views.configuracoes = function (root) {
     const theme = MQ.local.theme || 'auto';
-    const scale = Math.round((MQ.local.fontScale || 1) * 100);
+    const scale = Math.round(Math.max(MQ.MIN_FONT_SCALE, MQ.local.fontScale || 1) * 100);
     const st = MQ.syncStatus || { state: 'off', msg: 'Sem sincronização' };
     const secs = SECTIONS.filter(([k]) => k !== 'admin' || MQ.isAdmin());
     const nq = MQ.alive('questions').length, na = MQ.alive('attempts').length, nn = MQ.alive('notes').length;
@@ -32,7 +32,7 @@
       '<nav class="set-index" aria-label="Seções">' + secs.map(([k, l]) => '<a href="#/configuracoes" data-go="' + k + '">' + l + '</a>').join('') + '</nav>' +
       '<div class="settings">' +
       '<section class="set-sec" id="s-conta"><h2>Conta e sincronização</h2>' +
-      '<div class="sync-pill set-pill"><span class="sync-dot ' + ({ idle: 'on', busy: 'busy', error: 'err' }[st.state] || '') + '"></span><span class="sync-label">' + esc(st.msg) + '</span></div>' +
+      '<div class="sync-pill set-pill" role="status" aria-label="Sincronização: ' + esc(st.msg) + '"><span class="sync-dot ' + ({ idle: 'on', busy: 'busy', error: 'err' }[st.state] || '') + '"></span><span class="sync-label">' + esc(st.msg) + '</span></div>' +
       '<div id="set-sync"></div>' +
       '<h3 class="set-sub">Banco de questões</h3><p id="bank-info">' + (MQ.local.bank ? 'Banco: versão ' + Number(MQ.local.bank.version) + ', ' + Number(MQ.local.bank.count) + ' questões, atualizado em ' + MQ.fmtDate(MQ.local.bank.updatedAt) : 'Banco: ainda sem versão baixada') + '</p>' +
       (MQ.isAdmin() ? '<button class="btn" id="bank-pub">Publicar banco para todos</button>' : '') + '</section>' +
@@ -41,9 +41,9 @@
       '<div class="set-row"><span>Tema</span><div class="seg" role="group" aria-label="Tema">' +
       [['auto', 'Automático'], ['light', 'Claro'], ['dark', 'Escuro']].map(([v, l]) => '<button data-theme-set="' + v + '" aria-pressed="' + (theme === v) + '">' + l + '</button>').join('') + '</div></div>' +
       '<div class="set-row"><label for="fs-range">Tamanho do enunciado</label><output id="fs-val" aria-live="polite">' + scale + '%</output></div>' +
-      '<input type="range" id="fs-range" min="80" max="160" step="4" value="' + scale + '" aria-label="Tamanho do enunciado">' +
+      '<input type="range" id="fs-range" min="88" max="160" step="4" value="' + scale + '" aria-label="Tamanho do enunciado">' +
       '<div class="set-preview stem" id="fs-prev">Homem de 64 anos com insuficiência cardíaca de fração de ejeção reduzida chega ao pronto-socorro com dispneia. Qual conduta reduz a mortalidade nesse cenário?</div>' +
-      '<p class="muted small">Vale só neste aparelho. O tamanho nunca fica abaixo de 80%.</p></section>' +
+      '<p class="muted small">Vale só neste aparelho. O tamanho nunca fica abaixo de 88%.</p></section>' +
 
       '<section class="set-sec" id="s-estudo"><h2>Estudo</h2>' +
       '<div class="set-row"><label for="g-n">Meta diária (questões por dia)</label><input type="number" id="g-n" min="1" max="500" value="' + MQ.dailyGoal() + '" inputmode="numeric" style="width:96px"></div>' +

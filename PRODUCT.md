@@ -4,7 +4,7 @@
 
 ## Platform
 
-Site responsivo (web) para computador, celular e tablet. Entra-se com a conta Google; instalável como app (PWA) e funciona offline. Os apps Windows (Electron) e Android (APK) continuam no repositório como legado.
+web
 
 ## Users
 Residentes e candidatos a residência médica, colegas do administrador (Guilherme), que recebem o app e o banco publicado. Estudam em sessões longas, no celular (muitas vezes com uma mão), no tablet e no computador, resolvendo questões de provas oficiais. O administrador cadastra, importa e publica as questões; os demais só resolvem.
@@ -13,10 +13,10 @@ Residentes e candidatos a residência médica, colegas do administrador (Guilher
 Pulse é um banco de questões para resolver, organizar em listas e simulados cronometrados, marcar o texto, descartar alternativas, revisar os erros e acompanhar o desempenho por assunto. Sucesso: o estudante abre o app e sabe o que fazer agora, filtra rápido o que precisa, resolve sem atrito e vê onde errar menos.
 
 ## Positioning
-Controle total do estudo (marca-texto, tesoura, listas, simulados, revisão dos erros e desempenho do jeito do estudante), gratuito e sem anúncios, que funciona offline e sem conta própria: os dados ficam no aparelho e sincronizam pelo Google Drive de cada pessoa, sem servidor nem assinatura.
+Controle total do estudo (marca-texto, tesoura, listas, simulados, revisão dos erros e desempenho do jeito do estudante), gratuito e sem anúncios, que funciona offline e sem servidor nem senha própria: entra-se com a conta Google, os dados ficam no navegador e sincronizam pelo Google Drive de cada pessoa, sem assinatura.
 
 ## Operating Context
-WSite publicado no GitHub Pages (pasta `www/`, sem build), responsivo em três formatos pela largura da janela: celular (barra inferior), tablet (rail e 2 colunas) e computador (barra lateral, 3 colunas e atalhos de teclado). Tela de login "Entrar com Google" (Google Identity Services, sem servidor e sem senha; ID de cliente "Aplicativo da Web" em `googleWebClientId`). Manifesto e service worker deixam o site instalável e offline. Legado: Windows (Electron portátil) e Android (APK, Capacitor 7), com o fluxo antigo de código no google.com/device. Sincronização com a pasta oculta do Drive de cada usuário. O administrador publica o banco num arquivo público do próprio Drive (manifesto com versão + banco); os aparelhos baixam só quando a versão muda. Questões são importadas de pacotes `.json`, CSV ou cadastradas à mão.
+Site responsivo para computador, celular e tablet, publicado no GitHub Pages (pasta `www/`, sem build), instalável como app (PWA), em três formatos pela largura da janela: celular (barra inferior), tablet (rail e 2 colunas) e computador (barra lateral, 3 colunas e atalhos de teclado). Tela de login "Entrar com Google" (Google Identity Services, sem servidor e sem senha; ID de cliente "Aplicativo da Web" em `googleWebClientId`). Manifesto e service worker deixam o site instalável e offline. Legado: Windows (Electron portátil) e Android (APK, Capacitor 7), com o fluxo antigo de código no google.com/device. Sincronização com a pasta oculta do Drive de cada usuário. O administrador publica o banco num arquivo público do próprio Drive (manifesto com versão + banco); os aparelhos baixam só quando a versão muda. Questões são importadas de pacotes `.json`, CSV ou cadastradas à mão.
 
 ## Capabilities and Constraints
 - JS puro, sem build, tudo no objeto global `MQ`; dados no IndexedDB. A stack continua a mesma na reformulação.

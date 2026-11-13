@@ -85,20 +85,26 @@
     return '<figure class="qimg"><img src="' + src + '" alt="' + MQ.esc(alt || 'Imagem da questão') + '" loading="lazy" data-zoom="' + MQ.esc(id) + '"></figure>';
   };
 
-  let saveTimer = null;
+  let saveTimer = null, dirty = false;
   const changeListeners = [];
   MQ.onChange = fn => changeListeners.push(fn);
 
   /* Marca alteração: salva em seguida e avisa a sincronização */
   MQ.touch = function () {
     clearTimeout(saveTimer);
-    saveTimer = setTimeout(() => { idbSet(KEY_DATA, MQ.data).catch(e => console.error(e)); }, 250);
+    dirty = true;
+    saveTimer = setTimeout(() => { dirty = false; idbSet(KEY_DATA, MQ.data).catch(e => console.error(e)); }, 250);
     changeListeners.forEach(fn => { try { fn(); } catch (e) { console.error(e); } });
   };
   MQ.saveNow = function () {
     clearTimeout(saveTimer);
+    dirty = false;
     return idbSet(KEY_DATA, MQ.data);
   };
+  /* Fechar ou recarregar a aba logo depois de responder não perde o dado do debounce de 250 ms */
+  const flush = () => { if (dirty) MQ.saveNow().catch(e => console.error(e)); };
+  window.addEventListener('pagehide', flush);
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flush(); });
   MQ.saveLocal = function () { return idbSet(KEY_LOCAL, MQ.local); };
   /* Apaga tudo deste navegador (troca de conta ou "sair e apagar"); mantém só o id do aparelho */
   MQ.resetData = async function () {
@@ -223,6 +229,7 @@
     };
     MQ.put('attempts', a);
     MQ.reviewUpdate(a);
+    MQ.saveNow(); // o pagehide não garante a gravação no IndexedDB; a resposta vai direto ao disco
     return a;
   };
 

@@ -204,7 +204,7 @@
       if (fl) { cls += ' flag'; lab += ', marcada para revisar'; }
       if (i === idx) { cls += ' cur'; lab += ', questão atual'; }
     }
-    return '<button class="' + cls + '" data-' + (mode === 'res' ? 'rev' : 'go') + '="' + i + '" aria-label="' + esc(lab) + '"' + (mode !== 'res' && i === idx ? ' aria-current="true"' : '') + '><span class="n">' + (i + 1) + '</span><span class="l">' + (a ? esc(a) : '') + '</span></button>';
+    return '<button class="' + cls + '" data-' + (mode === 'res' ? 'rev' : 'go') + '="' + i + '" aria-label="' + esc(lab) + '"' + (mode !== 'res' && i === idx ? ' aria-current="true"' : '') + '><span class="n">' + (i + 1) + '</span><span class="l">' + (a ? esc(a) : '') + (mode === 'res' && a ? icon(cls.includes(' ok') ? 'check' : 'x') : fl ? icon('flag') : '') + '</span></button>';
   }
   function sheetHtml(run, idx) {
     const blank = run.qids.filter(id => !run.answers[id]).length;
@@ -252,7 +252,7 @@
       '<aside class="sim-sheet" aria-label="Cartão-resposta"><h3>Cartão-resposta</h3>' + sheetHtml(run, idx) + '</aside></div>' +
       '<div class="sim-bar"><button class="btn" id="sim-card">Cartão <span class="tnum">' + (idx + 1) + '/' + n + '</span></button><button class="btn primary" id="sim-next2"' + (idx >= n - 1 ? ' disabled' : '') + '>Próxima ' + icon('right') + '</button></div>';
 
-    function save() { MQ.put('runs', run); }
+    function save() { MQ.put('runs', run); MQ.saveNow(); } // prova: cada resposta vai direto ao disco
     function go(i) { if (i < 0 || i >= n) return; run.idx = i; save(); MQ.render(); window.scrollTo(0, 0); }
     function pick(l) { if (cut.includes(l)) return; run.answers[qid] = run.answers[qid] === l ? undefined : l; if (!run.answers[qid]) delete run.answers[qid]; save(); MQ.render(); }
     if (q) MQ.enableMarker(root, qid);
@@ -267,7 +267,7 @@
     }));
     $$('[data-alt]', root).forEach(el => {
       el.onclick = e => { if (e.target.closest('[data-cut]') || MQ.selectingIn(el)) return; pick(el.dataset.alt); };
-      el.onkeydown = e => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); pick(el.dataset.alt); } };
+      el.onkeydown = e => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); pick(el.dataset.alt); } };
     });
     $$('[data-go]', root).forEach(b => b.onclick = () => go(parseInt(b.dataset.go, 10)));
     function nextBlank() {

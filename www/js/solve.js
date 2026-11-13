@@ -61,6 +61,7 @@
     const o = MQ.get('notes', qid);
     if (text) { if (o && o.text === text) return; MQ.put('notes', Object.assign(o || { id: qid, qid }, { text })); }
     else if (o) MQ.remove('notes', qid);
+    MQ.saveNow(); // anotação salva ou excluída vai direto ao disco
   }
 
   MQ.noteOf = noteOf; MQ.saveNote = saveNote;
@@ -114,7 +115,7 @@
         if (cut.includes(a.l)) cls += ' cut-on';
         return '<div class="' + cls + '" role="button" tabindex="0" data-alt="' + esc(a.l) + '"' + (revealed ? ' aria-disabled="true"' : '') + ' aria-pressed="' + (a.l === chosen) + '">' +
           '<span class="letter">' + esc(a.l) + '</span><span class="txt"><span data-mk="' + esc(a.l) + '">' + MQ.para(a.t) + '</span>' + (a.img ? MQ.imgHtml(a.img, 'Imagem da alternativa ' + a.l) : '') + '</span>' +
-          (revealed ? '<span></span>' : '<button class="icon-btn cut" data-cut="' + esc(a.l) + '" aria-pressed="' + cut.includes(a.l) + '" aria-label="' + (cut.includes(a.l) ? 'Trazer de volta' : 'Descartar') + ' a alternativa ' + esc(a.l) + '" title="' + (cut.includes(a.l) ? 'Trazer de volta' : 'Descartar alternativa') + '">' + icon('scissors') + '</button>') +
+          (revealed ? (a.l === q.gabarito ? '<span class="alt-flag ok">' + icon('check') + 'Gabarito</span>' : a.l === chosen ? '<span class="alt-flag bad">' + icon('x') + 'Sua resposta, errada</span>' : '<span></span>') : '<button class="icon-btn cut" data-cut="' + esc(a.l) + '" aria-pressed="' + cut.includes(a.l) + '" aria-label="' + (cut.includes(a.l) ? 'Trazer de volta' : 'Descartar') + ' a alternativa ' + esc(a.l) + '" title="' + (cut.includes(a.l) ? 'Trazer de volta' : 'Descartar alternativa') + '">' + icon('scissors') + '</button>') +
           '</div>';
       }).join('');
       const histHtml = s.showHist[qid] ? '<div class="history">' + (hist.length ? histRows(hist) : 'Você ainda não respondeu esta questão.') + '</div>' : '';
@@ -242,7 +243,7 @@
         MQ.render();
       };
       el.addEventListener('click', e => { if (e.target.closest('[data-cut]')) return; pick(); });
-      el.addEventListener('keydown', e => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); pick(); } });
+      el.addEventListener('keydown', e => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); pick(); } });
     });
     function toggleCut(l) {
       const i = cut.indexOf(l);
@@ -289,8 +290,9 @@
   }
   MQ.ctxLabel = ctxLabel;
 
+  MQ.MIN_FONT_SCALE = 0.88; // piso de leitura do PRODUCT.md (enunciado ≥ 15 px)
   MQ.setFontScale = function (v) {
-    v = Math.max(0.8, Math.min(1.6, v));
+    v = Math.max(MQ.MIN_FONT_SCALE, Math.min(1.6, v));
     MQ.local.fontScale = v; MQ.saveLocal();
     document.documentElement.style.setProperty('--font-scale', v);
   };

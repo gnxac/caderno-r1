@@ -171,7 +171,7 @@
     $('#p-weak', root).innerHTML = weak.length ? weak.map((w, i) => {
       const pc = MQ.pct(w.ok, w.n);
       return '<li><div><div>' + esc(w.path[w.path.length - 1]) + '</div><div class="path">' + esc(w.path.slice(0, -1).join(' › ')) + ' · ' + w.n + ' respostas</div></div>' +
-        '<span class="pct' + (pc < 60 ? ' low' : '') + '">' + pc + '%</span><button class="btn sm" data-train="' + i + '">Treinar 20</button></li>';
+        '<span class="pct' + (pc < 60 ? ' low' : '') + '">' + (pc < 60 ? icon('alert') + '<span class="sr-only">Baixo: </span>' : '') + pc + '%</span><button class="btn sm' + (i === 0 ? ' primary' : ' ghost') + '" data-train="' + i + '">Treinar 20</button></li>';
     }).join('') : '<li class="muted">Nenhum tema com ' + MIN_WEAK + ' respostas e erros neste período. Bom sinal, ou ainda é cedo.</li>';
     $$('[data-train]', root).forEach(b => b.onclick = () => {
       const w = weak[+b.dataset.train];

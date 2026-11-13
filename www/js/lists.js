@@ -218,7 +218,7 @@
       bar(n) +
       '<div class="lc-foot"><span class="st">' + (l.kind === 'simulado' ? (n.last ? 'Nota ' + MQ.pct(n.ok, n.total) + '%' : 'Sem tentativa') : done(n) + '% feito') + '</span>' +
       (l.kind === 'simulado' ? '' : '<span class="pct' + (a >= 0 && a < 60 ? ' low' : '') + '">' + (a >= 0 ? a + '% acerto' : '–') + '</span>') + '</div>' +
-      '<button class="btn sm primary" data-act="open" data-id="' + esc(l.id) + '">' + icon('play') + actionLabel(l, n) + '</button></article>';
+      '<button class="btn sm" data-act="open" data-id="' + esc(l.id) + '">' + icon('play') + actionLabel(l, n) + '</button></article>';
   }
 
   /* Caderno de erros: filtro automático (não é uma lista salva) */
@@ -229,7 +229,7 @@
     return '<article class="lcard lc-erros"><div class="lc-top"><span class="lc-name">' + icon('target') + '<b>Caderno de erros</b></span></div>' +
       '<div class="st">' + ids.length + (ids.length === 1 ? ' questão' : ' questões') + ' · automático</div><div><span class="badge err">Automática</span></div>' +
       '<div class="st">Questões cuja última resposta foi errada. Saem daqui quando você acerta.</div>' +
-      '<div class="lc-btns"><button class="btn sm primary" data-act="erros"' + (ids.length ? '' : ' disabled') + '>' + icon('play') + 'Revisar</button></div></article>';
+      '<div class="lc-btns"><button class="btn sm" data-act="erros"' + (ids.length ? '' : ' disabled') + '>' + icon('play') + 'Revisar</button></div></article>';
   }
 
   function detail(l, n) {
@@ -258,7 +258,7 @@
       '<div class="lc-dtitle">' + esc(l.name) + '</div><div class="st">' + (folder ? 'Pasta ' + esc(folder.name) + ' · ' : '') + 'criada em ' + MQ.fmtDate(l.createdAt) + '</div>' +
       '<div class="row sb"><span class="st">' + n.resp + ' de ' + n.total + (l.kind === 'simulado' ? ' respondidas na última prova' : ' respondidas') + '</span><b class="num">' + done(n) + '%</b></div>' + bar(n) +
       '<div class="row sb"><span class="st">' + n.ok + ' certas · ' + n.err + ' erradas · ' + blank + ' em branco</span><span class="pct' + (a >= 0 && a < 60 ? ' low' : '') + '">' + (a >= 0 ? a + '%' : '–') + '</span></div>' +
-      '<button class="btn primary big" data-act="open" data-id="' + esc(l.id) + '">' + icon('play') + (l.kind === 'simulado' ? actionLabel(l, n) : (n.resp && n.resp < n.total ? 'Continuar da ' + Math.min(prog + 1, n.total) : actionLabel(l, n))) + '</button>' +
+      '<button class="btn big" data-act="open" data-id="' + esc(l.id) + '">' + icon('play') + (l.kind === 'simulado' ? actionLabel(l, n) : (n.resp && n.resp < n.total ? 'Continuar da ' + Math.min(prog + 1, n.total) : actionLabel(l, n))) + '</button>' +
       (l.kind === 'simulado' ? '' : '<div class="row"><button class="btn sm" data-act="redo" data-id="' + esc(l.id) + '"' + (n.err ? '' : ' disabled') + '>Refazer erradas</button><button class="btn sm" data-act="sim" data-id="' + esc(l.id) + '">Criar simulado</button></div>') +
       topics + '</div>';
   }
@@ -303,7 +303,7 @@
     root.innerHTML = '<div class="lst">' +
       '<header class="lst-head"><div class="lst-title"><h1>' + (tab === 'listas' ? 'Listas' : 'Simulados') + '</h1>' +
       '<div class="seg" role="group" aria-label="Tipo"><button data-tab="listas" aria-pressed="' + (tab === 'listas') + '">Listas</button><button data-tab="simulados" aria-pressed="' + (tab === 'simulados') + '">Simulados</button></div></div>' +
-      '<div class="toolbar"><button class="btn" id="l-sort">' + icon('sort') + ' ' + sortLabel + '</button><button class="btn primary" id="l-create">' + icon('plus') + ' Criar</button></div></header>' +
+      '<div class="toolbar"><button class="btn" id="l-sort">' + icon('sort') + ' ' + sortLabel + '</button><button class="btn primary act-fixed" id="l-create">' + icon('plus') + ' Criar</button></div></header>' +
       '<nav class="lst-folders" aria-label="Pastas">' + folderNav() + '</nav>' +
       '<div class="lst-main">' + (tab === 'simulados' ? provasSection() : '') +
       (cards ? '<div class="lgrid2">' + cards + '</div>' : '<div class="empty"><h2>' + (tab === 'simulados' ? 'Nenhum simulado aqui' : 'Nenhuma lista aqui') + '</h2><p>Filtre questões no banco e use "Criar lista" ou "Criar simulado". Para organizar, crie pastas.</p><a class="btn primary" href="#/questoes">Ir para o banco de questões</a></div>') + '</div>' +

@@ -61,7 +61,7 @@
 
       $('#nt-filters', root).innerHTML = '<div class="nt-row"><span class="nt-lab">Assunto</span>' +
         '<button class="qchip' + (depth ? '' : ' on') + '" data-crumb="0" aria-pressed="' + !depth + '">' + (depth ? '' : icon('check')) + 'Todos</button>' +
-        st.path.map((p, i) => '<button class="qchip' + (i === depth - 1 ? ' on' : '') + '" data-crumb="' + (i + 1) + '" aria-pressed="' + (i === depth - 1) + '">' + esc(p) + '</button>').join('') + '</div>' +
+        st.path.map((p, i) => '<button class="qchip' + (i === depth - 1 ? ' on' : '') + '" data-crumb="' + (i + 1) + '" aria-pressed="' + (i === depth - 1) + '">' + (i === depth - 1 ? icon('check') : '') + esc(p) + '</button>').join('') + '</div>' +
         (kidList.length ? '<div class="nt-row"><span class="nt-lab">' + (['Grande área', 'Especialidade', 'Tema', 'Subtema'][depth] || 'Mais') + '</span>' +
           kidList.map(([k, n]) => '<button class="qchip" data-add="' + esc(k) + '">' + esc(k) + ' <b class="qn">' + n + '</b></button>').join('') + '</div>' : '');
 
@@ -72,7 +72,7 @@
           (x.path.length ? '<div class="nt-path">' + esc(x.path.join(' › ')) + '</div>' : '') +
           (q ? '<p class="nt-q">' + esc(MQ.plain(q.enunciado).slice(0, 160)) + '</p>' : '') +
           '<div class="nt-text">' + esc(x.n.text) + '</div>' +
-          '<footer class="nt-foot">' + (q ? '<button class="btn sm primary" data-act="open" data-q="' + esc(x.qid) + '">' + icon('play') + 'Abrir questão</button>' : '') +
+          '<footer class="nt-foot">' + (q ? '<button class="btn sm" data-act="open" data-q="' + esc(x.qid) + '">' + icon('play') + 'Abrir questão</button>' : '') +
           '<button class="btn sm" data-act="edit" data-q="' + esc(x.qid) + '">' + icon('edit') + 'Editar</button>' +
           '<button class="icon-btn" data-act="del" data-q="' + esc(x.qid) + '" aria-label="Excluir anotação" title="Excluir anotação">' + icon('trash') + '</button></footer></article>';
       }).join('') + '</div>'

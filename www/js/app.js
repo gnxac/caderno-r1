@@ -18,6 +18,12 @@
     return !!email && admins.includes(email);
   };
 
+  function focusKey(el) {
+    if (el.id) return '#' + CSS.escape(el.id);
+    const d = Object.keys(el.dataset || {})[0];
+    return d ? el.tagName.toLowerCase() + '[data-' + d.replace(/[A-Z]/g, m => '-' + m.toLowerCase()) + '="' + CSS.escape(el.dataset[d]) + '"]' : null;
+  }
+
   MQ.render = function () {
     clearInterval(MQ.tick);
     if (MQ.stopSearch) { MQ.stopSearch(); MQ.stopSearch = null; }
@@ -35,8 +41,16 @@
     root.onclick = null; // cada tela define o seu; senão o da tela anterior continua ouvindo
     const navKey = NAV_FOR[r.name] || 'questoes';
     $$('#nav a').forEach(a => { if (a.dataset.route === navKey) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
+    /* O render troca o DOM inteiro: guarda o foco (por id ou data-*) e devolve no elemento novo equivalente */
+    const fa = document.activeElement, keep = fa && root.contains(fa) && fa !== root ? focusKey(fa) : null;
+    const caret = keep && fa.selectionStart != null ? [fa.selectionStart, fa.selectionEnd] : null;
     try {
       view(root, r.arg);
+      if (keep && document.activeElement === document.body) {
+        const el = keep && root.querySelector(keep);
+        if (!el || el.disabled) root.focus({ preventScroll: true }); // o elemento sumiu: o foco fica na tela, não no body
+        else { el.focus({ preventScroll: true }); if (caret && el.setSelectionRange) try { el.setSelectionRange(caret[0], caret[1]); } catch (_) {} }
+      }
     } catch (e) {
       console.error(e);
       root.innerHTML = '<div class="empty"><h2>Algo deu errado nesta tela</h2><p>' + MQ.esc(e.message || String(e)) + '</p><a class="btn" href="#/questoes">Voltar ao banco</a></div>';
@@ -88,7 +102,7 @@
     if (MQ.reminderApply) MQ.reminderApply(); // reagenda o lembrete com a meta atual
     MQ.bankFilter = MQ.newFilter(); // depois de carregar os dados: o filtro padrão vem de MQ.local.filtroPadrao
     MQ.applyTheme();
-    document.documentElement.style.setProperty('--font-scale', MQ.local.fontScale || 1);
+    document.documentElement.style.setProperty('--font-scale', Math.max(MQ.MIN_FONT_SCALE, MQ.local.fontScale || 1));
     MQ.seedIfEmpty();
     if (!location.hash) location.hash = '#/inicio';
     MQ.render();

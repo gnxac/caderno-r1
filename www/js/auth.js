@@ -114,20 +114,21 @@
       '<h2>Questões de residência no seu ritmo</h2>' +
       '<ul><li>Provas oficiais, filtros por assunto, banca e ano</li><li>Revisão espaçada dos seus erros e caderno de erros</li><li>Simulados cronometrados e desempenho por tema</li><li>Funciona no computador, no tablet e no celular, e até sem internet</li></ul></section>' +
       '<section class="lg-card"><div class="lg-mark sm">' + MARK + '<b>Pulse</b></div>' +
-      '<h1>Entrar</h1><p class="lg-sub">Use a sua conta Google. Seus dados ficam neste navegador e sincronizam com o seu Google Drive: não há outra senha nem servidor.</p>' +
+      '<h1>Entrar</h1><p class="lg-sub">Suas questões, respostas e listas ficam com você, sem outra senha.</p>' +
+      '<ul class="lg-points"><li>Revisão dos seus erros no dia certo</li><li>Simulados cronometrados e desempenho por tema</li><li>Funciona até sem internet</li></ul>' +
       (configured
-        ? '<button class="lg-google" id="lg-go">' + G + '<span>Entrar com Google</span></button>'
-        : '<p class="lg-warn" role="status">O login com Google ainda não foi configurado neste site. Veja o passo a passo no LEIA-ME (campo <code>googleWebClientId</code> em <code>config.js</code>).</p><button class="lg-google" id="lg-local">Continuar sem conta neste navegador</button>') +
-      '<p class="lg-err" id="lg-err" role="alert" hidden></p>' +
-      '<p class="lg-fine">Pedimos acesso só à pasta oculta do app no seu Drive e ao seu e-mail, para guardar e sincronizar os seus dados.</p></section>';
+        ? '<p class="lg-fine">Pedimos acesso só à pasta oculta do app no seu Drive e ao seu e-mail, para guardar e sincronizar os seus dados.</p><button class="lg-google" id="lg-go">' + G + '<span>Entrar com Google</span></button>'
+        : '<p class="lg-warn" role="status">Entrar com Google ainda não está disponível neste endereço. Você pode usar o Pulse só neste navegador, mas nada será sincronizado: se você limpar os dados do navegador, perde o progresso. Use <b>Configurações › Dados e backup</b> para guardar uma cópia.</p><button class="lg-google" id="lg-local">Continuar sem conta neste navegador</button>') +
+      '<p class="lg-err" id="lg-err" role="alert" hidden></p></section>';
     document.body.appendChild(el);
     const err = msg => { const e = el.querySelector('#lg-err'); e.textContent = msg; e.hidden = !msg; };
     const finish = () => { el.remove(); document.body.classList.remove('logged-out'); done(); };
     const go = el.querySelector('#lg-go');
     if (go) {
-      go.focus();
       go.onclick = async () => {
-        err(''); go.disabled = true;
+        if (go.getAttribute('aria-disabled')) return;
+        err(''); go.setAttribute('aria-disabled', 'true'); // aria-disabled mantém o foco no botão
+        
         try { if (await A.signIn()) return finish(); }
         catch (e) {
           const m = String(e && e.message);
@@ -137,11 +138,11 @@
             : /popup_failed/.test(m) ? 'O navegador bloqueou a janela do Google. Libere pop-ups para este site e tente de novo.'
             : 'Não foi possível entrar (' + m + '). Tente de novo.');
         }
-        go.disabled = false;
+        go.removeAttribute('aria-disabled');
       };
     }
     const local = el.querySelector('#lg-local');
-    if (local) { local.focus(); local.onclick = async () => { (MQ.local.sync || (MQ.local.sync = {})).localOnly = true; await MQ.saveLocal(); finish(); }; }
+    if (local) { local.onclick = async () => { (MQ.local.sync || (MQ.local.sync = {})).localOnly = true; await MQ.saveLocal(); finish(); }; }
   }
 
   /* Resolve quando o app pode abrir: nos apps nativos sempre; no site, com conta lembrada neste navegador

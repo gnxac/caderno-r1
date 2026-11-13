@@ -97,7 +97,7 @@
       return '<div class="mk">Simulado em andamento</div><div class="tt">' + esc(l.name || 'Simulado') + '</div>' +
         '<div class="st">' + done + ' de ' + run.qids.length + ' respondidas · restam ' + MQ.fmtDuration(left) + '</div>' +
         '<div class="bar"><i style="width:' + MQ.pct(done, run.qids.length) + '%"></i></div>' +
-        '<div class="row sb"><span class="st">iniciado ' + ago(run.startedAt) + '</span><button class="btn primary" data-act="run" data-id="' + esc(run.id) + '">' + icon('play') + 'Continuar</button></div>';
+        '<div class="row sb"><span class="st">iniciado ' + ago(run.startedAt) + '</span><button class="btn primary act-fixed" data-act="run" data-id="' + esc(run.id) + '">' + icon('play') + 'Continuar</button></div>';
     }
     const last = MQ.local.last;
     const l = last && last.listId && MQ.get('lists', last.listId);
@@ -109,10 +109,10 @@
       if (l) { const s = MQ.listStats(l); st += ' · ' + plural(s.ok, 'acerto', 'acertos') + ', ' + plural(s.err, 'erro', 'erros'); }
       return '<div class="mk">Continuar de onde parei</div><div class="tt">' + esc(last.title || 'Questões') + '</div>' +
         '<div class="st">' + (l ? 'Lista' : 'Banco de questões') + ' · ' + st + '</div><div class="bar"><i style="width:' + MQ.pct(idx, total) + '%"></i></div>' +
-        '<div class="row sb"><span class="st">' + ago(last.at) + '</span><button class="btn primary" data-act="last">' + icon('play') + 'Continuar</button></div>';
+        '<div class="row sb"><span class="st">' + ago(last.at) + '</span><button class="btn primary act-fixed" data-act="last">' + icon('play') + 'Continuar</button></div>';
     }
     return '<div class="mk">Sessão rápida</div><div class="tt">10 questões para agora</div><div class="st">Mistura suas revisões, seu ponto mais fraco e questões que você ainda não resolveu.</div>' +
-      '<div class="row"><button class="btn primary" data-act="quick"' + (MQ.alive('questions').length ? '' : ' disabled') + '>' + icon('bolt') + 'Começar</button></div>';
+      '<div class="row"><button class="btn primary act-fixed" data-act="quick"' + (MQ.alive('questions').length ? '' : ' disabled') + '>' + icon('bolt') + 'Começar</button></div>';
   }
 
   function goalCard(todayN, goal) {
@@ -133,7 +133,7 @@
       '<div class="row sb"><div class="num">' + due.length + ' <small>' + (due.length === 1 ? 'questão' : 'questões') + '</small></div>' +
       (late ? '<span class="badge err">' + late + (late === 1 ? ' atrasada' : ' atrasadas') + '</span>' : (!due.length && total ? '<span class="badge ok">' + icon('check') + 'Em dia</span>' : '')) + '</div>' +
       '<div class="st">' + (due.length ? 'Erradas que voltam hoje pela revisão espaçada.' : total ? 'Nada vence hoje. As próximas aparecem aqui.' : 'Quando você errar uma questão, ela volta aqui em 1, 3, 7, 15 e 30 dias.') + '</div>' +
-      '<div class="row"><button class="btn primary" data-act="rev"' + (due.length ? '' : ' disabled') + '>Revisar agora</button></div>';
+      '<div class="row"><button class="btn" data-act="rev"' + (due.length ? '' : ' disabled') + '>Revisar agora</button></div>';
   }
 
   function weakCard(weak) {
@@ -219,14 +219,14 @@
     const date = new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' });
     const st = MQ.syncStatus || { state: 'off', msg: 'Sem sincronização' };
     const hello = '<div class="hm hm-hello"><div><div class="st">' + esc(date.charAt(0).toUpperCase() + date.slice(1)) + '</div><h1>' + greet + '</h1></div>' +
-      '<span class="home-sync"><span class="sync-dot ' + ({ idle: 'on', busy: 'busy', error: 'err' }[st.state] || '') + '"></span><span class="sync-label">' + esc(st.msg) + '</span></span></div>';
+      '<span class="home-sync" role="status" aria-label="Sincronização: ' + esc(st.msg) + '" title="' + esc(st.msg) + '"><span class="sync-dot ' + ({ idle: 'on', busy: 'busy', error: 'err' }[st.state] || '') + '"></span><span class="sync-label">' + esc(st.msg) + '</span></span></div>';
     const card = (cls, html) => '<section class="hm-card ' + cls + '">' + html + '</section>';
     const nQ = MQ.alive('questions').length;
 
     if (first) {
       root.innerHTML = '<div class="hm-grid first">' + hello +
         card('hm-cont hi', '<div class="mk">Comece por aqui</div><div class="tt">Sua primeira sessão</div><div class="st">Sugerimos uma meta de ' + DEFAULT_GOAL + ' questões por dia. Comece com uma sessão rápida de 10 ou escolha seus próprios filtros.</div>' +
-          '<div class="row"><button class="btn primary" data-act="quick"' + (nQ ? '' : ' disabled') + '>' + icon('bolt') + 'Sessão rápida: 10 questões</button><a class="btn" href="#/questoes">' + icon('search') + 'Escolher filtros</a></div>' +
+          '<div class="row"><button class="btn primary act-fixed" data-act="quick"' + (nQ ? '' : ' disabled') + '>' + icon('bolt') + 'Sessão rápida: 10 questões</button><a class="btn" href="#/questoes">' + icon('search') + 'Escolher filtros</a></div>' +
           (nQ ? '' : '<div class="st">Ainda não há questões no banco. Elas aparecem aqui quando forem adicionadas.</div>')) +
         card('hm-meta', goalCard(0, goal)) + '</div>';
     } else {

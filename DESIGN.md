@@ -65,10 +65,10 @@ typography:
     letterSpacing: "-0.02em"
   headline:
     fontFamily: "Manrope, Segoe UI, Roboto, system-ui, sans-serif"
-    fontSize: "22px"
-    fontWeight: 800
+    fontSize: "18px"
+    fontWeight: 700
     lineHeight: 1.2
-    letterSpacing: "-0.015em"
+    letterSpacing: "-0.01em"
   title:
     fontFamily: "Manrope, Segoe UI, Roboto, system-ui, sans-serif"
     fontSize: "16px"
@@ -152,7 +152,7 @@ components:
 
 # Design System: Pulse
 
-Fonte da verdade do visual do app. Os nomes internos continuam `caderno-r1` (pasta, `appId`, IndexedDB, arquivos do Drive); só o nome exibido mudou. Plano completo e mockups aprovados: https://claude.ai/artifact/5UEsWEqJe55ZWP6JTiBqVA
+Fonte da verdade do visual do app, agora um **site responsivo** (computador, celular e tablet; instalável como PWA). Os apps Windows e Android são legado e usam o mesmo código. Os nomes internos continuam `caderno-r1` (pasta, `appId`, IndexedDB, arquivos do Drive); só o nome exibido mudou. Plano completo e mockups aprovados: https://claude.ai/artifact/5UEsWEqJe55ZWP6JTiBqVA
 
 ## Overview
 
@@ -171,7 +171,8 @@ O enunciado é lido em serifa (Literata), como texto impresso; todo o resto (nav
 
 - **Nome:** Pulse.
 - **Logo:** "pulso que vira check": linha de monitor com um pico que termina em check. Grade de 64, quadrado de cantos 15, traço único de 5 com pontas e junções arredondadas: `M12 34h8l4-8 5 14 22-22`.
-- **Ícone do app** (Android e Windows): fundo `#4338A8`, traço `#FFFFFF`, o mesmo nos dois temas. Conteúdo dentro da zona segura do ícone adaptativo (66% central). Windows: `.ico` com 16, 24, 32, 48 e 256 px. Android: foreground + background + monocromático (ícone temático do Android 13+).
+- **Ícone do app** (site, Android e Windows): no site, `www/img/icon.png` (512) e `icon-192.png` no manifesto (`manifest.webmanifest`, fundo `#F4F4F9`, tema `#4338A8`).
+- **Ícone nos apps nativos:** fundo `#4338A8`, traço `#FFFFFF`, o mesmo nos dois temas. Conteúdo dentro da zona segura do ícone adaptativo (66% central). Windows: `.ico` com 16, 24, 32, 48 e 256 px. Android: foreground + background + monocromático (ícone temático do Android 13+).
 - **Glifo** (sem fundo, dentro do app): o mesmo traço em `currentColor`.
 - **Assinatura:** ícone + "Pulse" em Manrope 800, letter-spacing −0,02em.
 
@@ -179,27 +180,29 @@ O enunciado é lido em serifa (Literata), como texto impresso; todo o resto (nav
 
 ### Tokens
 
+A tabela usa os nomes das variáveis CSS de `www/css/app.css`; entre parênteses, o nome do token no cabeçalho deste arquivo quando é diferente.
+
 | Token | Claro | Escuro | Uso |
 | --- | --- | --- | --- |
 | `--paper` | `#F4F4F9` | `#0B0B12` | Fundo da página |
 | `--surface` | `#FFFFFF` | `#15151F` | Cartões, painéis, modais, campos |
-| `--rail` | `#FFFFFF` | `#0F0F18` | Barra lateral, rail e barra inferior |
+| `--rail-bg` | `#FFFFFF` | `#0F0F18` | Barra lateral, rail e barra inferior |
 | `--sunk` | `#E8E8F2` | `#1D1D2A` | Trilho de barras, campos aninhados, controle segmentado |
 | `--line` | `#D5D5E3` | `#2A2A3A` | Bordas fracas e divisórias |
 | `--line-2` | `#BBBBD0` | `#3A3A4E` | Bordas fortes (botões, alternativas) |
 | `--ink` | `#1B1B2E` | `#ECECF5` | Texto principal |
 | `--ink-2` | `#3E3E57` | `#ABABC2` | Texto secundário |
 | `--ink-3` | `#62627D` | `#8A8AA3` | Texto terciário, rótulos |
-| `--title` | `#26236B` | `#D4D2FA` | Títulos e números de destaque |
+| `--navy` (token `title`) | `#26236B` | `#D4D2FA` | Títulos e números de destaque |
 | `--accent` | `#4338A8` | `#A5A0F5` | Botão principal, link, item ativo, progresso |
 | `--accent-ink` | `#FFFFFF` | `#15124A` | Texto sobre a cor de ação |
-| `--soft` | `#E2E0F7` | `#27245A` | Chips, botões de filtro, item ativo, alternativa selecionada |
+| `--accent-soft` (token `soft`) | `#E2E0F7` | `#27245A` | Chips, botões de filtro, item ativo, alternativa selecionada |
 | `--on-soft` | `#26236B` | `#DCDAFD` | Texto sobre `--soft` |
 | `--sec` | `#0C6A84` | `#5CD0E4` | Conquistas: meta batida, sequência, revisões em dia |
 | `--sec-soft` | `#D5EEF4` | `#103540` | Fundo das conquistas |
 | `--ok` / `--ok-soft` | `#1F7A4D` / `#E1F3E8` | `#5CC28E` / `#173326` | Certa |
 | `--err` / `--err-soft` | `#B3261E` / `#FBE7E5` | `#F08A80` / `#3B1C1A` | Errada |
-| `--doubt` / `--doubt-soft` | `#8A5A00` / `#FFF2D6` | `#E6B450` / `#3A2E12` | Questão marcada no simulado, anotações |
+| `--warn` / `--warn-soft` (tokens `doubt`) | `#8A5A00` / `#FFF2D6` | `#E6B450` / `#3A2E12` | Questão marcada no simulado, anotações |
 | `--focus` | `#B45309` | `#FBBF24` | Anel de foco de 2 px |
 | `--heat-1…4` | `#E2E0F7` `#AAA5DB` `#736AC0` `#4338A8` | `#27245A` `#534F90` `#7F7BC6` `#A5A0F5` | Heatmap de dias estudados (nível 0 = `--sunk`) |
 
@@ -221,12 +224,14 @@ Os temas seguem o padrão: tokens claros em `:root`, escuros em `@media (prefers
 | Papel | Fonte | Tamanho | Peso | Linha |
 | --- | --- | --- | --- | --- |
 | Display (título de página, número grande) | Manrope | 28 px | 800 | 1,2 |
-| Headline (título de seção) | Manrope | 22 px | 800 | 1,2 |
+| Headline (título de seção, `h2`) | Manrope | 18 px | 700 | 1,2 |
+| Número de destaque (`.num`, valores grandes) | Manrope | 22 px | 800 | — |
 | Title (título de cartão) | Manrope | 16 px | 700 | 1,3 |
 | Body | Manrope | 14 px | 400 | 1,5 |
 | Label (botão, chip, navegação) | Manrope | 13 px | 600 | — |
 | Eyebrow (rótulo de cartão, maiúsculas) | Manrope | 11 px | 700, +0,08em | — |
-| Enunciado, alternativas, comentário | Literata | 17 px × escala do usuário (mín. 15 px) | 400 | 1,62 |
+| Enunciado | Literata | 17 px × escala do usuário | 400 | 1,62 |
+| Alternativas e comentário | Literata | 16 px × escala do usuário | 400 | 1,5–1,6 |
 
 Escala: 12 · 13 · 14 · 16 · 18 · 22 · 28. **Regra da questão impressa:** o que se lê para responder é serifa; toda a interface ao redor é sans. A linha do enunciado vai até ~68 caracteres.
 
@@ -244,13 +249,13 @@ Escala: 12 · 13 · 14 · 16 · 18 · 22 · 28. **Regra da questão impressa:** 
 | Resolver · Cronômetro · Descartar · Marca-texto · Anotação | `play` · `timer` · `scissors` · `highlighter` · `notebook-pen` |
 | Sequência · Ponto fraco · Certa · Errada · Novo | `flame` · `target` · `check` · `x` · `plus` |
 | Filtro · Abrir · Voltar · Mais · Lista inteligente | `funnel` · `chevron-right` · `chevron-left` · `ellipsis` · `zap` |
-| Flashcard · Modo foco · Marcar · Ordenar · Backup | `layers` · `maximize` · `flag` · `arrow-up-down` · `download` |
+| Modo foco · Marcar · Ordenar · Backup | `maximize` · `flag` · `arrow-up-down` · `download` |
 | Lembrete · Atalhos · Sincronizado · Sincronizar · Excluir | `bell` · `keyboard` · `cloud-check` · `refresh-cw` · `trash-2` |
 | Tema · Simulado · Adicionar à lista · Editar · Pulso | `sun-moon` · `list-checks` · `list-plus` · `pencil` · `heart-pulse` |
 
 ## Layout
 
-O formato é decidido pela largura da janela, não pelo aparelho: Windows em meia tela usa o layout de tablet; tablet com teclado ganha os atalhos.
+O formato é decidido pela largura da janela, não pelo aparelho: uma janela de navegador estreita usa o layout de tablet; tablet com teclado ganha os atalhos.
 
 | Formato | Largura | Navegação | Colunas |
 | --- | --- | --- | --- |
@@ -283,6 +288,11 @@ Atalhos de letra só valem fora de campos de texto.
 
 Seis abas: **Início, Questões, Listas, Anotações, Desempenho, Configurações.** Início é a tela de abertura. Na barra inferior do celular os rótulos curtos são **Desemp.** e **Ajustes**.
 
+### Entrar (tela de login do site)
+- Aparece antes do app, até a conta Google ser lembrada neste navegador (depois disso o site abre direto, até sem internet). Uma única ação: **Entrar com Google** (botão claro com borda e o G de quatro cores, 48 px, como pede a marca do Google). Sem Google configurado, o botão é "Continuar sem conta neste navegador" e o aviso diz, sem jargão, que nada será sincronizado.
+- **Celular e tablet** (≤ 860 px): só o cartão, com logo, "Entrar", uma frase, 3 benefícios curtos e a nota do que o app acessa antes do botão. **PC** (> 860 px): painel de marca à esquerda (`--accent` de fundo, a única superfície grande em índigo do app) e o cartão à direita.
+- Foco inicial no corpo da página, nunca no botão (o anel âmbar parecia erro).
+
 ### Início
 Cada cartão responde "o que faço agora?" e tem uma ação só. Ordem: **Continuar de onde parei** (único cartão de destaque) → **Meta de hoje** (anel 28/40) → **Revisões de hoje** (revisão espaçada; atrasadas à parte) → **Ponto mais fraco** (pior tema em 30 dias, mínimo de 15 respostas, "Treinar 20 questões") → **Sequência** (dias seguidos e a semana em bolinhas, em ciano) → **Dias estudados** (heatmap de 17 semanas). Tablet e PC acrescentam **Acerto por grande área** e **Simulados recentes**. Primeiro uso: cartão "Comece por aqui" no lugar dos números vazios. Sem lista em andamento nem revisões, o destaque vira "Sessão rápida: 10 questões". Sincronização numa pílula pequena, não em cartão.
 
@@ -298,7 +308,7 @@ Cada cartão responde "o que faço agora?" e tem uma ação só. Ordem: **Contin
 - Centro: código e classificação, enunciado, alternativas com tesoura, Confirmar.
 - Depois de confirmar: gabarito, comentário, aviso de quando a questão volta na revisão e Próxima. **Não existe ver gabarito sem responder.**
 - Mapa (à esquerda, PC): grade de questões e, abaixo dela, o cartão **Resultado** (acertos e erros em blocos grandes com ✓ e ✗, barra e % de acerto). Histórico de respostas só no painel; abaixo de 860 px o botão no cartão da questão.
-- Painel (PC e tablet): tempo, histórico nesta questão, anotação, ações (adicionar à lista), marca-texto. No celular vão para o menu ⋯; ferramentas numa pílula flutuante.
+- Painel (PC e tablet): tempo, histórico nesta questão, anotação, ações (adicionar à lista), marca-texto. No celular, as ferramentas ficam numa linha única de ícones de 44 px acima do enunciado (Lista, Assunto, letra menor e maior, Anotação, Solução; "Limpar marcas" só aparece quando há marcas), e o marca-texto usa a pílula flutuante.
 - PC: mapa da lista \| questão \| painel.
 
 ### Listas
@@ -333,7 +343,7 @@ Cada cartão responde "o que faço agora?" e tem uma ação só. Ordem: **Contin
 - **Cantos:** 6 campos · 8 botões · 10 alternativas · 12 cartões · 14 painéis que contêm botões · pílula só para ação principal grande, chips, selos, controle segmentado e item ativo da navegação.
 - **Cantos concêntricos:** canto de fora = canto de dentro + espaçamento (cartão de 14 px com botão de 8 px a 6 px da borda). Nunca o mesmo raio em pai e filho aninhados.
 - **Borda para estrutura** (divisórias, selecionado, foco, cartões no escuro); **sombra em camadas transparentes para elevação**.
-- Sombras: elevada (controle segmentado ativo, barra fixa, pílula de ferramentas) `0 1px 2px rgba(0,0,0,.06), 0 4px 14px rgba(0,0,0,.06)`; menu `0 10px 30px rgba(0,0,0,.18)`; modal `0 18px 50px rgba(0,0,0,.25)`. No escuro, sombras viram borda `--line-2`.
+- Sombras: elevada (controle segmentado ativo, barra fixa, pílula de ferramentas) `0 1px 2px rgba(20,18,60,.06), 0 4px 14px rgba(20,18,60,.06)`; menu `0 10px 30px rgba(0,0,0,.18)`; modal `0 18px 50px rgba(0,0,0,.25)`. No escuro, sombras viram borda `--line-2`.
 - Espaçamento em múltiplos de 4: 4 · 8 · 12 · 16 · 24 · 32 · 48. Gap de grade 12 (celular) e 14–16 (tablet e PC).
 
 ## Components
@@ -379,7 +389,7 @@ Princípios da skill `make-interfaces-feel-better`, aplicados em cada tela; revi
 - Manter a área segura no topo e na base do celular.
 
 ### Don't
-- Pintar fundos grandes de índigo ou ciano.
+- Pintar fundos grandes de índigo ou ciano (a única exceção é o painel de marca da tela de login no PC).
 - Usar ciano em botão ou link, ou as cores do marca-texto como cor de interface.
 - Misturar bibliotecas de ícones ou pesos de traço.
 - Usar pílula em botões comuns.

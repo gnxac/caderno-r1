@@ -95,14 +95,27 @@ window.MQ = window.MQ || {};
     back.appendChild(box);
     document.body.appendChild(back);
     const prevFocus = document.activeElement;
+    const shell = document.querySelector('.shell');
+    MQ._modals = (MQ._modals || 0) + 1;
+    if (shell) shell.inert = true; // o fundo não recebe foco nem leitor de tela enquanto a janela está aberta
     function close() {
       back.remove();
       document.removeEventListener('keydown', onKey, true);
-      if (prevFocus && prevFocus.focus) prevFocus.focus();
+      if (--MQ._modals <= 0 && shell) shell.inert = false;
+      // a tela pode ter sido redesenhada: se o elemento antigo sumiu, o foco volta para a tela
+      const back2 = prevFocus && prevFocus.isConnected ? prevFocus : MQ.$('#view');
+      if (back2 && back2.focus) back2.focus({ preventScroll: true });
       if (opts.onClose) opts.onClose();
     }
     function onKey(e) {
-      if (e.key === 'Escape') { e.stopPropagation(); close(); }
+      if (e.key === 'Escape') { e.stopPropagation(); close(); return; }
+      if (e.key !== 'Tab') return;
+      const f = MQ.$$('a[href], button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex]:not([tabindex="-1"])', box).filter(x => x.offsetParent !== null);
+      if (!f.length) { e.preventDefault(); return; }
+      const a = document.activeElement;
+      if (!box.contains(a)) { e.preventDefault(); f[0].focus(); }
+      else if (e.shiftKey && a === f[0]) { e.preventDefault(); f[f.length - 1].focus(); }
+      else if (!e.shiftKey && a === f[f.length - 1]) { e.preventDefault(); f[0].focus(); }
     }
     document.addEventListener('keydown', onKey, true);
     back.addEventListener('mousedown', e => { if (e.target === back) close(); });
