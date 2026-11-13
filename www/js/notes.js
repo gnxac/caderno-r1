@@ -40,6 +40,7 @@
     }
     root.innerHTML = '<div class="nt">' +
       '<header class="nt-head"><div><h1>Anotações</h1><p class="nt-sub" id="nt-sub"></p></div>' +
+      '<div class="nt-tools"><button class="btn" id="nt-anki">' + icon('layers') + ' Exportar para o Anki</button></div>' +
       '<div class="pane-search nt-search">' + icon('search') + '<input type="search" id="nt-q" placeholder="Buscar na anotação ou na questão" aria-label="Buscar nas anotações" autocomplete="off" value="' + esc(st.text) + '"></div></header>' +
       '<section class="nt-filters" id="nt-filters" aria-label="Filtrar por assunto"></section>' +
       '<div id="nt-list"></div></div>';
@@ -98,6 +99,7 @@
         if (await MQ.confirm('Excluir anotação', 'A anotação desta questão será apagada.', 'Excluir', true)) { MQ.saveNote(x.qid, ''); MQ.render(); }
       }
     };
+    $('#nt-anki', root).onclick = () => MQ.ankiExport(all.filter(y => y.q && matches(y, MQ.norm(st.text))).map(y => y.qid), 'anotacoes');
     let timer = 0;
     $('#nt-q', root).addEventListener('input', e => { clearTimeout(timer); timer = setTimeout(() => { st.text = e.target.value.trim(); paint(); }, 200); });
     paint();

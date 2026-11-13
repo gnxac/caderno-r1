@@ -48,6 +48,7 @@
       '<section class="set-sec" id="s-estudo"><h2>Estudo</h2>' +
       '<div class="set-row"><label for="g-n">Meta diária (questões por dia)</label><input type="number" id="g-n" min="1" max="500" value="' + MQ.dailyGoal() + '" inputmode="numeric" style="width:96px"></div>' +
       '<p class="muted small" style="margin-top:-4px">A meta vale em todos os seus aparelhos e aparece no Início.</p>' +
+      (MQ.reminderAvailable() ? '<div class="set-row"><label for="rm-on">Lembrete diário</label><span class="set-inline"><input type="time" id="rm-t" value="' + ((MQ.local.reminder || {}).time || '20:00') + '" aria-label="Horário do lembrete"><input type="checkbox" class="sw" id="rm-on"' + ((MQ.local.reminder || {}).on ? ' checked' : '') + '></span></div>' : '<p class="muted small">O lembrete diário por notificação está disponível no app para Android.</p>') +
       '<div class="set-row"><span>Filtro padrão em Questões</span><div class="seg" role="group" aria-label="Filtro padrão">' +
       [['nao', 'Que não resolvi'], ['todas', 'Todas']].map(([v, l]) => '<button data-fp="' + v + '" aria-pressed="' + ((MQ.local.filtroPadrao || 'nao') === v) + '">' + l + '</button>').join('') + '</div></div></section>' +
 
@@ -79,7 +80,13 @@
       if (!(n >= 1 && n <= 500)) { MQ.toast('Use um número entre 1 e 500.'); e.target.value = MQ.dailyGoal(); return; }
       MQ.put('prefs', Object.assign(MQ.get('prefs', 'meta') || { id: 'meta' }, { daily: n }));
       MQ.toast('Meta diária: ' + n + ' questões.');
+      if (MQ.reminderApply) MQ.reminderApply(); // o texto do lembrete usa a meta
     };
+    if ($('#rm-on', root)) {
+      const apply = async () => { const ok = await MQ.reminderSet($('#rm-on', root).checked, $('#rm-t', root).value || '20:00'); if (!ok) $('#rm-on', root).checked = !!(MQ.local.reminder || {}).on; else MQ.toast($('#rm-on', root).checked ? 'Lembrete diário ligado.' : 'Lembrete diário desligado.'); };
+      $('#rm-on', root).onchange = apply;
+      $('#rm-t', root).onchange = () => { if ($('#rm-on', root).checked) apply(); };
+    }
     $$('[data-fp]', root).forEach(b => b.onclick = () => {
       const wasDefault = JSON.stringify(MQ.bankFilter) === JSON.stringify(MQ.newFilter()); // não descarta um filtro que você está montando
       MQ.local.filtroPadrao = b.dataset.fp; MQ.saveLocal(); if (wasDefault) MQ.bankFilter = MQ.newFilter();

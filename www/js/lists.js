@@ -140,6 +140,7 @@
     }
     MQ.menu(anchor, [
       { label: 'Resolver', onClick: () => MQ.openList(l.id) },
+      { label: 'Exportar flashcards (Anki)', onClick: () => MQ.ankiExport(l.qids, l.name) },
       { label: 'Criar simulado a partir desta lista', onClick: () => MQ.simCreateModal(l.qids.filter(id => MQ.get('questions', id)), l.name + ' — simulado') },
       '-',
       { label: 'Duplicar lista toda', onClick: () => duplicate(l, 'all') },
@@ -229,7 +230,8 @@
     return '<article class="lcard lc-erros"><div class="lc-top"><span class="lc-name">' + icon('target') + '<b>Caderno de erros</b></span></div>' +
       '<div class="st">' + ids.length + (ids.length === 1 ? ' questão' : ' questões') + ' · automático</div><div><span class="badge err">Automática</span></div>' +
       '<div class="st">Questões cuja última resposta foi errada. Saem daqui quando você acerta.</div>' +
-      '<button class="btn sm primary" data-act="erros"' + (ids.length ? '' : ' disabled') + '>' + icon('play') + 'Revisar</button></article>';
+      '<div class="lc-btns"><button class="btn sm primary" data-act="erros"' + (ids.length ? '' : ' disabled') + '>' + icon('play') + 'Revisar</button>' +
+      '<button class="btn sm" data-act="anki-erros"' + (ids.length ? '' : ' disabled') + '>' + icon('layers') + 'Anki</button></div></article>';
   }
 
   function detail(l, n) {
@@ -326,6 +328,7 @@
       if (act) {
         const a = act.dataset.act, l = act.dataset.id && MQ.get('lists', act.dataset.id);
         if (a === 'open' && l) openItem(l);
+        else if (a === 'anki-erros') MQ.ankiExport(errosIds(), 'caderno-de-erros');
         else if (a === 'erros') MQ.openSolve({ title: 'Caderno de erros', qids: errosIds(), ctx: 'banco' });
         else if (a === 'redo' && l) duplicate(l, 'erros');
         else if (a === 'sim' && l) MQ.simCreateModal(l.qids.filter(id => MQ.get('questions', id)), l.name + ' — simulado');

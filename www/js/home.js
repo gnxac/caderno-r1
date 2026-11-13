@@ -266,6 +266,7 @@
         const n = Math.round(Number($('#g-n', box).value));
         if (!(n >= 1 && n <= 500)) { MQ.toast('Use um número entre 1 e 500.'); return false; }
         MQ.put('prefs', Object.assign(MQ.get('prefs', 'meta') || { id: 'meta' }, { daily: n }));
+        if (MQ.reminderApply) MQ.reminderApply();
         MQ.render();
       } }]
     });
