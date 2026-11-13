@@ -73,7 +73,7 @@ Ordem aprovada na fase 1. Marque `[x]` ao concluir cada item. Decisões de visua
 - [x] Mapa de dias estudados (20, 18 ou 33 semanas, conforme o formato)
 - [x] Sessão rápida de 10 questões (revisões, ponto fraco e não resolvidas)
 - [x] Estado de primeiro uso; no tablet e no PC também "Acerto por grande área" e "Simulados recentes"
-- [ ] Sequência quando hoje está vazio e ontem tem resposta, e meta com 1 questão restante: lógica revisada, sem teste no navegador
+- [x] Sequência com hoje vazio e ontem com resposta, e meta com 1 questão restante: testados no navegador
 - [ ] A meta de hoje mostra "Meta batida!" no mesmo cartão; falta decidir se a sequência e a meta destacam a conquista com mais ênfase (ciano hoje só no número, nas bolinhas e no anel cheio)
 
 ## 7. Listas e Simulados
@@ -100,8 +100,9 @@ Ordem aprovada na fase 1. Marque `[x]` ao concluir cada item. Decisões de visua
 - [x] Mapa de dias estudados (26 semanas) e histórico de simulados do período
 - [x] "Onde focar" (bolhas e tabela) mantido numa seção recolhível; lista/simulado com as erradas; excluir histórico
 - [x] ~~Acerto real sem chutes~~ (removido junto com o recurso de chute)
-- [ ] Comparação com o período anterior nos 4 números (ex.: "+212 questões")
-- [ ] Tooltips das barras e do mapa e a mensagem de "sem tema elegível" sem teste no navegador
+- [x] Comparação com o período anterior em Questões, Acerto e Tempo médio (verde melhorou, vermelho piorou; some em "todo o histórico")
+- [x] Tooltips das barras, do mapa e do gráfico e a mensagem de "sem tema elegível", testados no navegador com mouse
+- [ ] Tooltips por toque no celular (hoje só reagem ao mouse)
 
 ## 9. Configurações
 - [ ] Status de sincronização detalhado

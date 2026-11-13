@@ -937,3 +937,6 @@ body.in-focus .qcard { margin-left: auto; margin-right: auto; }
 .perf-actions { display: flex; gap: 8px; flex-wrap: wrap; }
 @media (max-width: 860px) { .weak-list .btn.sm, #p-crumb .btn.sm, .perf-actions .btn { min-height: 44px; } }
 .weak-list .btn.sm, .perf-actions .btn { min-height: 40px; }
+.dl { font-weight: 700; }
+.dl.up { color: var(--ok); }
+.dl.down { color: var(--err); }

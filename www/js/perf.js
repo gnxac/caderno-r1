@@ -22,8 +22,9 @@
     return [start.getTime() - (d - 1) * DAY, end];
   }
 
-  function filteredAttempts() {
-    const [a, b] = range();
+  function filteredAttempts(from, to) { // sem argumentos: o período escolhido; com eles: outro intervalo (período anterior)
+    const [a0, b0] = range();
+    const a = from === undefined ? a0 : from, b = to === undefined ? b0 : to;
     const o = MQ.perf.origin;
     return MQ.alive('attempts').filter(x => x.ts >= a && x.ts <= b && MQ.get('questions', x.qid) &&
       (!o || (o === 'banco' ? (x.ctx === 'banco' || !x.ctx) : x.ctx === o)));
@@ -81,7 +82,13 @@
     const days = new Set(atts.map(a => dayKeyOf(a.ts))).size;
     const day0 = ts => { const d = new Date(ts); d.setHours(0, 0, 0, 0); return d.getTime(); };
     const spanDays = p.period === 'all' || (p.period === 'custom' && !p.from) ? 0 : Math.max(1, Math.round((day0(Math.min(rb, Date.now())) - day0(ra)) / DAY) + 1); // dias de calendário, inclusive hoje
-    const kpi = (mk, num, sub) => '<div class="pk"><span class="mk">' + mk + '</span><div class="num">' + num + '</div><span class="st">' + sub + '</span></div>';
+    /* comparação com o período anterior, do mesmo tamanho, logo antes (não existe em "todo o histórico" nem em datas sem início) */
+    const prev = p.period === 'all' || (p.period === 'custom' && !p.from) ? null : filteredAttempts(ra - (rb - ra), ra - 1);
+    const pOk = prev ? prev.filter(a => a.correct).length : 0;
+    const pTimed = prev ? prev.filter(a => a.timeSec > 0 && a.timeSec <= 600) : [];
+    const pAvg = pTimed.length ? pTimed.reduce((s, a) => s + a.timeSec, 0) / pTimed.length : 0;
+    const dl = (d, unit, goodWhenUp) => !d ? '' : '<span class="dl ' + ((d > 0) === goodWhenUp ? 'up' : 'down') + '">' + (d > 0 ? '+' : '−') + Math.abs(d).toLocaleString('pt-BR') + unit + ' vs. período anterior</span>';
+    const kpi = (mk, num, sub, delta) => '<div class="pk"><span class="mk">' + mk + '</span><div class="num">' + num + '</div><span class="st">' + sub + '</span>' + (delta ? '<span class="st">' + delta + '</span>' : '') + '</div>';
 
     root.innerHTML =
       '<div class="page-head"><div><h1>Desempenho</h1><p>Onde você está acertando, onde precisa voltar e como evolui.</p></div>' +
@@ -91,9 +98,9 @@
       '<label class="pf-f"><span>Origem</span><select id="p-origin">' + originOpts + '</select></label></div>' +
       (total ? '' : '<div class="empty"><h2>Sem respostas neste período</h2><p>Responda questões no banco, nas listas ou em simulados. Se você já respondeu, tente um período maior.</p><a class="btn primary" href="#/questoes">Resolver questões</a></div>') +
       (total ? '<div class="pk-row">' +
-        kpi('Questões', total.toLocaleString('pt-BR'), ok + ' certas · ' + (total - ok) + ' erradas') +
-        kpi('Acerto', MQ.pct(ok, total) + '%', 'cada resposta conta, mesmo ao refazer') +
-        kpi('Tempo médio', avgT ? MQ.fmtDuration(avgT) : '–', avgT ? 'por questão, em ' + timed.length + ' respostas' : 'ainda sem tempos gravados') +
+        kpi('Questões', total.toLocaleString('pt-BR'), ok + ' certas · ' + (total - ok) + ' erradas', prev && prev.length ? dl(total - prev.length, '', true) : '') +
+        kpi('Acerto', MQ.pct(ok, total) + '%', 'cada resposta conta, mesmo ao refazer', prev && prev.length ? dl(MQ.pct(ok, total) - MQ.pct(pOk, prev.length), ' pp', true) : '') +
+        kpi('Tempo médio', avgT ? MQ.fmtDuration(avgT) : '–', avgT ? 'por questão, em ' + timed.length + ' respostas' : 'ainda sem tempos gravados', avgT && pAvg ? dl(Math.round(avgT - pAvg), ' s', false) : '') +
         kpi('Dias estudados', days + (spanDays ? '<small>/' + spanDays + '</small>' : '<small> dias</small>'), 'com pelo menos 1 resposta') + '</div>' +
         '<div class="perf-grid">' +
         '<section class="panel span-7"><h2>Evolução</h2><div class="sub">Percentual de acerto por ' + ({ 1: 'dia', 2: 'período de 2 dias' }[bucketDays()] || 'semana') + '</div><div id="p-line"></div></section>' +
