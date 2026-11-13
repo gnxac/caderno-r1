@@ -9,7 +9,7 @@
     if (!opts.qids || !opts.qids.length) { MQ.toast('Nenhuma questão para abrir.'); return; }
     MQ.session = {
       title: opts.title || 'Questões', qids: opts.qids.slice(), ctx: opts.ctx || 'banco', listId: opts.listId || null,
-      idx: Math.min(opts.startIndex || 0, opts.qids.length - 1), sid: MQ.uid(), sel: {}, conf: {}, attempt: {}, time: {}, focus: false, revealed: {}, cut: {}, hideBanner: {}, showTopics: false, showHist: {},
+      idx: Math.min(opts.startIndex || 0, opts.qids.length - 1), sid: MQ.uid(), sel: {}, attempt: {}, time: {}, focus: false, revealed: {}, cut: {}, hideBanner: {}, showTopics: false, showHist: {},
       showIndex: window.innerWidth > 1100, shownAt: Date.now()
     };
     // Reabrir a lista mostra de novo as respostas já dadas (desde o último "recomeçar")
@@ -45,9 +45,6 @@
     MQ.menu(anchor, items);
   }
 
-  const CONF_L = { sabia: 'sabia', duvida: 'com dúvida', chute: 'chutou' };
-  const WHY = [['nao-sabia', 'Não sabia'], ['conceito', 'Confundi conceito'], ['li-errado', 'Li errado']];
-  const WHY_L = Object.fromEntries(WHY);
   const MAX_SEC = 600; // shortcut: tela parada > 10 min conta só 10 min; trocar por visibilitychange se incomodar
 
   /* Tempo médio por questão do estudante (só respostas com tempo gravado) */
@@ -66,9 +63,11 @@
     else if (o) MQ.remove('notes', qid);
   }
 
+  MQ.noteOf = noteOf; MQ.saveNote = saveNote;
+
   function histRows(list) {
     return list.slice().reverse().map(a =>
-      '<div><span>' + MQ.fmtDateTime(a.ts) + '</span><span>marcou ' + esc(a.choice) + (a.conf ? ' · ' + CONF_L[a.conf] : '') + '</span><b style="color:var(--' + (a.correct ? 'ok' : 'err') + ')">' + (a.correct ? 'certo' : 'errado') + '</b><span class="muted">' + esc(ctxLabel(a.ctx)) + (a.why ? ' · ' + esc(WHY_L[a.why] || '') : '') + '</span></div>').join('');
+      '<div><span>' + MQ.fmtDateTime(a.ts) + '</span><span>marcou ' + esc(a.choice) + '</span><b style="color:var(--' + (a.correct ? 'ok' : 'err') + ')">' + (a.correct ? 'certo' : 'errado') + '</b><span class="muted">' + esc(ctxLabel(a.ctx)) + '</span></div>').join('');
   }
 
   function statusIn(ctx) {
@@ -138,11 +137,7 @@
         (s.showTopics ? '<div class="topics">' + esc(MQ.qPath(q).join(' › ') || 'Sem assunto definido') + '</div>' : '') +
         '<div class="stem"><div data-mk="stem">' + MQ.para(q.enunciado) + '</div>' + (q.imagens || []).map(id => MQ.imgHtml(id)).join('') + '</div>' +
         '<div class="alts" role="group" aria-label="Alternativas">' + alts + '</div>' +
-        (!revealed ? '<div class="conf" role="group" aria-label="Como você vai responder?"><span class="st">Como você vai responder? <small>(teclas 1, 2, 3)</small></span><div class="seg full">' +
-          [['sabia', 'Sabia'], ['duvida', 'Tive dúvida'], ['chute', 'Chutei']].map(c => '<button data-conf="' + c[0] + '" aria-pressed="' + (s.conf[qid] === c[0]) + '">' + c[1] + '</button>').join('') + '</div></div>' : '') +
         (revealed && rv ? '<p class="rv-note">' + icon('history') + 'Revisão: volta ' + (rvDays <= 0 ? 'hoje' : rvDays === 1 ? 'amanhã' : 'em ' + rvDays + ' dias') + '.</p>' : '') +
-        (revealed && att && att.correct === false ? '<div class="why" role="group" aria-label="Por que errou?"><span class="st">Por que errou?</span><div class="chips">' +
-          WHY.map(w => '<button class="chip-trail' + (att.why === w[0] ? ' cur' : '') + '" data-why="' + w[0] + '" aria-pressed="' + (att.why === w[0]) + '">' + w[1] + '</button>').join('') + '</div></div>' : '') +
         (revealed ? '<section class="comment" id="q-comment"><h3>Solução em texto</h3><div class="gab">GABARITO: ALTERNATIVA ' + esc(q.gabarito) + '</div><div class="body">' + (q.comentario ? MQ.para(q.comentario) : '<p class="muted">Sem comentário para esta questão.</p>') + '</div></section>' : '') +
         '</article>';
       if (revealed && chosen && !s.hideBanner[qid]) {
@@ -224,8 +219,6 @@
       title: 'Anotação', body: '<textarea id="n-t" rows="6" maxlength="4000" aria-label="Anotação da questão" placeholder="Escreva um lembrete sobre esta questão…">' + esc(noteOf(qid)) + '</textarea>',
       actions: [{ label: 'Salvar', kind: 'primary', onClick(close, box) { saveNote(qid, $('#n-t', box).value); MQ.render(); } }]
     });
-    $$('[data-conf]', root).forEach(b => b.onclick = () => { s.conf[qid] = s.conf[qid] === b.dataset.conf ? undefined : b.dataset.conf; MQ.render(); });
-    $$('[data-why]', root).forEach(b => b.onclick = () => { if (!att) return; att.why = att.why === b.dataset.why ? undefined : b.dataset.why; if (!att.why) delete att.why; MQ.put('attempts', att); MQ.render(); });
 
     $('#q-fplus', root).onclick = () => MQ.setFontScale((MQ.local.fontScale || 1) + 0.08);
     $('#q-fminus', root).onclick = () => MQ.setFontScale((MQ.local.fontScale || 1) - 0.08);
@@ -264,7 +257,7 @@
       const c = s.sel[qid];
       if (!c || s.revealed[qid]) return;
       const secs = Math.min((Date.now() - s.shownAt) / 1000, MAX_SEC);
-      s.attempt[qid] = MQ.recordAttempt(qid, c, s.ctx, secs, s.conf[qid]);
+      s.attempt[qid] = MQ.recordAttempt(qid, c, s.ctx, secs);
       s.time[qid] = secs;
       s.revealed[qid] = true;
       MQ.render();
@@ -276,7 +269,6 @@
       const isAlt = /^[A-E]$/.test(k) && (q.alternativas || []).some(a => a.l === k);
       if (isAlt && e.shiftKey && !s.revealed[qid]) toggleCut(k); // Shift + letra descarta (tesoura)
       else if (isAlt && !e.shiftKey && !s.revealed[qid] && !cut.includes(k)) { s.sel[qid] = k; MQ.render(); }
-      else if (/^[1-3]$/.test(e.key) && !s.revealed[qid]) { const c = MQ.CONF[+e.key - 1]; s.conf[qid] = s.conf[qid] === c ? undefined : c; MQ.render(); }
       else if (k === 'F' && !e.shiftKey) { s.focus = !s.focus; MQ.render(); }
       else if (e.key === 'Escape' && s.focus) { s.focus = false; MQ.render(); }
       else if (k === 'N') { e.preventDefault(); const t = $('#q-note', root); if (t && t.offsetParent) t.focus(); else $('#q-note-btn', root).click(); }

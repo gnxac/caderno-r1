@@ -199,7 +199,7 @@ O enunciado é lido em serifa (Literata), como texto impresso; todo o resto (nav
 | `--sec-soft` | `#D5EEF4` | `#103540` | Fundo das conquistas |
 | `--ok` / `--ok-soft` | `#1F7A4D` / `#E1F3E8` | `#5CC28E` / `#173326` | Certa |
 | `--err` / `--err-soft` | `#B3261E` / `#FBE7E5` | `#F08A80` / `#3B1C1A` | Errada |
-| `--doubt` / `--doubt-soft` | `#8A5A00` / `#FFF2D6` | `#E6B450` / `#3A2E12` | Tive dúvida, chutei, questão marcada no simulado |
+| `--doubt` / `--doubt-soft` | `#8A5A00` / `#FFF2D6` | `#E6B450` / `#3A2E12` | Questão marcada no simulado, anotações |
 | `--focus` | `#B45309` | `#FBBF24` | Anel de foco de 2 px |
 | `--heat-1…4` | `#E2E0F7` `#AAA5DB` `#736AC0` `#4338A8` | `#27245A` `#534F90` `#7F7BC6` `#A5A0F5` | Heatmap de dias estudados (nível 0 = `--sunk`) |
 
@@ -272,23 +272,22 @@ Atalhos de letra só valem fora de campos de texto.
 | Onde | Tecla | Ação |
 | --- | --- | --- |
 | Global | `Ctrl K` | Buscar questão por texto ou código R1-… |
-| Global | `Ctrl 1–5` | Início, Questões, Listas, Desempenho, Configurações |
+| Global | `Ctrl 1–6` | Início, Questões, Listas, Anotações, Desempenho, Configurações |
 | Global | `?` / `Esc` | Mostrar atalhos / fechar menu, sair do foco |
 | Resolver | `A–E` / `Shift A–E` | Escolher / descartar alternativa |
-| Resolver | `1` `2` `3` | Sabia · Tive dúvida · Chutei |
 | Resolver | `Enter` · `←` `→` | Confirmar ou próxima · anterior / próxima |
 | Resolver | `H` · `N` · `L` · `F` | Marca-texto na cor atual · anotação · adicionar à lista · modo foco |
 | Simulado | `M` · `C` · `Ctrl Enter` | Marcar para revisar · cartão-resposta · entregar (com confirmação) |
 
 ## Navigation & Tabs
 
-Cinco abas: **Início, Questões, Listas, Desempenho, Configurações.** Início é a tela de abertura.
+Seis abas: **Início, Questões, Listas, Anotações, Desempenho, Configurações.** Início é a tela de abertura. Na barra inferior do celular os rótulos curtos são **Desemp.** e **Ajustes**.
 
 ### Início
 Cada cartão responde "o que faço agora?" e tem uma ação só. Ordem: **Continuar de onde parei** (único cartão de destaque) → **Meta de hoje** (anel 28/40) → **Revisões de hoje** (revisão espaçada; atrasadas à parte) → **Ponto mais fraco** (pior tema em 30 dias, mínimo de 15 respostas, "Treinar 20 questões") → **Sequência** (dias seguidos e a semana em bolinhas, em ciano) → **Dias estudados** (heatmap de 17 semanas). Tablet e PC acrescentam **Acerto por grande área** e **Simulados recentes**. Primeiro uso: cartão "Comece por aqui" no lugar dos números vazios. Sem lista em andamento nem revisões, o destaque vira "Sessão rápida: 10 questões". Sincronização numa pílula pequena, não em cartão.
 
 ### Questões
-- Topo: busca (`Ctrl K`) e chips rápidos: **Que não resolvi** (ligado por padrão), Errei, Chutei ou dúvida, Caderno de erros.
+- Topo: busca (`Ctrl K`) e chips rápidos: **Que não resolvi** (ligado por padrão), Errei, Caderno de erros (última resposta errada), Revisão de hoje.
 - Filtros na ordem de uso: Grande área → Especialidade → Tema e subtema, Instituição, Ano, UF, Tipo de prova. **Sem filtro de Professor.** "Filtros avançados" (botão cheio): anuladas, desatualizadas, com imagem, com comentário.
 - Resultado (cartão de destaque): contagem, filtros aplicados e **Resolver**; abaixo, Criar lista, Lista inteligente, Simulado.
 - Menu ⋯: ordem (aleatória, ano, recentes), limpar filtros, salvar como padrão; para o administrador, Cadastrar questão.
@@ -296,8 +295,8 @@ Cada cartão responde "o que faço agora?" e tem uma ação só. Ordem: **Contin
 
 ### Resolver (dentro de Questões e Listas)
 - Topo: contexto, "18 de 40", cronômetro e barra de progresso.
-- Centro: código e classificação, enunciado, alternativas com tesoura, **Sabia / Tive dúvida / Chutei**, Confirmar.
-- Depois de confirmar: gabarito, comentário, motivo do erro (Não sabia · Confundi conceito · Li errado) e Próxima. **Não existe ver gabarito sem responder.**
+- Centro: código e classificação, enunciado, alternativas com tesoura, Confirmar.
+- Depois de confirmar: gabarito, comentário, aviso de quando a questão volta na revisão e Próxima. **Não existe ver gabarito sem responder.**
 - Mapa (à esquerda, PC): grade de questões e, abaixo dela, o cartão **Resultado** (acertos e erros em blocos grandes com ✓ e ✗, barra e % de acerto). Histórico de respostas só no painel; abaixo de 860 px o botão no cartão da questão.
 - Painel (PC e tablet): tempo, histórico nesta questão, anotação, ações (adicionar à lista, flashcard Anki), marca-texto. No celular vão para o menu ⋯; ferramentas numa pílula flutuante.
 - PC: mapa da lista \| questão \| painel.
@@ -313,14 +312,20 @@ Cada cartão responde "o que faço agora?" e tem uma ação só. Ordem: **Contin
 - Primeiro o simulado em andamento, com tempo restante; depois Novo simulado (personalizado ou **modo prova** por instituição) e os concluídos com nota, data e tempo, que abrem a revisão pós-prova.
 - Durante a prova: sem navegação do app, sem gabarito, sem estatísticas. Só questão, cartão-resposta e relógio. PC e tablet: questão \| cartão-resposta; celular: cartão-resposta abre por baixo.
 
+### Anotações
+- Todas as anotações feitas nas questões (tecla `N` no Resolver), da mais recente para a mais antiga, em cartões: código, instituição e ano, caminho do assunto, trecho do enunciado e o texto da anotação em caixa âmbar.
+- **Filtro por assunto** em chips que descem pela hierarquia (grande área › especialidade › tema › subtema), com a quantidade de anotações em cada um; a trilha escolhida fica acima e cada passo pode ser desfeito. Busca por texto da anotação, da questão ou código R1-….
+- Em cada cartão: **Abrir questão** (abre o resolver com as questões do filtro), **Editar** (janela) e excluir (com confirmação). Cartões em 1, 2 ou 3 colunas conforme a largura.
+- Sem anotações: estado vazio explica como criar uma.
+
 ### Desempenho
 - Fixos no topo: período (7, 30, 90 dias, tudo) e origem (banco, listas, simulados).
-- 4 números: questões, acerto (com **acerto real**, sem chutes), tempo médio, dias estudados.
+- 4 números: questões, acerto, tempo médio, dias estudados.
 - Corpo, do mais acionável ao mais histórico: evolução semanal, pontos fracos com Treinar, acerto por grande área com drill até subtema, por instituição, heatmap, simulados.
 - Menu ⋯: exportar CSV, zerar histórico (confirmação digitada).
 
 ### Configurações
-- Ordem: **Conta e sincronização** (status, alterações pendentes, versão do banco, Sincronizar agora) → Aparência (tema claro/escuro/automático, tamanho do enunciado com prévia) → Estudo (meta diária, lembrete, pedir Sabia/Dúvida/Chutei, filtros padrão) → Dados e backup → Atalhos → Administrador (só para o admin) → Sobre.
+- Ordem: **Conta e sincronização** (status, alterações pendentes, versão do banco, Sincronizar agora) → Aparência (tema claro/escuro/automático, tamanho do enunciado com prévia) → Estudo (meta diária, lembrete, filtros padrão) → Dados e backup → Atalhos → Administrador (só para o admin) → Sobre.
 - Celular: lista com o valor atual à direita, cada item abre a subtela. PC: índice \| conteúdo em rolagem \| status da sincronização e do backup.
 
 ## Elevation & Shapes

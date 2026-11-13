@@ -19,18 +19,17 @@
   const QUICK = [
     { k: 'nao', label: 'Que não resolvi', set: { situacao: ['nao'] } },
     { k: 'errei', label: 'Errei', set: { situacao: ['errei'] } },
-    { k: 'duvida', label: 'Chutei ou dúvida', set: { situacao: ['resolvi'], conf: true } },
     { k: 'erros', label: 'Caderno de erros', set: { situacao: ['resolvi'], erros: true } },
     { k: 'revisao', label: 'Revisão de hoje', set: { situacao: ALL_SIT, revisao: true } }
   ];
-  const FLAGS = ['conf', 'erros', 'revisao'];
+  const FLAGS = ['erros', 'revisao'];
   const quickOn = (f, q) => FLAGS.every(k => !!f[k] === !!q.set[k]) && f.situacao.length === q.set.situacao.length && q.set.situacao.every(s => f.situacao.includes(s));
   const quickOff = f => { f.situacao = ALL_SIT.slice(); FLAGS.forEach(k => { f[k] = false; }); };
   const quickOnApply = (f, q) => { FLAGS.forEach(k => { f[k] = !!q.set[k]; }); f.situacao = q.set.situacao.slice(); };
   const SIT_LABEL = { nao: 'Que não resolvi', resolvi: 'Que já resolvi', acertei: 'Que acertei', errei: 'Que errei' };
 
   MQ.newFilter = function () {
-    const f = { paths: [], situacao: ['nao'], conf: false, erros: false, revisao: false, tipos: ['multipla', 'certoerrado'], comCom: true, semCom: true, anuladas: false, desatualizadas: false, texto: '' };
+    const f = { paths: [], situacao: ['nao'], erros: false, revisao: false, tipos: ['multipla', 'certoerrado'], comCom: true, semCom: true, anuladas: false, desatualizadas: false, texto: '' };
     FIELDS.forEach(x => { f[x.key] = []; });
     return f;
   };
@@ -73,9 +72,8 @@
       const ok = f.situacao.some(s => s === st || (s === 'resolvi' && a));
       if (!ok) return false;
     }
-    if (f.erros) { const a = latest[q.id]; if (!a || (a.correct && a.conf !== 'chute')) return false; } // caderno de erros: última resposta errada ou acerto no chute
+    if (f.erros) { const a = latest[q.id]; if (!a || a.correct) return false; } // caderno de erros: última resposta errada
     if (f.revisao) { const r = MQ.get('reviews', q.id); if (!r || r.due > dueLimit) return false; }
-    if (f.conf) { const a = latest[q.id]; if (!a || (a.conf !== 'chute' && a.conf !== 'duvida')) return false; }
     if (f.texto) {
       if (!hayOf(q).includes(textNorm == null ? MQ.norm(f.texto) : textNorm)) return false;
     }
@@ -310,7 +308,7 @@
     });
     $('#adv-reset', root).onclick = () => {
       const d = MQ.newFilter();
-      Object.assign(t, { situacao: d.situacao, conf: false, erros: false, revisao: false, tipos: d.tipos, comCom: true, semCom: true, anuladas: false, desatualizadas: false, texto: '' });
+      Object.assign(t, { situacao: d.situacao, erros: false, revisao: false, tipos: d.tipos, comCom: true, semCom: true, anuladas: false, desatualizadas: false, texto: '' });
       draw(); MQ.toast('Padrão restaurado. Toque em Confirmar para aplicar.');
     };
     $('#fp-back', root).onclick = () => L.close();
@@ -329,7 +327,6 @@
     FIELDS.forEach(x => f[x.key].forEach(v => chips.push({ label: x.key === 'uf' ? (v === 'BR' ? 'Federal' : (UF_NAMES[v] || v)) : v, kind: x.key, val: v, group: x.key })));
     if (isAllSit(f)) { if (!f.revisao) chips.push({ label: 'Todas as situações', kind: 'situacao', val: '__all', group: 'avancados' }); }
     else f.situacao.forEach(v => chips.push({ label: SIT_LABEL[v], kind: 'situacao', val: v, group: 'avancados' }));
-    if (f.conf) chips.push({ label: 'Só chutes e dúvidas', kind: 'conf', val: '', group: 'avancados' });
     if (f.erros) chips.push({ label: 'Caderno de erros', kind: 'erros', val: '', group: 'avancados' });
     if (f.revisao) chips.push({ label: 'Revisão de hoje', kind: 'revisao', val: '', group: 'avancados' });
     if (f.tipos.length < 2) f.tipos.forEach(v => chips.push({ label: v === 'multipla' ? 'Só múltipla escolha' : 'Só certo/errado', kind: 'tipos', val: v, group: 'avancados' }));
@@ -344,7 +341,7 @@
     const f = MQ.bankFilter;
     if (kind === 'path') f.paths = f.paths.filter(p => p !== val);
     else if (kind === 'situacao') { if (val === '__all') f.situacao = ['nao']; else { f.situacao = f.situacao.filter(x => x !== val); if (!f.situacao.length) f.situacao = ['nao', 'resolvi']; } }
-    else if (kind === 'conf' || kind === 'erros' || kind === 'revisao') f[kind] = false;
+    else if (kind === 'erros' || kind === 'revisao') f[kind] = false;
     else if (kind === 'tipos') f.tipos = ['multipla', 'certoerrado'];
     else if (kind === 'com') { f.comCom = true; f.semCom = true; }
     else if (kind === 'texto') f.texto = '';
@@ -356,7 +353,7 @@
     if (k === 'assunto') return f.paths.length;
     if (k === 'avancados') {
       return (f.situacao.length === 1 && f.situacao[0] === 'nao' ? 0 : 1) + (f.tipos.length < 2 ? 1 : 0) + (f.comCom === false || f.semCom === false ? 1 : 0) +
-        (f.conf ? 1 : 0) + (f.erros ? 1 : 0) + (f.revisao ? 1 : 0) + (f.texto ? 1 : 0) + (f.anuladas ? 1 : 0) + (f.desatualizadas ? 1 : 0);
+        (f.erros ? 1 : 0) + (f.revisao ? 1 : 0) + (f.texto ? 1 : 0) + (f.anuladas ? 1 : 0) + (f.desatualizadas ? 1 : 0);
     }
     return f[k].length;
   }
@@ -393,7 +390,7 @@
 
     /* Resumo: o assunto/banca escolhidos, sem olhar a situação (senão "não resolvi" sempre daria 0%) */
     function summary(f, latest) {
-      const set = MQ.filterQuestions(Object.assign({}, f, { situacao: ALL_SIT, conf: false, erros: false, revisao: false }), latest);
+      const set = MQ.filterQuestions(Object.assign({}, f, { situacao: ALL_SIT, erros: false, revisao: false }), latest);
       let done = 0, ok = 0;
       const by = new Map();
       set.forEach(q => {

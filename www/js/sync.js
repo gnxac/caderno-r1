@@ -255,7 +255,7 @@
         s.lastSync = Date.now();
         MQ.saveLocal();
         setStatus('idle', 'Sincronizado ' + new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }));
-        if (changed && ['inicio', 'questoes', 'listas', 'desempenho', 'configuracoes'].includes(MQ.route().name)) MQ.render();
+        if (changed && ['inicio', 'questoes', 'listas', 'anotacoes', 'desempenho', 'configuracoes'].includes(MQ.route().name)) MQ.render();
         if (opts.manual) MQ.toast(changed ? 'Sincronizado: ' + changed + ' itens vieram de outro aparelho.' : 'Sincronizado. Tudo em dia.');
         return true;
       } catch (e) {

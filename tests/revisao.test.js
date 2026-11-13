@@ -16,7 +16,7 @@ const MQ = ctx.MQ, DAY = 86400000;
 MQ.data.questions.q1 = { id: 'q1', gabarito: 'B', updatedAt: 1 };
 const rev = () => MQ.get('reviews', 'q1');
 let now = new Date(2026, 0, 10, 10, 0, 0).getTime();
-const att = (correct, conf) => MQ.reviewUpdate({ qid: 'q1', correct, conf, ts: now });
+const att = correct => MQ.reviewUpdate({ qid: 'q1', correct, ts: now });
 const days = r => Math.round((r.due - now) / DAY);
 const wait = () => { now = rev().due; }; // o relógio vai até o vencimento
 
@@ -37,11 +37,6 @@ att(true); att(true); assert.strictEqual(rev().box, b1); assert.strictEqual(rev(
 // errar no meio do caminho volta para a caixa 0
 wait(); att(true); assert.strictEqual(rev().box, 2);
 att(false); assert.strictEqual(rev().box, 0);
-// acerto com chute (revisão vencida): fica na caixa e repete em 3 dias
-wait(); att(true, 'chute'); assert.strictEqual(rev().box, 0); assert.strictEqual(days(rev()), 3);
-// chute sem revisão cria uma, em 3 dias
-MQ.remove('reviews', 'q1');
-att(true, 'chute'); assert.strictEqual(rev().box, 0); assert.strictEqual(days(rev()), 3);
 // questão removida não gera revisão
 MQ.remove('questions', 'q1'); MQ.remove('reviews', 'q1');
 att(false); assert.strictEqual(rev(), null);

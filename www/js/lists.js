@@ -48,6 +48,7 @@
      shortcut: com filtro "Que não resolvi" a lista encolhe conforme você responde; o ponto de "continuar" é o índice e pode pular uma questão. */
   MQ.refreshSmart = function () {
     MQ.alive('lists').filter(l => l.filter).forEach(l => {
+      if ('conf' in l.filter) { delete l.filter.conf; MQ.put('lists', l); } // filtro removido do app
       const ids = MQ.sortQuestions(MQ.filterQuestions(Object.assign(MQ.newFilter(), l.filter))).map(q => q.id);
       if (JSON.stringify(ids) !== JSON.stringify(l.qids)) { l.qids = ids; MQ.put('lists', l); }
     });
@@ -227,7 +228,7 @@
   function errosCard(ids) {
     return '<article class="lcard lc-erros"><div class="lc-top"><span class="lc-name">' + icon('target') + '<b>Caderno de erros</b></span></div>' +
       '<div class="st">' + ids.length + (ids.length === 1 ? ' questão' : ' questões') + ' · automático</div><div><span class="badge err">Automática</span></div>' +
-      '<div class="st">Última resposta errada ou acerto no chute. Sai daqui quando você acerta.</div>' +
+      '<div class="st">Questões cuja última resposta foi errada. Saem daqui quando você acerta.</div>' +
       '<button class="btn sm primary" data-act="erros"' + (ids.length ? '' : ' disabled') + '>' + icon('play') + 'Revisar</button></article>';
   }
 

@@ -4,14 +4,14 @@
   const { esc, $, $$, icon } = MQ;
 
   /* ---------- Atalhos de teclado ---------- */
-  const ROUTES = ['inicio', 'questoes', 'listas', 'desempenho', 'configuracoes'];
+  const ROUTES = ['inicio', 'questoes', 'listas', 'anotacoes', 'desempenho', 'configuracoes'];
   const inSim = () => MQ.route().name === 'simulado'; // prova em andamento: nada de sair por atalho
   const typing = el => !!el && (el.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName));
 
   document.addEventListener('keydown', e => {
     if (e.defaultPrevented || e.altKey) return;
     const mod = e.ctrlKey || e.metaKey;
-    if (mod && !e.shiftKey && /^[1-5]$/.test(e.key)) {
+    if (mod && !e.shiftKey && /^[1-6]$/.test(e.key)) {
       if (document.querySelector('.modal-back') || typing(e.target) || inSim()) return; // não perde texto digitado
       e.preventDefault(); location.hash = '#/' + ROUTES[+e.key - 1];
     } else if (mod && !e.shiftKey && e.key.toLowerCase() === 'k') {
@@ -22,7 +22,7 @@
   });
 
   MQ.shortcutsDialog = function () {
-    const rows = [['Ctrl K', 'Buscar questão por texto ou código R1-…'], ['Ctrl 1–5', 'Início, Questões, Listas, Desempenho, Configurações'], ['?', 'Mostrar esta lista'], ['Esc', 'Fechar janela ou menu']];
+    const rows = [['Ctrl K', 'Buscar questão por texto ou código R1-…'], ['Ctrl 1–6', 'Início, Questões, Listas, Anotações, Desempenho, Configurações'], ['?', 'Mostrar esta lista'], ['Esc', 'Fechar janela ou menu']];
     MQ.modal({
       title: 'Atalhos de teclado',
       body: '<dl class="kbd-list">' + rows.map(r => '<dt><kbd>' + esc(r[0]) + '</kbd></dt><dd>' + esc(r[1]) + '</dd>').join('') + '</dl>' +

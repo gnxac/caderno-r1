@@ -31,7 +31,7 @@
   --err: #B3261E;
   --err-soft: #FBE7E5;
   --err-ink: #FFFFFF;
-  --warn: #8A5A00;            /* dúvida, chute, marcada */
+  --warn: #8A5A00;            /* marcada para revisar, anotação */
   --warn-soft: #FFF2D6;
   --heat-1: #E2E0F7; --heat-2: #AAA5DB; --heat-3: #736AC0; --heat-4: #4338A8;
   --focus: #B45309;
@@ -181,8 +181,6 @@ main { min-width: 0; padding: 28px 36px 60px; }
   .brand, .rail-foot { display: none; }
   .nav { flex-direction: row; width: 100%; justify-content: space-around; gap: 0; }
   .nav a { flex: 1; min-height: 52px; padding: 6px 2px; }
-  .nav .l-r { display: none; }
-  .nav .l-r ~ .l-f { display: inline; }
   main { padding-bottom: calc(84px + env(safe-area-inset-bottom)); }
   body.in-solve .rail { display: none; }
 }
@@ -665,14 +663,6 @@ kbd { font: 700 11px var(--sans); border: 1px solid var(--line-2); border-bottom
 .nav kbd.hint { border: 0; background: none; padding: 0; }
 
 /* ---------- Resolver: confiança, motivo do erro, painel e modo foco ---------- */
-.conf, .why { display: grid; gap: 6px; max-width: 68ch; margin: 0 0 18px; }
-.conf .st, .why .st { font-size: 13px; color: var(--ink-3); font-weight: 600; }
-.conf .st small { font-weight: 400; }
-.conf .seg { display: flex; }
-.conf .seg button { flex: 1; }
-@media (pointer: coarse), (max-width: 860px) { .why .chip-trail { min-height: 44px; } }
-.why .chips { margin: 0; }
-.chip-trail[aria-pressed="true"] { background: var(--accent-soft); color: var(--on-soft); border-color: transparent; font-weight: 700; }
 .qp-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 12px 14px; display: grid; gap: 8px; min-width: 0; }
 .qp-card h3 { font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); display: flex; align-items: center; gap: 6px; }
 .qp-card h3 .ic { width: 15px; height: 15px; }
@@ -906,3 +896,25 @@ body.in-focus .qcard { margin-left: auto; margin-right: auto; }
 
 /* Tablet e celular largo: o mapa e o cartão de acertos ficam lado a lado em vez de empilhados em largura total */
 @media (min-width: 600px) and (max-width: 1099px) { .qleft { grid-template-columns: minmax(0, 1fr) 300px; align-items: start; } }
+
+/* ---------- Anotações ---------- */
+.nt { display: grid; gap: 14px; max-width: 1400px; }
+.nt-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.nt-sub { margin: 4px 0 0; color: var(--ink-3); font-variant-numeric: tabular-nums; }
+.nt-search { margin: 0; width: min(420px, 100%); }
+.nt-search .ic { top: 12px; }
+.nt-search input { border-radius: 999px; min-height: 42px; padding-left: 38px; }
+.nt-filters { display: grid; gap: 8px; }
+.nt-row { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.nt-lab { font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); min-width: 92px; }
+.nt-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 12px; }
+.nt-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 14px; display: grid; gap: 8px; align-content: start; min-width: 0; }
+.nt-meta { display: flex; justify-content: space-between; gap: 8px; font-size: 12px; color: var(--ink-3); }
+.nt-meta b { color: var(--accent); }
+.nt-path { font-size: 12px; font-weight: 600; color: var(--ink-2); }
+.nt-q { margin: 0; font-family: var(--serif); font-size: 13.5px; line-height: 1.4; color: var(--ink-3); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.nt-text { font-family: var(--serif); font-size: 14.5px; line-height: 1.5; background: var(--warn-soft); color: var(--ink); border-radius: 8px; padding: 10px 12px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.nt-foot { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.nt-foot .btn { text-decoration: none; }
+#nt-edit { font-family: var(--serif); font-size: 14px; line-height: 1.5; background: var(--warn-soft); border-color: transparent; }
+@media (max-width: 860px) { .nt-foot .btn.sm { min-height: 44px; } .nt-lab { min-width: 100%; } }

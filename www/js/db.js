@@ -13,7 +13,6 @@
   const isColl = v => !!v && typeof v === 'object' && !Array.isArray(v);
   /* Chaves que, vindas de um JSON, alterariam o protótipo dos objetos */
   const UNSAFE = new Set(['__proto__', 'constructor', 'prototype']);
-  MQ.CONF = ['sabia', 'duvida', 'chute'];
 
   function emptyData() {
     const d = { version: 1, counter: 0 };
@@ -184,7 +183,7 @@
   /* ---------- Revisão espaçada (caixas de Leitner) ----------
      Coleção "reviews", um item por questão (id = id da questão): { box, due, lastAt }.
      Errou: volta para a caixa 0 e reaparece em 1 dia. Acertou uma questão em revisão que já venceu: sobe uma caixa
-     (1, 3, 7, 15, 30 dias) e, depois da última, sai da revisão. Acertou com "chutei": repete em 3 dias. */
+     (1, 3, 7, 15, 30 dias) e, depois da última, sai da revisão. */
   const DAY = 86400000, REV_DAYS = [1, 3, 7, 15, 30];
   MQ.DAY = DAY;
   MQ.endOfDay = function (ts) { const d = new Date(ts); d.setHours(23, 59, 59, 999); return d.getTime(); };
@@ -196,7 +195,6 @@
     const set = (box, days) => MQ.put('reviews', Object.assign(cur || { id: a.qid, qid: a.qid }, { box, due: at + days * DAY, lastAt: at }));
     if (!a.correct) set(0, REV_DAYS[0]);
     else if (cur && cur.due > MQ.endOfDay(at)) return; // ainda não venceu: acertar de novo antes da hora não sobe a caixa
-    else if (a.conf === 'chute') set(cur ? cur.box : 0, 3);
     else if (cur) {
       const box = cur.box + 1;
       if (box >= REV_DAYS.length) MQ.remove('reviews', a.qid); else set(box, REV_DAYS[box]);
@@ -208,7 +206,7 @@
     return MQ.alive('reviews').filter(r => r.due <= lim && MQ.get('questions', r.qid));
   };
 
-  MQ.recordAttempt = function (qid, choice, ctx, timeSec, conf) {
+  MQ.recordAttempt = function (qid, choice, ctx, timeSec) {
     const q = MQ.get('questions', qid);
     if (!q) return null;
     const a = {
@@ -216,7 +214,6 @@
       ctx: ctx || 'banco', ts: MQ.now(), timeSec: timeSec || null,
       device: MQ.local.deviceId
     };
-    if (MQ.CONF.includes(conf)) a.conf = conf;
     MQ.put('attempts', a);
     MQ.reviewUpdate(a);
     return a;

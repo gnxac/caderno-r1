@@ -22,7 +22,7 @@ Windows (Electron portátil), Android (APK, Capacitor 7) e navegador. Layout res
 - JS puro, sem build, tudo no objeto global `MQ`; dados no IndexedDB. A stack continua a mesma na reformulação.
 - **Só o nome exibido mudou para Pulse.** Ficam como estão: `appId` `br.cadernor1.app`, banco IndexedDB `caderno-r1`, arquivos do Drive, `MQ`. No Electron, `userData` fica fixo em `%APPDATA%\Caderno R1` (e `Caderno R1 Admin` na versão admin), senão o app abriria vazio ao trocar o `productName`.
 - **Sincronização compatível:** a mesclagem aceita qualquer coleção presente nos dados remotos, não só as conhecidas; nenhuma função nova grava coleção nova antes de essa versão estar em todos os aparelhos.
-- Coleções novas previstas: `notes` (anotação por questão), `reviews` (revisão espaçada por questão), `prefs` (meta e lembrete, sincronizados). Campo novo nas respostas: `conf` (sabia, dúvida, chute). Tempo por questão já é gravado (`timeSec`).
+- Coleções novas: `notes` (anotação por questão), `reviews` (revisão espaçada por questão), `prefs` (meta diária, sincronizada). Tempo por questão já é gravado (`timeSec`). Respostas antigas podem ter `conf`/`why` (recurso removido); são ignorados.
 - IDs de questões nunca mudam; remover = `deleted: true` (lápide).
 - Só o administrador (`guilhermeacnx@gmail.com`) cadastra, importa e publica. Por padrão só provas oficiais (INEP/Ebserh) são publicadas; questões de cursos (como o Estratégia) não são publicadas.
 - Detecção de questões repetidas por texto (alternativas embaralhadas incluídas).
@@ -32,10 +32,11 @@ Windows (Electron portátil), Android (APK, Capacitor 7) e navegador. Layout res
 ## Scope of the Redesign
 Funções que entram (plano aprovado: https://claude.ai/artifact/5UEsWEqJe55ZWP6JTiBqVA):
 - **Início:** continuar de onde parei, meta diária, sequência, revisões do dia, ponto mais fraco com "Treinar agora", heatmap, sessão rápida de 10 questões.
-- **Questões:** busca global (`Ctrl K`), caderno de erros automático, revisão espaçada das erradas (Leitner 1-3-7-15-30 dias), Sabia / Tive dúvida / Chutei, motivo do erro, anotações por questão, tempo por questão, modo foco, gerar flashcard Anki (.txt; AnkiConnect no Windows), selo de anulada e desatualizada.
+- **Questões:** busca global (`Ctrl K`), caderno de erros automático, revisão espaçada das erradas (Leitner 1-3-7-15-30 dias), anotações por questão, tempo por questão, modo foco, gerar flashcard Anki (.txt; AnkiConnect no Windows), selo de anulada e desatualizada.
+- **Anotações:** aba com todas as anotações das questões, filtro por assunto (hierarquia da questão), busca, editar e excluir.
 - **Listas:** listas inteligentes (filtros salvos), progresso por lista, ordenar, duplicar e mover entre pastas.
 - **Simulados:** modo prova por instituição (predefinições editadas e publicadas pelo admin), cartão-resposta, revisão pós-prova.
-- **Desempenho:** evolução semanal, acerto real sem chutes, tempo médio, pontos fracos, por instituição, heatmap, histórico de simulados.
+- **Desempenho:** evolução semanal, tempo médio, pontos fracos, por instituição, heatmap, histórico de simulados.
 - **Configurações:** status de sincronização detalhado, backup e restauração (restaurar mescla, nunca apaga), meta, lembrete, atalhos.
 - **Android:** lembrete diário por notificação local.
 

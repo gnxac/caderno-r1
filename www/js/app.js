@@ -9,7 +9,7 @@
     return { name: name || 'inicio', arg: arg ? decodeURIComponent(arg) : null };
   };
 
-  const NAV_FOR = { inicio: 'inicio', questoes: 'questoes', resolver: 'questoes', listas: 'listas', simulado: 'listas', resultado: 'listas', desempenho: 'desempenho', configuracoes: 'configuracoes', cadastrar: 'configuracoes', sincronizar: 'configuracoes' };
+  const NAV_FOR = { anotacoes: 'anotacoes', inicio: 'inicio', questoes: 'questoes', resolver: 'questoes', listas: 'listas', simulado: 'listas', resultado: 'listas', desempenho: 'desempenho', configuracoes: 'configuracoes', cadastrar: 'configuracoes', sincronizar: 'configuracoes' };
 
   MQ.isAdmin = function () {
     if (window.mqNative && window.mqNative.admin) return true; // versão Windows Admin

@@ -60,13 +60,6 @@ assert.strictEqual(MQ.data.version, 1);
 assert.strictEqual(MQ.data.lixo, undefined);
 assert.strictEqual(MQ.data.texto, undefined);
 
-// 6. Resposta aceita "conf" só com valor válido
-fresh();
-MQ.data.questions.q1 = { id: 'q1', gabarito: 'B', updatedAt: 1 };
-assert.strictEqual(MQ.recordAttempt('q1', 'B', 'banco', 12, 'chute').conf, 'chute');
-assert.strictEqual(MQ.recordAttempt('q1', 'A', 'banco', 12, 'talvez').conf, undefined);
-assert.strictEqual(MQ.recordAttempt('q1', 'A', 'banco', 12).conf, undefined);
-
 // 7. JSON malicioso do Drive não contamina protótipos; item que não é objeto é ignorado
 const mau = JSON.parse('{"__proto__":{"poluido":{"id":"p","updatedAt":9}},"constructor":{"x":{"id":"x"}},"notes":{"__proto__":{"id":"y","updatedAt":9},"q9":5}}');
 MQ.mergeData(mau);
