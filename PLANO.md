@@ -93,12 +93,15 @@ Ordem aprovada na fase 1. Marque `[x]` ao concluir cada item. Decisões de visua
 - [x] Cartões com todas as anotações, filtro por assunto (hierarquia), busca, abrir questão, editar e excluir
 
 ## 8. Desempenho
-- [ ] Evolução semanal (`multiLineChart`)
-- [ ] Tempo médio
-- [ ] Pontos fracos com Treinar
-- [ ] Por instituição
-- [ ] Heatmap
-- [ ] Histórico de simulados
+- [x] Período e origem no topo; 4 números (questões, acerto, tempo médio, dias estudados)
+- [x] Evolução (linha, por dia, 2 dias ou semana conforme o período)
+- [x] Pontos fracos: temas com pior acerto (mínimo de 5 respostas) e "Treinar 20"
+- [x] Acerto por grande área com detalhamento até o subtema; por instituição
+- [x] Mapa de dias estudados (26 semanas) e histórico de simulados do período
+- [x] "Onde focar" (bolhas e tabela) mantido numa seção recolhível; lista/simulado com as erradas; excluir histórico
+- [x] ~~Acerto real sem chutes~~ (removido junto com o recurso de chute)
+- [ ] Comparação com o período anterior nos 4 números (ex.: "+212 questões")
+- [ ] Tooltips das barras e do mapa e a mensagem de "sem tema elegível" sem teste no navegador
 
 ## 9. Configurações
 - [ ] Status de sincronização detalhado

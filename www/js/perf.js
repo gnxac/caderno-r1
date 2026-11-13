@@ -2,7 +2,7 @@
 (function (MQ) {
   'use strict';
   const { esc, $, $$, icon } = MQ;
-  const DAY = 86400000;
+  const DAY = 86400000, MIN_WEAK = 5, HEAT_WEEKS = 26;
 
   MQ.perf = { period: '30', from: '', to: '', origin: '', view: 'pct', drill: [] };
 
@@ -64,6 +64,8 @@
     });
   }
 
+  const dayKeyOf = ts => { const d = new Date(ts); return d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate(); };
+
   MQ.views.desempenho = function (root) {
     const p = MQ.perf;
     const atts = filteredAttempts();
@@ -71,27 +73,40 @@
     const lists = MQ.alive('lists').sort((a, b) => b.createdAt - a.createdAt);
     const originOpts = '<option value="">Todas as respostas</option><option value="banco"' + (p.origin === 'banco' ? ' selected' : '') + '>Só no banco de questões</option>' +
       lists.map(l => '<option value="' + (l.kind === 'simulado' ? 'sim:' : 'lista:') + l.id + '"' + (p.origin === (l.kind === 'simulado' ? 'sim:' : 'lista:') + l.id ? ' selected' : '') + '>' + (l.kind === 'simulado' ? 'Simulado: ' : 'Lista: ') + esc(l.name) + '</option>').join('');
+    const [ra, rb] = range();
+
+    /* números do topo */
+    const timed = atts.filter(a => a.timeSec > 0 && a.timeSec <= 600);
+    const avgT = timed.length ? timed.reduce((s, a) => s + a.timeSec, 0) / timed.length : 0;
+    const days = new Set(atts.map(a => dayKeyOf(a.ts))).size;
+    const day0 = ts => { const d = new Date(ts); d.setHours(0, 0, 0, 0); return d.getTime(); };
+    const spanDays = p.period === 'all' || (p.period === 'custom' && !p.from) ? 0 : Math.max(1, Math.round((day0(Math.min(rb, Date.now())) - day0(ra)) / DAY) + 1); // dias de calendário, inclusive hoje
+    const kpi = (mk, num, sub) => '<div class="pk"><span class="mk">' + mk + '</span><div class="num">' + num + '</div><span class="st">' + sub + '</span></div>';
 
     root.innerHTML =
-      '<div class="page-head"><div><h1>Meu desempenho</h1><p>Onde você está acertando, onde precisa voltar e como evolui.</p></div>' +
+      '<div class="page-head"><div><h1>Desempenho</h1><p>Onde você está acertando, onde precisa voltar e como evolui.</p></div>' +
       '<div class="toolbar"><button class="btn ghost" id="p-more" aria-label="Mais opções">' + icon('more') + '</button></div></div>' +
-      '<div class="perf-layout"><aside class="panel perf-side" aria-label="Filtros"><h2>Filtros</h2>' +
-      '<label class="field"><span>Período</span><select id="p-period">' + PERIODS.map(([v, l]) => '<option value="' + v + '"' + (p.period === v ? ' selected' : '') + '>' + l + '</option>').join('') + '</select></label>' +
-      (p.period === 'custom' ? '<label class="field"><span>De</span><input type="date" id="p-from" value="' + esc(p.from) + '"></label><label class="field"><span>Até</span><input type="date" id="p-to" value="' + esc(p.to) + '"></label>' : '') +
-      '<label class="field"><span>Origem</span><select id="p-origin">' + originOpts + '</select></label></aside><div class="perf-main">' +
+      '<div class="pf-bar"><label class="pf-f"><span>Período</span><select id="p-period">' + PERIODS.map(([v, l]) => '<option value="' + v + '"' + (p.period === v ? ' selected' : '') + '>' + l + '</option>').join('') + '</select></label>' +
+      (p.period === 'custom' ? '<label class="pf-f"><span>De</span><input type="date" id="p-from" value="' + esc(p.from) + '"></label><label class="pf-f"><span>Até</span><input type="date" id="p-to" value="' + esc(p.to) + '"></label>' : '') +
+      '<label class="pf-f"><span>Origem</span><select id="p-origin">' + originOpts + '</select></label></div>' +
       (total ? '' : '<div class="empty"><h2>Sem respostas neste período</h2><p>Responda questões no banco, nas listas ou em simulados. Se você já respondeu, tente um período maior.</p><a class="btn primary" href="#/questoes">Resolver questões</a></div>') +
-      (total ? '<div class="perf-grid">' +
-        '<section class="panel span-5"><h2>Respostas no período</h2><div class="sub">Cada resposta conta, inclusive quando você refaz uma questão.</div>' +
-        '<div class="totals"><div class="big-pct">' + MQ.pct(ok, total) + '%</div><dl><dt>Total</dt><dd>' + total + '</dd><dt>Certas</dt><dd>' + ok + '</dd><dt>Erradas</dt><dd>' + (total - ok) + '</dd></dl></div>' +
-        '<div class="toolbar" style="margin-top:14px"><button class="btn sm" id="p-wrong-list">Lista com as erradas</button><button class="btn sm" id="p-wrong-sim">Simulado com as erradas</button></div></section>' +
+      (total ? '<div class="pk-row">' +
+        kpi('Questões', total.toLocaleString('pt-BR'), ok + ' certas · ' + (total - ok) + ' erradas') +
+        kpi('Acerto', MQ.pct(ok, total) + '%', 'cada resposta conta, mesmo ao refazer') +
+        kpi('Tempo médio', avgT ? MQ.fmtDuration(avgT) : '–', avgT ? 'por questão, em ' + timed.length + ' respostas' : 'ainda sem tempos gravados') +
+        kpi('Dias estudados', days + (spanDays ? '<small>/' + spanDays + '</small>' : '<small> dias</small>'), 'com pelo menos 1 resposta') + '</div>' +
+        '<div class="perf-grid">' +
         '<section class="panel span-7"><h2>Evolução</h2><div class="sub">Percentual de acerto por ' + ({ 1: 'dia', 2: 'período de 2 dias' }[bucketDays()] || 'semana') + '</div><div id="p-line"></div></section>' +
-        '<section class="panel span-12"><div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:flex-start"><div><h2>Por matéria</h2><div class="sub" id="p-crumb"></div></div>' +
+        '<section class="panel span-5"><h2>Pontos fracos</h2><div class="sub">Temas com pior acerto (mínimo de ' + MIN_WEAK + ' respostas)</div><ul class="weak-list" id="p-weak"></ul></section>' +
+        '<section class="panel span-7"><div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:flex-start"><div><h2>Por grande área</h2><div class="sub" id="p-crumb"></div></div>' +
         '<div class="seg" role="group" aria-label="Visualização"><button data-view="pct" aria-pressed="' + (p.view === 'pct') + '">% de acerto</button><button data-view="total" aria-pressed="' + (p.view === 'total') + '">Total de respostas</button></div></div><div class="bars" id="p-bars"></div></section>' +
-        '<section class="panel span-7"><h2>Onde focar</h2><div class="sub">Cada bolha é uma matéria. Tamanho = quantas questões dela existem no seu banco (um indicador de quanto ela pesa). Clique para detalhar.</div><div id="p-bubble"></div>' +
-        '<div class="quad-help"><span><b>Q1</b> poucas questões e acerto baixo: faça mais questões e revise a teoria.</span><span><b>Q2</b> muitas questões e acerto baixo: alerta — volte à teoria.</span><span><b>Q3</b> muitas questões e acerto bom: mantenha o ritmo.</span><span><b>Q4</b> poucas questões e acerto bom: aumente o volume.</span></div></section>' +
-        '<section class="panel span-5"><h2>Assuntos com mais erros</h2><div class="sub">Considera tema e subtema</div><ul class="weak-list" id="p-weak"></ul></section>' +
-        '<section class="panel span-12"><h2>Tabela</h2><div class="sub">Os mesmos números das bolhas</div><div id="p-table"></div></section>' +
-        '</div>' : '') + '</div></div>';
+        '<section class="panel span-5"><h2>Por instituição</h2><div class="sub">Onde você mais resolve e como vai em cada uma</div><div class="hbars" id="p-inst"></div></section>' +
+        '<section class="panel span-7"><h2>Dias estudados</h2><div class="sub">Últimas ' + HEAT_WEEKS + ' semanas, todas as suas respostas</div><div id="p-heat"></div></section>' +
+        '<section class="panel span-5"><h2>Simulados</h2><div class="sub">Concluídos no período</div><div id="p-sims"></div></section>' +
+        '<section class="panel span-12"><details id="p-focus"><summary><h2 style="display:inline">Onde focar</h2> <span class="sub">bolhas por matéria e tabela</span></summary><div class="sub" style="margin-top:8px">Cada bolha é uma matéria. Tamanho = quantas questões dela existem no seu banco. Clique para detalhar.</div><div id="p-bubble"></div>' +
+        '<div class="quad-help"><span><b>Q1</b> poucas questões e acerto baixo: faça mais questões e revise a teoria.</span><span><b>Q2</b> muitas questões e acerto baixo: alerta, volte à teoria.</span><span><b>Q3</b> muitas questões e acerto bom: mantenha o ritmo.</span><span><b>Q4</b> poucas questões e acerto bom: aumente o volume.</span></div><div id="p-table" style="margin-top:12px"></div></details></section>' +
+        '<section class="panel span-12 perf-actions"><button class="btn" id="p-wrong-list">Lista com as erradas</button><button class="btn" id="p-wrong-sim">Simulado com as erradas</button></section>' +
+        '</div>' : '');
 
     $('#p-period', root).onchange = e => { p.period = e.target.value; MQ.render(); };
     if ($('#p-from', root)) { $('#p-from', root).onchange = e => { p.from = e.target.value; MQ.render(); }; $('#p-to', root).onchange = e => { p.to = e.target.value; MQ.render(); }; }
@@ -115,11 +130,12 @@
     $('#p-wrong-list', root).onclick = () => { const ids = wrongIds(); if (!ids.length) MQ.toast('Nenhuma questão errada no período.'); else MQ.createListModal(ids, 'Erradas — ' + MQ.fmtDate(Date.now())); };
     $('#p-wrong-sim', root).onclick = () => { const ids = wrongIds(); if (!ids.length) MQ.toast('Nenhuma questão errada no período.'); else MQ.simCreateModal(ids, 'Simulado de erradas — ' + MQ.fmtDate(Date.now())); };
     $$('[data-view]', root).forEach(b => b.onclick = () => { p.view = b.dataset.view; MQ.render(); });
+    const focus = $('#p-focus', root);
+    if (p.focusOpen) focus.open = true;
 
     // Evolução
     const bd = bucketDays();
-    const [ra, rb] = range();
-    const firstTs = p.period === 'all' ? Math.min(...atts.map(a => a.ts)) : ra;
+    const firstTs = p.period === 'all' ? atts.reduce((m, a) => Math.min(m, a.ts), Infinity) : ra;
     const startDay = new Date(firstTs); startDay.setHours(0, 0, 0, 0);
     const buckets = [];
     for (let t = startDay.getTime(); t <= rb; t += bd * DAY) buckets.push({ t, n: 0, ok: 0 });
@@ -131,14 +147,57 @@
     MQ.lineChart($('#p-line', root), trimmed.map(b => {
       const d = new Date(b.t);
       const lab = d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
-      return { label: lab, tipLabel: bd === 1 ? lab : 'Semana de ' + lab, value: b.n ? MQ.pct(b.ok, b.n) : null, n: b.n };
+      return { label: lab, tipLabel: bd === 1 ? lab : bd === 2 ? 'A partir de ' + lab : 'Semana de ' + lab, value: b.n ? MQ.pct(b.ok, b.n) : null, n: b.n };
     }), { label: 'Evolução do percentual de acerto' });
 
-    // Barras com detalhamento
+    // Pontos fracos: pior acerto por tema (até 3 níveis), com treino direto
+    const wk = new Map();
+    atts.forEach(a => {
+      const path = MQ.qPath(MQ.get('questions', a.qid)).slice(0, 3);
+      if (!path.length) return;
+      const k = path.join('>');
+      const w = wk.get(k) || { path, n: 0, ok: 0 };
+      w.n++; if (a.correct) w.ok++;
+      wk.set(k, w);
+    });
+    const weak = Array.from(wk.values()).filter(w => w.n >= MIN_WEAK && w.ok < w.n).sort((a, b) => a.ok / a.n - b.ok / b.n || b.n - a.n).slice(0, 6);
+    $('#p-weak', root).innerHTML = weak.length ? weak.map((w, i) => {
+      const pc = MQ.pct(w.ok, w.n);
+      return '<li><div><div>' + esc(w.path[w.path.length - 1]) + '</div><div class="path">' + esc(w.path.slice(0, -1).join(' › ')) + ' · ' + w.n + ' respostas</div></div>' +
+        '<span class="pct' + (pc < 60 ? ' low' : '') + '">' + pc + '%</span><button class="btn sm" data-train="' + i + '">Treinar 20</button></li>';
+    }).join('') : '<li class="muted">Nenhum tema com ' + MIN_WEAK + ' respostas e erros neste período. Bom sinal, ou ainda é cedo.</li>';
+    $$('[data-train]', root).forEach(b => b.onclick = () => {
+      const w = weak[+b.dataset.train];
+      MQ.openSolve({ title: 'Treino: ' + w.path[w.path.length - 1], qids: MQ.trainIds(w.path, 20, MQ.latestByQ()), ctx: 'banco' });
+    });
+
+    // Por instituição
+    const inst = new Map();
+    atts.forEach(a => {
+      const q = MQ.get('questions', a.qid), k = (q.instituicao || '').trim() || 'Sem instituição';
+      const o = inst.get(k) || { n: 0, ok: 0 };
+      o.n++; if (a.correct) o.ok++;
+      inst.set(k, o);
+    });
+    $('#p-inst', root).innerHTML = Array.from(inst).sort((a, b) => b[1].n - a[1].n).slice(0, 8).map(([k, o]) => {
+      const pc = MQ.pct(o.ok, o.n);
+      return '<div class="hbar"><span>' + esc(k) + ' <span class="muted">· ' + o.n + '</span></span><b>' + pc + '%</b><div class="bar"><i class="' + (pc < 55 ? 'err' : '') + '" style="width:' + pc + '%"></i></div></div>';
+    }).join('');
+
+    // Dias estudados e simulados
+    $('#p-heat', root).innerHTML = MQ.studyHeat(MQ.attemptDays(), HEAT_WEEKS).html;
+    const runs = MQ.alive('runs').filter(r => r.status === 'concluido' && r.finishedAt >= ra && r.finishedAt <= rb).sort((a, b) => b.finishedAt - a.finishedAt).slice(0, 6);
+    $('#p-sims', root).innerHTML = runs.length ? runs.map(r => {
+      const s = MQ.runScore(r), l = MQ.get('lists', r.listId) || {};
+      return '<button class="hm-run" data-run="' + esc(r.id) + '"><span class="hm-rt"><span class="tt">' + esc(l.name || 'Simulado') + '</span><span class="st">' + MQ.fmtDate(r.finishedAt) + ' · ' + s.ok + '/' + s.total + ' · ' + MQ.fmtDuration((r.finishedAt - r.startedAt) / 1000) + '</span></span><b class="pct">' + MQ.pct(s.ok, s.total) + '%</b></button>';
+    }).join('') : '<p class="muted">Nenhum simulado concluído neste período.</p>';
+    $$('[data-run]', root).forEach(b => b.onclick = () => { location.hash = '#/resultado/' + b.dataset.run; });
+
+    // Por grande área, com detalhamento
     const depth = p.drill.length;
     const groups = sortGroups(groupBy(atts, depth, p.drill), depth);
     $('#p-crumb', root).innerHTML = (depth ? '<button class="btn ghost sm" id="p-up">' + icon('left') + ' Voltar</button> ' : '') +
-      esc(depth ? p.drill.join(' › ') : 'Grandes áreas') + (groups.some(g => g.deeper) ? ' · clique numa barra para detalhar' : '');
+      esc(depth ? p.drill.join(' › ') : 'Toque numa barra para detalhar') ;
     if ($('#p-up', root)) $('#p-up', root).onclick = () => { p.drill.pop(); MQ.render(); };
     const maxN = Math.max(1, ...groups.map(g => g.n));
     $('#p-bars', root).innerHTML = groups.length ? groups.map((g, i) => {
@@ -155,7 +214,7 @@
       b.addEventListener('mouseleave', MQ.hideTip);
     });
 
-    // Bolhas
+    // Bolhas e tabela (seção "Onde focar")
     const inc = bankIncidence(depth, p.drill);
     const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
     const items = groups.slice(0, 26).map((g, i) => ({
@@ -165,35 +224,16 @@
       onClick: g.deeper ? () => { p.drill.push(g.name); MQ.render(); } : null
     }));
     const meanN = groups.reduce((s, g) => s + g.n, 0) / Math.max(1, groups.length);
-    MQ.bubbleChart($('#p-bubble', root), items, { xSplit: 60, ySplit: meanN, label: 'Percentual de acerto versus questões resolvidas por matéria' });
+    // desenhado só com a seção aberta: fechada, o container tem largura 0 e o SVG sairia no tamanho errado
+    const drawBubble = () => MQ.bubbleChart($('#p-bubble', root), items, { xSplit: 60, ySplit: meanN, label: 'Percentual de acerto versus questões resolvidas por matéria' });
+    if (p.focusOpen) drawBubble();
+    focus.addEventListener('toggle', () => { p.focusOpen = focus.open; if (focus.open) drawBubble(); });
     $('#p-table', root).innerHTML = '<div class="table-wrap" style="border:0"><table class="tbl"><thead><tr><th>Bolha</th><th>Matéria</th><th class="num">Respostas</th><th class="num">% de acerto</th><th class="num hide-sm">No banco</th><th>Quadrante</th></tr></thead><tbody>' +
       items.map(it => {
         const hi = it.y >= meanN, good = it.x >= 60;
         const qd = hi ? (good ? 'Q3' : 'Q2') : (good ? 'Q4' : 'Q1');
         return '<tr><td><b>' + it.letter + '</b></td><td>' + esc(it.label) + '</td><td class="num">' + it.y + '</td><td class="num">' + it.x + '%</td><td class="num hide-sm">' + (inc[it.label] || 0) + '</td><td>' + qd + '</td></tr>';
       }).join('') + '</tbody></table></div>';
-
-    // Assuntos com mais erros
-    const weak = {};
-    atts.forEach(a => {
-      const q = MQ.get('questions', a.qid);
-      const path = MQ.qPath(q);
-      const key = path.slice(0, Math.min(path.length, 4)).join('>');
-      if (!key) return;
-      const w = weak[key] || (weak[key] = { key, path, n: 0, err: 0 });
-      w.n++; if (!a.correct) w.err++;
-    });
-    const top = Object.values(weak).filter(w => w.err).sort((a, b) => b.err - a.err || MQ.pct(a.err, a.n) - MQ.pct(b.err, b.n)).slice(0, 8);
-    $('#p-weak', root).innerHTML = top.length ? top.map((w, i) =>
-      '<li><div><div>' + esc(w.path[w.path.length - 1]) + '</div><div class="path">' + esc(w.path.slice(0, -1).join(' › ')) + '</div></div>' +
-      '<span class="small" style="color:var(--err);font-variant-numeric:tabular-nums">' + w.err + ' de ' + w.n + (w.n === 1 ? ' errada' : ' erradas') + '</span>' +
-      '<button class="btn sm" data-train="' + i + '">Treinar</button></li>').join('') : '<li class="muted">Nenhum erro no período. Bom sinal.</li>';
-    $$('[data-train]', root).forEach(b => b.onclick = () => {
-      const w = top[+b.dataset.train];
-      MQ.bankFilter = MQ.newFilter();
-      MQ.bankFilter.paths = [w.key];
-      location.hash = '#/questoes';
-    });
   };
 
   function bucketDays() {

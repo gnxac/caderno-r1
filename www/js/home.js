@@ -157,8 +157,9 @@
       (n ? '' : '<div class="st">Responda uma questão hoje para começar sua sequência.</div>');
   }
 
-  function heatCard(byDay) {
-    const today = startOfDay(Date.now()), WEEKS = weeksShown();
+  /* Mapa de dias estudados (semanas em colunas, segunda a domingo): devolve o HTML e quantos dias têm resposta */
+  MQ.studyHeat = function (byDay, WEEKS) {
+    const today = startOfDay(Date.now());
     const start = addDays(mondayOf(today), -(WEEKS - 1) * 7);
     let cells = '', studied = 0;
     for (let w = 0; w < WEEKS; w++) {
@@ -171,8 +172,15 @@
         cells += '<i class="l' + lv + '" title="' + new Date(d).toLocaleDateString('pt-BR') + ': ' + plural(n, 'questão', 'questões') + '"></i>';
       }
     }
-    return '<div class="mk">Dias estudados · ' + WEEKS + ' semanas</div><div class="heat" role="img" aria-label="' + studied + ' dias estudados nas últimas ' + WEEKS + ' semanas">' + cells + '</div>' +
-      '<div class="row sb"><span class="st">' + plural(studied, 'dia estudado', 'dias estudados') + '</span><span class="legend"><span>menos</span><i class="l0"></i><i class="l1"></i><i class="l2"></i><i class="l3"></i><i class="l4"></i><span>mais</span></span></div>';
+    return { studied, html: '<div class="heat" role="img" aria-label="' + studied + ' dias estudados nas últimas ' + WEEKS + ' semanas">' + cells + '</div>' +
+      '<div class="row sb"><span class="st">' + plural(studied, 'dia estudado', 'dias estudados') + '</span><span class="heat-legend"><span>menos</span><i class="l0"></i><i class="l1"></i><i class="l2"></i><i class="l3"></i><i class="l4"></i><span>mais</span></span></div>' };
+  };
+  MQ.attemptDays = () => gather().byDay;
+  MQ.trainIds = trainIds;
+
+  function heatCard(byDay) {
+    const WEEKS = weeksShown();
+    return '<div class="mk">Dias estudados · ' + WEEKS + ' semanas</div>' + MQ.studyHeat(byDay, WEEKS).html;
   }
 
   function areasCard(rows) {
