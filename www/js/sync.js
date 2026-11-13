@@ -34,7 +34,7 @@
     document.querySelectorAll('.sync-dot').forEach(d => { d.className = cls; });
     document.querySelectorAll('.sync-label').forEach(l => { l.textContent = msg; });
     document.querySelectorAll('.sync-pill, .home-sync').forEach(p => { p.title = detail || msg; p.setAttribute('aria-label', 'Sincronização: ' + msg); });
-    const short = { idle: 'Em dia', busy: 'Sincr.', error: 'Erro', offline: 'Offline', auth: 'Reconectar' }[state] || 'Local'; // texto curto para a barra lateral estreita
+    const short = { idle: 'Em dia', busy: 'Enviando', error: 'Falhou', offline: 'Sem rede', auth: 'Reconectar' }[state] || 'Local'; // texto curto para a barra lateral estreita
     document.querySelectorAll('.sync-short').forEach(l => { l.textContent = short; });
   }
   /* Qualquer falha vira um problema com texto em português; o detalhe técnico fica só no console */
@@ -148,7 +148,7 @@
     const res = await http(PUBLIC_URL + encodeURIComponent(id) + '&t=' + Date.now());
     if (res.status === 404) throw bankErr('O banco publicado não foi encontrado. Avise o administrador.');
     if (res.status === 403 || res.status === 429) throw bankErr('O Google limitou o download do banco por excesso de acessos. Tente de novo mais tarde.');
-    if (res.status !== 200) throw bankErr('Não foi possível baixar o banco (erro ' + res.status + '). Tente de novo mais tarde.');
+    if (res.status !== 200) throw bankErr('Não foi possível baixar o banco. Tente de novo mais tarde.');
     try { return JSON.parse(res.body); } catch (e) { throw bankErr('O Google devolveu uma página no lugar do banco. Tente de novo mais tarde.'); } // aviso de cota do Drive vem em HTML
   }
   MQ.bankConfigured = () => !!bankManifestId();
@@ -164,7 +164,7 @@
     bankRunning = true;
     try {
       const m = await publicGet(id);
-      if (!m || !m.bankFileId || !Number.isFinite(m.version)) throw bankErr('O manifesto do banco está incompleto. Avise o administrador.');
+      if (!m || !m.bankFileId || !Number.isFinite(m.version)) throw bankErr('As informações do banco publicado estão incompletas. Avise o administrador.');
       if (MQ.local.bank && MQ.local.bank.version === m.version) { if (manual) MQ.toast('O banco já está na versão mais recente.'); return; }
       const bank = await publicGet(m.bankFileId);
       if (!bank || !bank.questions || typeof bank.questions !== 'object' || Array.isArray(bank.questions)) throw bankErr('O arquivo do banco está incompleto. Tente de novo mais tarde.');
