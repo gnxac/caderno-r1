@@ -292,8 +292,8 @@ Compartilhados: C-1, C-2, C-3, C-7, C-8, C-9, C-10, C-13, C-16.
 Compartilhados: C-1, C-2, C-3, C-4, C-9, C-10, C-12, C-13, C-14, C-15, C-20.
 
 **P1**
-- **DES-1 · Sem ação principal; Pontos fracos vem depois do histórico.** `perf.js:106-107` (Evolução antes de Pontos fracos), `:174` (6× "Treinar 20"), `:115` ("Lista/Simulado com as erradas" a 94–95% da página). Faixa no topo "Seu ponto mais fraco: Pneumonia, 38%" com um primário; Pontos fracos sobe; os outros 5 viram link; "Lista/Simulado com as erradas" vai para o ⋯.
-- **DES-2 · "Por instituição" não desenha as barras.** `perf.js:191` gera `<div class="bar"><i style="width:N%">`, mas o CSS de `.bar` só existe sob `.hm-card .bar` (`app.css:765`) e `.qh-card .bar` (`:711`); para `.hbar .bar` só há `grid-column` (`app.css:791`). Medido: altura 0 nos 6 combos. Mover as regras para um seletor compartilhado (trilho 8 px, preenchimento `--accent`, `.err` com `--err` e ícone). **É correção de uma regra de CSS.**
+- [x] **DES-1 · Sem ação principal; Pontos fracos vem depois do histórico.** `perf.js:106-107` (Evolução antes de Pontos fracos), `:174` (6× "Treinar 20"), `:115` ("Lista/Simulado com as erradas" a 94–95% da página). Faixa no topo "Seu ponto mais fraco: Pneumonia, 38%" com um primário; Pontos fracos sobe; os outros 5 viram link; "Lista/Simulado com as erradas" vai para o ⋯.
+- [x] **DES-2 · "Por instituição" não desenha as barras.** `perf.js:191` gera `<div class="bar"><i style="width:N%">`, mas o CSS de `.bar` só existe sob `.hm-card .bar` (`app.css:765`) e `.qh-card .bar` (`:711`); para `.hbar .bar` só há `grid-column` (`app.css:791`). Medido: altura 0 nos 6 combos. Mover as regras para um seletor compartilhado (trilho 8 px, preenchimento `--accent`, `.err` com `--err` e ícone). **É correção de uma regra de CSS.**
 - [x] **DES-3 · Gráfico de Evolução ilegível no celular e só por mouse.** `charts.js:141` (`W = 640` fixo, escala 0,5 = rótulos de 6 px), `:167` e `:176` (só `mousemove`/`mouseleave`), `app.css:466` (12 px). SVG sem dados e sem ponto focável. Calcular `W` por `clientWidth` (como `bubbleChart` em `charts.js:38`), `pointerdown`, tabela oculta equivalente, legenda em texto.
 
 **P2**
@@ -321,9 +321,9 @@ Compartilhados: C-1, C-2, C-3, C-4, C-9, C-10, C-12, C-13, C-14, C-15, C-20.
 Compartilhados: C-1, C-3, C-4, C-6, C-7, C-8, C-9, C-10, C-11, C-12, C-13, C-15.
 
 **P1**
-- **NOT-1 · Busca e filtros não ficam fixos.** `app.css:902` (`.nt-filters` sem `position`), `:896-903`; `app.js:58` faz `scrollTo(0,0)`. A página tem 15.000–29.000 px no celular, e os filtros ocupam 341 px (40% da altura). Voltar de "Abrir questão" mantém filtro e busca, mas leva a rolagem a 0. Cabeçalho compacto fixo, "voltar ao topo", restaurar a rolagem.
-- **NOT-2 · Excluir é irreversível, sem desfazer e sem identificar a nota.** `notes.js:98` (texto genérico), `db.js:120-125` (`MQ.remove` troca por lápide e descarta o texto). Mostrar código e primeiras palavras no diálogo; toast "Anotação excluída · Desfazer" por ~8 s; toast ao salvar.
-- **NOT-3 · Chip de assunto longo vaza da pílula (celular).** `app.css:688` (`.qchip{height:32px}`) com `min-height:44px` no toque (`:694`). Só um dos avaliadores reproduziu; B mediu 44 px. `height:auto; min-height:44px; white-space:normal`.
+- [x] **NOT-1 · Busca e filtros não ficam fixos.** `app.css:902` (`.nt-filters` sem `position`), `:896-903`; `app.js:58` faz `scrollTo(0,0)`. A página tem 15.000–29.000 px no celular, e os filtros ocupam 341 px (40% da altura). Voltar de "Abrir questão" mantém filtro e busca, mas leva a rolagem a 0. Cabeçalho compacto fixo, "voltar ao topo", restaurar a rolagem. Feito: cabeçalho com busca fixo, botão "Voltar ao topo" e rolagem restaurada ao voltar de "Abrir questão".
+- [x] **NOT-2 · Excluir é irreversível, sem desfazer e sem identificar a nota.** `notes.js:98` (texto genérico), `db.js:120-125` (`MQ.remove` troca por lápide e descarta o texto). Mostrar código e primeiras palavras no diálogo; toast "Anotação excluída · Desfazer" por ~8 s; toast ao salvar. Feito: o diálogo mostra código e início da nota; toast "Anotação excluída" com Desfazer (8 s) e "Anotação salva".
+- [x] **NOT-3 · Chip de assunto longo vaza da pílula (celular).** `app.css:688` (`.qchip{height:32px}`) com `min-height:44px` no toque (`:694`). Só um dos avaliadores reproduziu; B mediu 44 px. `height:auto; min-height:44px; white-space:normal`. Feito: chip com altura automática e mínimo de 44 px no toque.
 
 **P2**
 - **NOT-4 · Nota longa sem recolher; cartão estica os vizinhos.** `app.css:905-911`. Cartão de 2.110–2.570 px; vazio de até 2.194 px no PC. Limitar a ~8 linhas com "Ver tudo" e alinhar o rodapé (`margin-top:auto`).
@@ -331,7 +331,7 @@ Compartilhados: C-1, C-3, C-4, C-6, C-7, C-8, C-9, C-10, C-11, C-12, C-13, C-15.
 - **NOT-6 · A nota some ao "Abrir questão" e a sessão registra tentativa.** `notes.js:93-95`, `solve.js:129`, `app.css:1068`. Contamina Desempenho e a revisão espaçada. Mostrar a nota como faixa no Resolver aberto por Anotações. **Decisão de produto** sobre um modo de leitura que não registre resposta.
 - **NOT-7 · O sync repinta e tira o foco da busca.** `sync.js:261` (`MQ.render()` quando `changed`), `notes.js:41`. Repintar só `#nt-list`.
 - **NOT-8 · Busca ignora a hierarquia e casa com o enunciado inteiro.** `notes.js:17`. "Hérnia" (assunto) retorna 0; "conduta" retorna 45 de 47.
-- **NOT-9 · Crumb ativo só por cor e `aria-pressed` errado.** `notes.js:63-64`. Trilha deveria ser `nav` com `aria-current`.
+- [x] **NOT-9 · Crumb ativo só por cor e `aria-pressed` errado.** `notes.js:63-64`. Trilha deveria ser `nav` com `aria-current`. Feito: trilha em `nav`, item ativo com `aria-current`.
 
 **P3**
 - Caminho completo repetido em cada cartão dentro de um filtro (`notes.js:72`).

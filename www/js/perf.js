@@ -97,14 +97,14 @@
       (p.period === 'custom' ? '<label class="pf-f"><span>De</span><input type="date" id="p-from" value="' + esc(p.from) + '"></label><label class="pf-f"><span>Até</span><input type="date" id="p-to" value="' + esc(p.to) + '"></label>' : '') +
       '<label class="pf-f"><span>Origem</span><select id="p-origin">' + originOpts + '</select></label></div>' +
       (total ? '' : '<div class="empty"><h2>Sem respostas neste período</h2><p>Responda questões no banco, nas listas ou em simulados. Se você já respondeu, tente um período maior.</p><a class="btn primary" href="#/questoes">Resolver questões</a></div>') +
-      (total ? '<div class="pk-row">' +
+      (total ? '<div id="p-top"></div><div class="pk-row">' +
         kpi('Questões', total.toLocaleString('pt-BR'), ok + ' certas · ' + (total - ok) + ' erradas', prev && prev.length ? dl(total - prev.length, '', true) : '') +
         kpi('Acerto', MQ.pct(ok, total) + '%', 'cada resposta conta, mesmo ao refazer', prev && prev.length ? dl(MQ.pct(ok, total) - MQ.pct(pOk, prev.length), ' pp', true) : '') +
         kpi('Tempo médio', avgT ? MQ.fmtDuration(avgT) : '–', avgT ? 'por questão, em ' + timed.length + ' respostas' : 'ainda sem tempos gravados', avgT && pAvg ? dl(Math.round(avgT - pAvg), ' s', false) : '') +
         kpi('Dias estudados', days + (spanDays ? '<small>/' + spanDays + '</small>' : '<small> dias</small>'), 'com pelo menos 1 resposta') + '</div>' +
         '<div class="perf-grid">' +
-        '<section class="panel span-7"><h2>Evolução</h2><div class="sub">Percentual de acerto por ' + ({ 1: 'dia', 2: 'período de 2 dias' }[bucketDays()] || 'semana') + '</div><div id="p-line"></div></section>' +
         '<section class="panel span-5"><h2>Pontos fracos</h2><div class="sub">Temas com pior acerto (mínimo de ' + MIN_WEAK + ' respostas)</div><ul class="weak-list" id="p-weak"></ul></section>' +
+        '<section class="panel span-7"><h2>Evolução</h2><div class="sub">Percentual de acerto por ' + ({ 1: 'dia', 2: 'período de 2 dias' }[bucketDays()] || 'semana') + '</div><div id="p-line"></div></section>' +
         '<section class="panel span-7"><div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:flex-start"><div><h2>Por grande área</h2><div class="sub" id="p-crumb"></div></div>' +
         '<div class="seg" role="group" aria-label="Visualização"><button data-view="pct" aria-pressed="' + (p.view === 'pct') + '">% de acerto</button><button data-view="total" aria-pressed="' + (p.view === 'total') + '">Total de respostas</button></div></div><div class="bars" id="p-bars"></div></section>' +
         '<section class="panel span-5"><h2>Por instituição</h2><div class="sub">Onde você mais resolve e como vai em cada uma</div><div class="hbars" id="p-inst"></div></section>' +
@@ -112,13 +112,14 @@
         '<section class="panel span-5"><h2>Simulados</h2><div class="sub">Concluídos no período</div><div id="p-sims"></div></section>' +
         '<section class="panel span-12"><details id="p-focus"><summary><h2 style="display:inline">Onde focar</h2> <span class="sub">bolhas por matéria e tabela</span></summary><div class="sub" style="margin-top:8px">Cada bolha é uma matéria. Tamanho = quantas questões dela existem no seu banco. Clique para detalhar.</div><div id="p-bubble"></div>' +
         '<div class="quad-help"><span><b>Q1</b> poucas questões e acerto baixo: faça mais questões e revise a teoria.</span><span><b>Q2</b> muitas questões e acerto baixo: alerta, volte à teoria.</span><span><b>Q3</b> muitas questões e acerto bom: mantenha o ritmo.</span><span><b>Q4</b> poucas questões e acerto bom: aumente o volume.</span></div><div id="p-table" style="margin-top:12px"></div></details></section>' +
-        '<section class="panel span-12 perf-actions"><button class="btn" id="p-wrong-list">Lista com as erradas</button><button class="btn" id="p-wrong-sim">Simulado com as erradas</button></section>' +
         '</div>' : '');
 
     $('#p-period', root).onchange = e => { p.period = e.target.value; MQ.render(); };
     if ($('#p-from', root)) { $('#p-from', root).onchange = e => { p.from = e.target.value; MQ.render(); }; $('#p-to', root).onchange = e => { p.to = e.target.value; MQ.render(); }; }
     $('#p-origin', root).onchange = e => { p.origin = e.target.value; p.drill = []; MQ.render(); };
     $('#p-more', root).onclick = e => MQ.menu(e.currentTarget, [
+      { label: 'Lista com as erradas', onClick: () => { const ids = wrongIds(); if (!ids.length) MQ.toast('Nenhuma questão errada no período.'); else MQ.createListModal(ids, 'Erradas — ' + MQ.fmtDate(Date.now())); } },
+      { label: 'Simulado com as erradas', onClick: () => { const ids = wrongIds(); if (!ids.length) MQ.toast('Nenhuma questão errada no período.'); else MQ.simCreateModal(ids, 'Simulado de erradas — ' + MQ.fmtDate(Date.now())); } },
       { label: 'Excluir todo o histórico de respostas', danger: true, onClick: async () => {
         const okk = await MQ.confirm('Excluir histórico', 'Todas as suas respostas, em todos os aparelhos sincronizados, serão apagadas. Questões, listas e pastas continuam. Não dá para desfazer.', 'Excluir histórico', true);
         if (!okk) return;
@@ -134,8 +135,6 @@
       atts.forEach(a => { if (!last[a.qid] || a.ts > last[a.qid].ts) last[a.qid] = a; });
       return Object.values(last).filter(a => !a.correct).map(a => a.qid);
     }
-    $('#p-wrong-list', root).onclick = () => { const ids = wrongIds(); if (!ids.length) MQ.toast('Nenhuma questão errada no período.'); else MQ.createListModal(ids, 'Erradas — ' + MQ.fmtDate(Date.now())); };
-    $('#p-wrong-sim', root).onclick = () => { const ids = wrongIds(); if (!ids.length) MQ.toast('Nenhuma questão errada no período.'); else MQ.simCreateModal(ids, 'Simulado de erradas — ' + MQ.fmtDate(Date.now())); };
     $$('[data-view]', root).forEach(b => b.onclick = () => { p.view = b.dataset.view; MQ.render(); });
     const focus = $('#p-focus', root);
     if (p.focusOpen) focus.open = true;
@@ -173,6 +172,10 @@
       return '<li><div><div>' + esc(w.path[w.path.length - 1]) + '</div><div class="path">' + esc(w.path.slice(0, -1).join(' › ')) + ' · ' + w.n + ' respostas</div></div>' +
         '<span class="pct' + (pc < 60 ? ' low' : '') + '">' + (pc < 60 ? icon('alert') + '<span class="sr-only">Baixo: </span>' : '') + pc + '%</span><button class="btn sm' + (i === 0 ? ' primary' : ' ghost') + '" data-train="' + i + '">Treinar 20</button></li>';
     }).join('') : '<li class="muted">Nenhum tema com ' + MIN_WEAK + ' respostas e erros neste período. Bom sinal, ou ainda é cedo.</li>';
+    if (weak.length) {
+      const w0 = weak[0], pc0 = MQ.pct(w0.ok, w0.n);
+      $('#p-top', root).innerHTML = '<div class="pf-top"><div><span class="st">Seu ponto mais fraco</span><b>' + esc(w0.path[w0.path.length - 1]) + ' · ' + pc0 + '%</b></div><button class="btn primary" data-train="0">Treinar 20 questões</button></div>';
+    }
     $$('[data-train]', root).forEach(b => b.onclick = () => {
       const w = weak[+b.dataset.train];
       MQ.openSolve({ title: 'Treino: ' + w.path[w.path.length - 1], qids: MQ.trainIds(w.path, 20, MQ.latestByQ()), ctx: 'banco' });

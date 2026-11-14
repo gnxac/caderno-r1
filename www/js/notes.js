@@ -2,7 +2,7 @@
 (function (MQ) {
   'use strict';
   const { esc, $, $$, icon } = MQ;
-  const st = { path: [], text: '' }; // filtro em memória (assunto: grande área › especialidade › tema › subtema)
+  const st = { path: [], text: '', scroll: 0 }; // filtro em memória (assunto: grande área › especialidade › tema › subtema)
 
   function load() {
     return MQ.alive('notes').filter(n => n.text && n.text.trim()).map(n => {
@@ -25,7 +25,7 @@
       actions: [{ label: 'Cancelar', kind: 'ghost' }, { label: 'Salvar', kind: 'primary', onClick(close, box) {
         const t = $('#nt-edit', box).value.trim();
         if (!t) { MQ.toast('Para apagar a anotação, use o botão de excluir.'); return false; }
-        MQ.saveNote(x.qid, t); done();
+        MQ.saveNote(x.qid, t); MQ.toast('Anotação salva.'); done();
       } }]
     });
   }
@@ -41,8 +41,9 @@
     root.innerHTML = '<div class="nt">' +
       '<header class="nt-head"><div><h1>Anotações</h1><p class="nt-sub" id="nt-sub"></p></div>' +
       '<div class="pane-search nt-search">' + icon('search') + '<input type="search" id="nt-q" placeholder="Buscar na anotação ou na questão" aria-label="Buscar nas anotações" autocomplete="off" value="' + esc(st.text) + '"></div></header>' +
-      '<section class="nt-filters" id="nt-filters" aria-label="Filtrar por assunto"></section>' +
-      '<div id="nt-list"></div></div>';
+      '<nav class="nt-filters" id="nt-filters" aria-label="Filtrar por assunto"></nav>' +
+      '<div id="nt-list"></div>' +
+      '<button type="button" class="btn nt-top" id="nt-top" aria-label="Voltar ao topo" hidden>' + icon('up') + '</button></div>';
 
     function paint() {
       if (!$('#nt-sub', root)) return; // saiu da tela com a busca pendente
@@ -60,8 +61,8 @@
         : list.length + ' de ' + all.length + ' anotações';
 
       $('#nt-filters', root).innerHTML = '<div class="nt-row"><span class="nt-lab">Assunto</span>' +
-        '<button class="qchip' + (depth ? '' : ' on') + '" data-crumb="0" aria-pressed="' + !depth + '">' + (depth ? '' : icon('check')) + 'Todos</button>' +
-        st.path.map((p, i) => '<button class="qchip' + (i === depth - 1 ? ' on' : '') + '" data-crumb="' + (i + 1) + '" aria-pressed="' + (i === depth - 1) + '">' + (i === depth - 1 ? icon('check') : '') + esc(p) + '</button>').join('') + '</div>' +
+        '<button class="qchip' + (depth ? '' : ' on') + '" data-crumb="0" ' + (depth ? '' : ' aria-current="true"') + '>' + (depth ? '' : icon('check')) + 'Todos</button>' +
+        st.path.map((p, i) => '<button class="qchip' + (i === depth - 1 ? ' on' : '') + '" data-crumb="' + (i + 1) + '"' + (i === depth - 1 ? ' aria-current="true"' : '') + '>' + (i === depth - 1 ? icon('check') : '') + esc(p) + '</button>').join('') + '</div>' +
         (kidList.length ? '<div class="nt-row"><span class="nt-lab">' + (['Grande área', 'Especialidade', 'Tema', 'Subtema'][depth] || 'Mais') + '</span>' +
           kidList.map(([k, n]) => '<button class="qchip" data-add="' + esc(k) + '">' + esc(k) + ' <b class="qn">' + n + '</b></button>').join('') + '</div>' : '');
 
@@ -91,15 +92,33 @@
       const x = all.find(y => y.qid === b.dataset.q);
       if (!x) return;
       if (b.dataset.act === 'open') {
+        st.scroll = window.scrollY;
+        window.addEventListener('hashchange', function once() { // rolagem guardada só vale para a volta de "Abrir questão"
+          if (/^#\/resolver/.test(location.hash)) return; // continua até sair do Resolver
+          window.removeEventListener('hashchange', once);
+          if (!/^#\/anotacoes/.test(location.hash)) st.scroll = 0;
+        });
         const ids = all.filter(y => y.q && matches(y, MQ.norm(st.text))).map(y => y.qid);
         MQ.openSolve({ title: 'Anotações', qids: ids, ctx: 'banco', startIndex: Math.max(0, ids.indexOf(x.qid)) });
       } else if (b.dataset.act === 'edit') editDialog(x, () => MQ.render());
       else if (b.dataset.act === 'del') {
-        if (await MQ.confirm('Excluir anotação', 'A anotação desta questão será apagada.', 'Excluir', true)) { MQ.saveNote(x.qid, ''); MQ.render(); }
+        const resumo = x.n.text.trim().replace(/\s+/g, ' ');
+        const nome = ((x.q && x.q.codigo) || 'sem código') + ': “' + resumo.slice(0, 60) + (resumo.length > 60 ? '…' : '') + '”';
+        if (await MQ.confirm('Excluir anotação', 'Excluir a anotação de ' + nome + '?', 'Excluir', true)) {
+          const texto = x.n.text;
+          MQ.saveNote(x.qid, ''); MQ.render();
+          MQ.toast('Anotação excluída.', '', { label: 'Desfazer', fn: () => { MQ.saveNote(x.qid, texto); MQ.render(); } });
+        }
       }
     };
     let timer = 0;
     $('#nt-q', root).addEventListener('input', e => { clearTimeout(timer); timer = setTimeout(() => { st.text = e.target.value.trim(); paint(); }, 200); });
     paint();
+    const top = $('#nt-top', root);
+    if (st.onScroll) window.removeEventListener('scroll', st.onScroll);
+    st.onScroll = () => { if (!top.isConnected) { window.removeEventListener('scroll', st.onScroll); return; } top.hidden = window.scrollY < 600; };
+    window.addEventListener('scroll', st.onScroll, { passive: true });
+    top.onclick = () => window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (st.scroll) { const y = st.scroll; st.scroll = 0; setTimeout(() => window.scrollTo(0, y), 0); } // volta de "Abrir questão" ao mesmo ponto
   };
 })(window.MQ);

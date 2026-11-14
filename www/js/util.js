@@ -62,7 +62,7 @@ window.MQ = window.MQ || {};
 
   /* ---------- Toast ---------- */
   let toastTimer = null;
-  MQ.toast = function (msg, kind) {
+  MQ.toast = function (msg, kind, act) { // act: { label, fn } mostra um botão (ex.: Desfazer)
     let el = MQ.$('#toast');
     if (!el) {
       el = document.createElement('div');
@@ -73,8 +73,14 @@ window.MQ = window.MQ || {};
     }
     el.className = 'toast show ' + (kind || '');
     el.textContent = msg;
+    if (act) {
+      const b = document.createElement('button');
+      b.type = 'button'; b.className = 'toast-act'; b.textContent = act.label;
+      b.onclick = () => { el.className = 'toast'; act.fn(); };
+      el.appendChild(b);
+    }
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => { el.className = 'toast'; }, kind === 'err' ? 7000 : 3200); // erro com ação leva mais tempo para ler
+    toastTimer = setTimeout(() => { el.className = 'toast'; }, act ? 8000 : kind === 'err' ? 7000 : 3200); // erro com ação leva mais tempo para ler
   };
 
   /* Problemas de rede e do Google Drive: mensagem curta com a ação (msg) e rótulo para a pílula de status (short) */
@@ -257,6 +263,7 @@ window.MQ = window.MQ || {};
     left: '<path d="m15 18l-6-6l6-6"/>',
     right: '<path d="m9 18l6-6l-6-6"/>',
     down: '<path d="m6 9l6 6l6-6"/>',
+    up: '<path d="m6 15l6-6l6 6"/>',
     check: '<path d="M20 6L9 17l-5-5"/>',
     flag: '<path d="M4 22V4a1 1 0 0 1 .4-.8A6 6 0 0 1 8 2c3 0 5 2 7.333 2q2 0 3.067-.8A1 1 0 0 1 20 4v10a1 1 0 0 1-.4.8A6 6 0 0 1 16 16c-3 0-5-2-8-2a6 6 0 0 0-4 1.528"/>',
     grid: '<rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/>',
