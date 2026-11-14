@@ -856,6 +856,9 @@ body.in-focus .qcard { margin-left: auto; margin-right: auto; }
 .pct.low { color: var(--err); }
 .lcard .btn { justify-self: start; text-decoration: none; }
 .lst-provas { display: grid; gap: 8px; }
+.lst-provas > summary { cursor: pointer; min-height: 44px; display: flex; align-items: center; }
+.lst-provas[open] > summary { margin-bottom: 4px; }
+.lst-detail:empty { display: none !important; }
 .lst-provas .mk, .lc-detail .mk { font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); margin: 0; }
 .lc-detail { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 14px 16px; display: grid; gap: 10px; align-content: start; }
 .lc-dtitle { font-size: 18px; font-weight: 800; color: var(--navy); letter-spacing: -.01em; overflow-wrap: anywhere; }

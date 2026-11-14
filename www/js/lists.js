@@ -205,6 +205,11 @@
   }
   const bar = n => '<div class="lbar" role="img" aria-label="' + n.ok + ' certas, ' + n.err + ' erradas, de ' + n.total + ' questões"><i class="ok" style="width:' + MQ.pct(n.ok, n.total) + '%"></i><i class="err" style="width:' + MQ.pct(n.err, n.total) + '%"></i></div>';
 
+  function left(run) {
+    const ms = run.startedAt + run.durationMin * 60000 - Date.now();
+    return ms > 0 ? MQ.fmtDuration(ms / 1000) + ' restantes' : 'Tempo esgotado';
+  }
+
   function card(l, n, sel) {
     const folder = l.folderId && MQ.get('folders', l.folderId);
     let badge = '';
@@ -216,7 +221,7 @@
       '<button class="icon-btn" data-lmenu="' + esc(l.id) + '" aria-label="Ações de ' + esc(l.name) + '">' + icon('more') + '</button></div>' +
       '<div class="st">' + n.total + (n.total === 1 ? ' questão' : ' questões') + (folder ? ' · ' + esc(folder.name) : '') + '</div>' + (badge ? '<div>' + badge + '</div>' : '') +
       bar(n) +
-      '<div class="lc-foot"><span class="st">' + (l.kind === 'simulado' ? (n.last ? 'Nota ' + MQ.pct(n.ok, n.total) + '%' : 'Sem tentativa') : done(n) + '% feito') + '</span>' +
+      '<div class="lc-foot"><span class="st">' + (l.kind === 'simulado' ? (n.run ? left(n.run) : n.last ? 'Nota ' + MQ.pct(n.ok, n.total) + '%' : 'Sem tentativa') : done(n) + '% feito') + '</span>' +
       (l.kind === 'simulado' ? '' : '<span class="pct' + (a >= 0 && a < 60 ? ' low' : '') + '">' + (a >= 0 ? a + '% acerto' : '–') + '</span>') + '</div>' +
       '<button class="btn sm" data-act="open" data-id="' + esc(l.id) + '">' + icon('play') + actionLabel(l, n) + '</button></article>';
   }
@@ -256,7 +261,7 @@
     const prog = (MQ.local.progress || {})[l.id] || 0;
     return '<div class="lc-detail"><div class="mk">' + (l.kind === 'simulado' ? 'Simulado selecionado' : 'Lista selecionada') + '</div>' +
       '<div class="lc-dtitle">' + esc(l.name) + '</div><div class="st">' + (folder ? 'Pasta ' + esc(folder.name) + ' · ' : '') + 'criada em ' + MQ.fmtDate(l.createdAt) + '</div>' +
-      '<div class="row sb"><span class="st">' + n.resp + ' de ' + n.total + (l.kind === 'simulado' ? ' respondidas na última prova' : ' respondidas') + '</span><b class="num">' + done(n) + '%</b></div>' + bar(n) +
+      '<div class="row sb"><span class="st">' + n.resp + ' de ' + n.total + (l.kind === 'simulado' ? (n.last ? ' respondidas na última prova' : ' · ainda sem prova') : ' respondidas') + '</span><b class="num">' + done(n) + '%</b></div>' + bar(n) +
       '<div class="row sb"><span class="st">' + n.ok + ' certas · ' + n.err + ' erradas · ' + blank + ' em branco</span><span class="pct' + (a >= 0 && a < 60 ? ' low' : '') + '">' + (a >= 0 ? a + '%' : '–') + '</span></div>' +
       '<button class="btn big" data-act="open" data-id="' + esc(l.id) + '">' + icon('play') + (l.kind === 'simulado' ? actionLabel(l, n) : (n.resp && n.resp < n.total ? 'Continuar da ' + Math.min(prog + 1, n.total) : actionLabel(l, n))) + '</button>' +
       (l.kind === 'simulado' ? '' : '<div class="row"><button class="btn sm" data-act="redo" data-id="' + esc(l.id) + '"' + (n.err ? '' : ' disabled') + '>Refazer erradas</button><button class="btn sm" data-act="sim" data-id="' + esc(l.id) + '">Criar simulado</button></div>') +
@@ -283,17 +288,18 @@
     const ps = MQ.provaPresets ? MQ.provaPresets() : [];
     if (!ps.length) return '';
     const list = provasAll ? ps : ps.slice(0, 4);
-    return '<section class="lst-provas" aria-label="Provas por instituição"><div class="mk">Provas por instituição</div><div class="lgrid2">' +
+    return '<details class="lst-provas"' + (provasAll ? ' open' : '') + '><summary class="mk">Provas por instituição (' + ps.length + ')</summary><div class="lgrid2">' +
       list.map((p, i) => '<article class="lcard"><div class="lc-top"><span class="lc-name">' + icon('timer') + '<b>' + esc(p.instituicao) + ' ' + esc(p.ano) + '</b></span></div>' +
         '<div class="st">' + p.count + ' questões · ' + MQ.fmtDuration(p.minutes * 60) + ' de prova</div><button class="btn sm" data-prova="' + i + '">Fazer prova</button></article>').join('') +
-      '</div>' + (ps.length > 4 ? '<button class="btn ghost sm" data-act="provas">' + (provasAll ? 'Mostrar menos' : 'Mostrar todas (' + ps.length + ')') + '</button>' : '') + '</section>';
+      '</div>' + (ps.length > 4 ? '<button class="btn ghost sm" data-act="provas">' + (provasAll ? 'Mostrar menos' : 'Mostrar todas (' + ps.length + ')') + '</button>' : '') + '</details>';
   }
 
   MQ.views.listas = function (root) {
     MQ.refreshSmart();
     if (MQ.currentFolder !== undefined && MQ.currentFolder !== null && MQ.currentFolder !== ALL && MQ.currentFolder !== SMART && !MQ.get('folders', MQ.currentFolder)) MQ.currentFolder = ALL; // pasta que não existe mais
     const tab = tabNow();
-    const visible = sortLists(MQ.alive('lists').filter(l => inTab(l) && inScope(l)));
+    let visible = sortLists(MQ.alive('lists').filter(l => inTab(l) && inScope(l)));
+    if (tab === 'simulados') visible = visible.filter(v => v.n.run).concat(visible.filter(v => !v.n.run)); // em andamento primeiro
     if (!selId || !visible.some(v => v.l.id === selId)) selId = visible.length ? visible[0].l.id : null;
     const selItem = visible.find(v => v.l.id === selId);
     const erros = tab === 'listas' && scopeNow() === ALL ? errosIds() : null;
@@ -305,9 +311,9 @@
       '<div class="seg" role="group" aria-label="Tipo"><button data-tab="listas" aria-pressed="' + (tab === 'listas') + '">Listas</button><button data-tab="simulados" aria-pressed="' + (tab === 'simulados') + '">Simulados</button></div></div>' +
       '<div class="toolbar"><button class="btn" id="l-sort">' + icon('sort') + ' ' + sortLabel + '</button><button class="btn primary act-fixed" id="l-create">' + icon('plus') + ' Criar</button></div></header>' +
       '<nav class="lst-folders" aria-label="Pastas">' + folderNav() + '</nav>' +
-      '<div class="lst-main">' + (tab === 'simulados' ? provasSection() : '') +
-      (cards ? '<div class="lgrid2">' + cards + '</div>' : '<div class="empty"><h2>' + (tab === 'simulados' ? 'Nenhum simulado aqui' : 'Nenhuma lista aqui') + '</h2><p>Filtre questões no banco e use "Criar lista" ou "Criar simulado". Para organizar, crie pastas.</p><a class="btn primary" href="#/questoes">Ir para o banco de questões</a></div>') + '</div>' +
-      '<aside class="lst-detail" aria-label="Detalhe">' + detail(selItem && selItem.l, selItem && selItem.n) + '</aside></div>';
+      '<div class="lst-main">' +
+      (cards ? '<div class="lgrid2">' + cards + '</div>' : '') + (visible.length ? '' : '<div class="empty"><h2>' + (tab === 'simulados' ? 'Nenhum simulado aqui' : 'Nenhuma lista aqui') + '</h2><p>Filtre questões no banco e use "Criar lista" ou "Criar simulado". Para organizar, crie pastas.</p><a class="btn primary" href="#/questoes">Ir para o banco de questões</a></div>') + (tab === 'simulados' ? provasSection() : '') + '</div>' +
+      '<aside class="lst-detail" aria-label="Detalhe">' + (selItem ? detail(selItem.l, selItem.n) : '') + '</aside></div>';
 
     const onChip = root.querySelector('.lst-f.on'); // no celular a faixa de pastas rola até a pasta aberta
     if (onChip && !wide()) onChip.scrollIntoView({ inline: 'center', block: 'nearest' });

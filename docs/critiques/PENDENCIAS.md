@@ -239,16 +239,16 @@ Compartilhados: C-1, C-2, C-3, C-6, C-9, C-11, C-13, C-16, C-17.
 Compartilhados: C-1, C-4, C-8, C-9, C-10, C-12. Itens de simulado (cartão-resposta, resultado, timer) estão em SIM.
 
 **P1**
-- **LST-1 · Listas vazia não diz o que fazer.** `lists.js:309`: o Caderno de erros sempre existe, então `cards ? grid : empty` nunca cai no vazio. No PC o painel "Escolha uma lista…" aparece sem lista. Mostrar o estado vazio com "Ir para Questões" e esconder o detalhe vazio.
-- **LST-2 · Simulado em andamento enterrado e sem tempo restante.** `lists.js:212,219`. Vem depois de 4 cartões de prova, ordenado por data, com "Sem tentativa". O DESIGN.md pede "primeiro o simulado em andamento, com tempo restante". Fixar um cartão no topo: "Em andamento · 12:40 restantes · Continuar".
-- **LST-3 · "Provas por instituição" vem antes do conteúdo do usuário.** `lists.js:286-289,308`. ~760 px no celular, "Fazer prova" secundário contra primário nos cartões do usuário, "Exemplo autoral 2026" listado como instituição. Recolher a seção, pôr depois dos simulados do usuário.
+- [x] **LST-1 · Listas vazia não diz o que fazer.** `lists.js:309`: o Caderno de erros sempre existe, então `cards ? grid : empty` nunca cai no vazio. No PC o painel "Escolha uma lista…" aparece sem lista. Mostrar o estado vazio com "Ir para Questões" e esconder o detalhe vazio.
+- [x] **LST-2 · Simulado em andamento enterrado e sem tempo restante.** `lists.js:212,219`. Vem depois de 4 cartões de prova, ordenado por data, com "Sem tentativa". O DESIGN.md pede "primeiro o simulado em andamento, com tempo restante". Fixar um cartão no topo: "Em andamento · 12:40 restantes · Continuar".
+- [x] **LST-3 · "Provas por instituição" vem antes do conteúdo do usuário.** `lists.js:286-289,308`. ~760 px no celular, "Fazer prova" secundário contra primário nos cartões do usuário, "Exemplo autoral 2026" listado como instituição. Recolher a seção, pôr depois dos simulados do usuário.
 
 **P2**
 - **LST-4 · Detalhe da lista só no PC.** No celular e tablet o toque abre direto o Resolver (`lists.js:338`). Menu ⋯ com 11 itens, 5 deles variações de "Duplicar apenas com…" (`lists.js:141-159`); `[data-lmenu]` encolhe para 34×44 com nome longo. Bottom sheet de detalhe e submenu.
 - **LST-5 · "Nova lista" e "Novo simulado" não criam nada.** `lists.js:346-347` só mandam ao banco com um toast curto. Criar a lista vazia ali, ou banner persistente em Questões.
 - **LST-6 · "Criar" e "Recentes" a ~12% da altura no celular** (`lists.js:306`), fora do polegar.
 - **LST-7 · Aproveitamento da largura.** PC: coluna de cartões de 540 px dentro de 1148, nomes quebrando em até 6 linhas. Tablet sem painel de detalhe e sem indicar o cartão selecionado (`.lcard.sel` só no PC).
-- **LST-8 · Métricas sem sentido em simulado novo.** `lists.js:259-260` ("0 de 4 respondidas na última prova", "4 em branco"). "Resolver" ativo em lista vazia, e a primeira lista vazia vem selecionada no PC (`lists.js:297`).
+- [x] **LST-8 · Métricas sem sentido em simulado novo.** `lists.js:259-260` ("0 de 4 respondidas na última prova", "4 em branco"). "Resolver" ativo em lista vazia, e a primeira lista vazia vem selecionada no PC (`lists.js:297`).
 - **LST-9 · A lista inteligente nasce só em Questões**, o filtro não aparece nem se edita em Listas. Concluídos mostram só a nota (sem data e tempo); faltam predefinições de instituição editadas pelo admin.
 
 **P3**
