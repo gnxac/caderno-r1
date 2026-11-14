@@ -424,14 +424,16 @@
         : MQ.syncConfigured() ? 'Sem conta, seus dados ficam só neste navegador.' : 'Entrar com Google ainda não está disponível neste endereço. Seus dados ficam só neste navegador: exporte um backup de vez em quando.') + '</p>' +
       problemHtml() +
       '<div class="toolbar">' + (MQ.syncLoggedIn()
-        ? '<button class="btn' + (st === 'auth' ? '' : st === 'error' ? ' primary' : '') + '" id="sy-now">' + icon('sync') + ' ' + (st === 'error' ? 'Tentar de novo' : 'Sincronizar agora') + '</button><button class="btn' + (st === 'auth' ? ' primary' : '') + '" id="sy-re">Reconectar</button>' + (quota ? '<button class="btn" id="sy-quota">Gerenciar espaço do Drive</button>' : '') + '<button class="btn ghost" id="sy-out">Sair</button><button class="btn ghost" id="sy-wipe">Sair e apagar dados daqui</button>'
-        : MQ.syncConfigured() ? '<button class="btn primary" id="sy-in">' + icon('cloud') + ' Entrar com o Google</button>' : '<button class="btn primary" id="sy-bkp">' + icon('download') + ' Exportar backup</button>') + '</div></section>';
+        ? '<button class="btn' + (st === 'auth' ? '' : st === 'error' ? ' primary' : '') + '" id="sy-now">' + icon('sync') + ' ' + (st === 'error' ? 'Tentar de novo' : 'Sincronizar agora') + '</button><button class="btn' + (st === 'auth' ? ' primary' : '') + '" id="sy-re">Reconectar</button>' + (quota ? '<button class="btn" id="sy-quota">Gerenciar espaço do Drive</button>' : '') + '<button class="btn ghost" id="sy-out">Sair</button>'
+        : MQ.syncConfigured() ? '<button class="btn primary" id="sy-in">' + icon('cloud') + ' Entrar com o Google</button>' : '<button class="btn primary" id="sy-bkp">' + icon('download') + ' Exportar backup</button>') + '</div>' +
+      (MQ.syncLoggedIn() ? '<details class="sync-danger"><summary>Computador compartilhado?</summary><p class="muted small">Sair e apagar remove questões, respostas e anotações deste navegador. Exporte um backup antes.</p><div class="toolbar"><button class="btn" id="sy-bkp2">' + icon('download') + ' Exportar backup antes</button><button class="btn danger" id="sy-wipe">Sair e apagar dados daqui</button></div></details>' : '') + '</section>';
     const on = (id, fn) => { if ($(id, root)) $(id, root).onclick = fn; };
     on('#sy-now', e => working(e.currentTarget, 'Sincronizando…', async () => { await MQ.syncNow({ manual: true }); MQ.render(); }));
     on('#sy-re', e => reconnect(e.currentTarget));
     on('#sy-in', e => reconnect(e.currentTarget));
     on('#sy-quota', () => MQ.openExternal('https://one.google.com/storage'));
     on('#sy-bkp', MQ.backupExport);
+    on('#sy-bkp2', MQ.backupExport);
     on('#sy-out', () => MQ.auth.signOut(false));
     on('#sy-wipe', () => MQ.auth.signOut(true));
   }

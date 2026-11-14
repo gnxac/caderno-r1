@@ -1144,3 +1144,8 @@ body.logged-out .shell { display: none; }
 .hbar .bar { height: 8px; background: var(--sunk); border-radius: 999px; overflow: hidden; }
 .hbar .bar i { display: block; height: 100%; background: var(--accent); border-radius: 999px; }
 .hbar .bar i.err { background: var(--err); }
+
+.num-sm { width: 96px; }
+.sync-danger { margin-top: 14px; border-top: 1px solid var(--line); padding-top: 10px; }
+.sync-danger summary, #s-atalhos summary { cursor: pointer; min-height: 44px; display: list-item; line-height: 44px; font-weight: 600; color: var(--ink-2); }
+#s-atalhos summary h2 { margin: 0; display: inline; line-height: 44px; }

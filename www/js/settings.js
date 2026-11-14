@@ -47,7 +47,7 @@
       '<p class="muted small">Vale só neste aparelho. O tamanho nunca fica abaixo de 88%.</p></section>' +
 
       '<section class="set-sec" id="s-estudo"><h2>Estudo</h2>' +
-      '<div class="set-row"><label for="g-n">Meta diária (questões por dia)</label><input type="number" id="g-n" min="1" max="500" value="' + MQ.dailyGoal() + '" inputmode="numeric" style="width:96px"></div>' +
+      '<div class="set-row"><label for="g-n">Meta diária (questões por dia)</label><input type="number" id="g-n" min="1" max="500" value="' + MQ.dailyGoal() + '" inputmode="numeric" class="num-sm"></div>' +
       '<p class="muted small" style="margin-top:-4px">A meta vale em todos os seus aparelhos e aparece no Início.</p>' +
       (MQ.reminderAvailable() ? '<div class="set-row"><label for="rm-on">Lembrete diário</label><span class="set-inline"><input type="time" id="rm-t" value="' + ((MQ.local.reminder || {}).time || '20:00') + '" aria-label="Horário do lembrete"><input type="checkbox" class="sw" id="rm-on"' + ((MQ.local.reminder || {}).on ? ' checked' : '') + '></span></div>' : '<p class="muted small">O lembrete diário por notificação está disponível no app para Android.</p>') +
       '<div class="set-row"><span>Filtro padrão em Questões</span><div class="seg" role="group" aria-label="Filtro padrão">' +
@@ -58,8 +58,8 @@
       '<div class="set-actions"><button class="btn" id="d-export">' + icon('download') + ' Exportar backup completo</button><button class="btn" id="d-restore">' + icon('upload') + ' Restaurar de um arquivo</button><button class="btn" id="d-csv">' + icon('download') + ' Exportar respostas (CSV)</button></div>' +
       '<p class="muted small">Restaurar junta o arquivo com o que você já tem e não apaga o que é mais novo que o arquivo. O backup inclui questões, listas, respostas, anotações, revisões e imagens.</p></section>' +
 
-      '<section class="set-sec" id="s-atalhos"><h2>Atalhos de teclado</h2>' + KEYS.map(([t, rows]) => '<h3 class="set-sub">' + t + '</h3><dl class="kbd-list">' + rows.map(r => '<dt><kbd>' + esc(r[0]) + '</kbd></dt><dd>' + esc(r[1]) + '</dd>').join('') + '</dl>').join('') +
-      '<p class="muted small">Atalhos de letra não funcionam enquanto você digita num campo.</p></section>' +
+      '<section class="set-sec" id="s-atalhos"><details' + (matchMedia('(pointer: fine)').matches ? ' open' : '') + '><summary><h2>Atalhos de teclado</h2></summary>' + KEYS.map(([t, rows]) => '<h3 class="set-sub">' + t + '</h3><dl class="kbd-list">' + rows.map(r => '<dt><kbd>' + esc(r[0]) + '</kbd></dt><dd>' + esc(r[1]) + '</dd>').join('') + '</dl>').join('') +
+      '<p class="muted small">Atalhos de letra não funcionam enquanto você digita num campo.</p></details></section>' +
 
       (MQ.isAdmin() ? '<section class="set-sec" id="s-admin"><h2>Administrador</h2><a class="set-link" href="#/cadastrar"><span>Cadastrar questões</span>' + icon('right') + '</a><button class="btn" id="bank-dedupe" style="margin-top:10px">Remover questões repetidas</button></section>' : '') +
 
@@ -86,6 +86,7 @@
     $('#g-n', root).onchange = e => {
       const n = Math.round(Number(e.target.value));
       if (!(n >= 1 && n <= 500)) { MQ.toast('Use um número entre 1 e 500.'); e.target.value = MQ.dailyGoal(); return; }
+      e.target.value = n;
       MQ.put('prefs', Object.assign(MQ.get('prefs', 'meta') || { id: 'meta' }, { daily: n }));
       MQ.toast('Meta diária: ' + n + ' questões.');
       if (MQ.reminderApply) MQ.reminderApply(); // o texto do lembrete usa a meta
@@ -100,7 +101,7 @@
       MQ.local.filtroPadrao = b.dataset.fp; MQ.saveLocal(); if (wasDefault) MQ.bankFilter = MQ.newFilter();
       $$('[data-fp]', root).forEach(x => x.setAttribute('aria-pressed', String(x === b)));
     });
-    $('#d-export', root).onclick = MQ.backupExport;
+    $('#d-export', root).onclick = () => { MQ.backupExport(); if (!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform())) MQ.toast('Backup exportado.'); };
     $('#d-restore', root).onclick = MQ.backupRestore;
     $('#d-csv', root).onclick = () => MQ.saveFile('pulse-respostas-' + new Date().toISOString().slice(0, 10) + '.csv', '﻿' + MQ.toCSV(answersCSV()), 'text/csv;charset=utf-8');
   };
