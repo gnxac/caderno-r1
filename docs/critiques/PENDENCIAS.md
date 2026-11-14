@@ -372,7 +372,7 @@ Compartilhados: C-1, C-3, C-5, C-6, C-8, C-9, C-12, C-15.
 Compartilhados: C-3, C-9, C-10, C-12, C-18.
 
 **P1**
-- **LOG-1 · O painel de marca flutua com margens.** `main{padding:28px 36px 60px}` (`app.css:121`) vaza para `<main id="login">`, que só define grid e fundo (`:1028`). O painel índigo ocupa x=36..720 e y=28..840 em 1440×900. No celular soma 84 px de padding embaixo (`:184`) de uma barra que o login não tem. `#login{padding:0; max-width:none}`.
+- [x] **LOG-1 · O painel de marca flutua com margens.** `main{padding:28px 36px 60px}` (`app.css:121`) vaza para `<main id="login">`, que só define grid e fundo (`:1028`). O painel índigo ocupa x=36..720 e y=28..840 em 1440×900. No celular soma 84 px de padding embaixo (`:184`) de uma barra que o login não tem. `#login{padding:0; max-width:none}`. Feito: `#login{padding:0;max-width:none}`.
 - [x] **LOG-2 · Sem Google (único estado real hoje), o aviso domina e o botão não parece o primário.** `auth.js:121`. `.lg-warn` de 171 px abre com "…ainda não está disponível neste endereço"; "Continuar sem conta neste navegador" é branco com borda cinza e quebra em 2 linhas a 320 px. Avisar em 2 linhas, fazer "Continuar neste navegador" o primário. Feito: aviso de 2 linhas e "Continuar neste navegador" como botão primário.
 - [x] **LOG-3 · Sem estado de carregamento.** `auth.js:25-35`, `:129`. Offline são 11,1 s antes de "Sem conexão com o Google"; se o popup nunca responde, o botão fica desabilitado para sempre. Checar `navigator.onLine`, mostrar "Abrindo o Google…" com spinner, teto de ~60 s. Feito: offline responde na hora, o botão mostra "Abrindo o Google…" e um popup mudo desiste em 2 min.
 
