@@ -198,8 +198,8 @@ Alternativa sem Docker: PHP 8.4 + Composer + PostgreSQL 17 instalados no Windows
 ## 7. Ordem de implementação
 
 ### 0. Preparação no app atual (na `main`, antes da virada)
-- [ ] Backup completo passa a incluir o marca-texto como coleção `marks` (`{ id: qid, qid, m: {...}, updatedAt }`), no formato que `mergeData` já aceita
-- [ ] Restaurar um backup com `marks` no app atual não quebra nada (a mesclagem já aceita coleção desconhecida)
+- [x] Backup completo passa a incluir o marca-texto como coleção `marks` (`{ id: qid, qid, m: {...}, updatedAt }`), no formato que `mergeData` já aceita
+- [x] Restaurar um backup com `marks` no app atual devolve o marca-texto (`MQ.marksFromBackup`, só trechos válidos; a marcação local da questão fica)
 - **Pronto quando:** um backup exportado tem `marks` com as marcações de 2 questões, e `node tests/mesclagem.test.js` passa.
 
 ### 1. Esqueleto do Laravel, Docker e CI
