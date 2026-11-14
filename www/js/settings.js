@@ -21,15 +21,42 @@
     return rows;
   }
 
-  MQ.views.configuracoes = function (root) {
+  /* Alterações feitas neste aparelho depois da última sincronização */
+  function pendingCount() {
+    const last = (MQ.local.sync || {}).lastSync || 0;
+    let n = 0;
+    ['attempts', 'folders', 'lists', 'runs', 'notes', 'reviews', 'prefs'].forEach(c => Object.values(MQ.data[c] || {}).forEach(o => { if ((o.updatedAt || 0) > last) n++; }));
+    return n;
+  }
+
+  const phone = matchMedia('(max-width: 860px)');
+  let phoneWatch = false;
+
+  MQ.views.configuracoes = function (root, arg) {
+    if (!phoneWatch) { phoneWatch = true; phone.addEventListener('change', () => { if (MQ.route().name === 'configuracoes') MQ.render(); }); }
     const theme = MQ.local.theme || 'auto';
     const scale = Math.round(Math.max(MQ.MIN_FONT_SCALE, MQ.local.fontScale || 1) * 100);
     const st = MQ.syncStatus || { state: 'off', msg: 'Sem sincronização' };
     const secs = SECTIONS.filter(([k]) => k !== 'admin' || MQ.isAdmin());
     const nq = MQ.alive('questions').length, na = MQ.alive('attempts').length, nn = MQ.alive('notes').length;
 
-    root.innerHTML = '<div class="page-head"><div><h1>Configurações</h1></div></div><div class="set-wrap">' +
-      '<nav class="set-index" aria-label="Seções">' + secs.map(([k, l]) => '<a href="#/configuracoes" data-go="' + k + '">' + l + '</a>').join('') + '</nav>' +
+    /* Celular: lista com o valor atual à direita; cada item abre a própria subtela (#/configuracoes/<seção>) */
+    const ph = phone.matches, one = ph && secs.some(([k]) => k === arg) ? arg : null;
+    const VALUES = { conta: st.msg, aparencia: { auto: 'Automático', light: 'Claro', dark: 'Escuro' }[theme] + ' · ' + scale + '%', estudo: MQ.dailyGoal() + '/dia', dados: na + ' respostas', atalhos: '', admin: '', sobre: 'v' + MQ.VERSION };
+    const menu = '<nav class="set-menu" aria-label="Seções">' + secs.filter(([k]) => k !== 'atalhos' || matchMedia('(pointer: fine)').matches).map(([k, l]) => '<a class="set-link" href="#/configuracoes/' + k + '"><span>' + l + '</span><span class="set-val">' + esc(VALUES[k]) + '</span>' + icon('right') + '</a>').join('') + '</nav>';
+    const bk = MQ.local.lastBackup, bank = MQ.local.bank, pend = pendingCount();
+    const status = '<aside class="set-status" aria-label="Status da sincronização e do backup"><h2>Status</h2><dl class="kv">' +
+      '<dt>Sincronização</dt><dd>' + esc(st.msg) + '</dd>' +
+      '<dt>Última sincronização</dt><dd>' + ((MQ.local.sync || {}).lastSync ? MQ.fmtDateTime(MQ.local.sync.lastSync) : 'ainda não') + '</dd>' +
+      '<dt>Alterações pendentes</dt><dd>' + (pend ? pend + ' neste aparelho' : 'nenhuma') + '</dd>' +
+      '<dt>Último backup</dt><dd>' + (bk ? MQ.fmtDateTime(bk) : 'nunca exportado') + '</dd>' +
+      '<dt>Banco</dt><dd>' + (bank ? 'versão ' + Number(bank.version) : 'sem versão baixada') + '</dd></dl></aside>';
+
+    root.innerHTML = (one
+      ? '<div class="page-head"><div><a class="btn sm" href="#/configuracoes">' + icon('left') + ' Configurações</a><h1>' + esc(secs.find(([k]) => k === one)[1]) + '</h1></div></div>'
+      : '<div class="page-head"><div><h1>Configurações</h1></div></div>') +
+      '<div class="set-wrap">' +
+      (ph ? (one ? '' : menu) :'<nav class="set-index" aria-label="Seções">' + secs.map(([k, l]) => '<a href="#/configuracoes/' + k + '" data-go="' + k + '">' + l + '</a>').join('') + '</nav>') +
       '<div class="settings">' +
       '<section class="set-sec" id="s-conta"><h2>Conta e sincronização</h2>' +
       '<div class="sync-pill set-pill" role="status" title="' + esc(st.detail || st.msg) + '" aria-label="Sincronização: ' + esc(st.msg) + '"><span class="sync-dot ' + MQ.syncDot(st.state) + '"></span><span class="sync-label">' + esc(st.msg) + '</span></div>' +
@@ -64,7 +91,9 @@
       (MQ.isAdmin() ? '<section class="set-sec" id="s-admin"><h2>Administrador</h2><a class="set-link" href="#/cadastrar"><span>Cadastrar questões</span>' + icon('right') + '</a><button class="btn" id="bank-dedupe" style="margin-top:10px">Remover questões repetidas</button></section>' : '') +
 
       '<section class="set-sec" id="s-sobre"><h2>Sobre</h2><p><b>Pulse</b> · versão ' + MQ.VERSION + '</p><p class="muted small">Banco de questões para residência médica. Seus dados ficam neste aparelho e sincronizam pela sua conta Google.</p></section>' +
-      '</div></div>';
+      '</div>' + (ph ? '' : status) + '</div>';
+    if (ph) { if (one) $$('.set-sec', root).forEach(s => { if (s.id !== 's-' + one) s.remove(); }); else $('.settings', root).remove(); }
+    const sub = $('.set-sec h2', root); if (ph && one && sub) sub.hidden = true; // o título já está no cabeçalho
 
     if ($('#bank-dedupe', root)) $('#bank-dedupe', root).onclick = MQ.dedupeDialog;
     if ($('#bank-pub', root)) $('#bank-pub', root).onclick = MQ.publishDialog;
@@ -75,15 +104,15 @@
       await MQ.syncBank(true); // avisa por toast o resultado, inclusive o erro e o que fazer
       b.removeAttribute('aria-busy'); b.textContent = was;
     };
-    MQ.syncSection($('#set-sync', root));
+    if ($('#set-sync', root)) MQ.syncSection($('#set-sync', root));
 
-    $$('[data-go]', root).forEach(a => a.onclick = e => { e.preventDefault(); const t = $('#s-' + a.dataset.go, root); if (t) { t.scrollIntoView({ behavior: 'smooth', block: 'start' }); t.tabIndex = -1; t.focus({ preventScroll: true }); } });
+    $$('[data-go]', root).forEach(a => a.onclick = e => { e.preventDefault(); const t = $('#s-' + a.dataset.go, root); if (t) { t.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' }); t.tabIndex = -1; t.focus({ preventScroll: true }); } });
     $$('[data-theme-set]', root).forEach(b => b.onclick = () => {
       MQ.local.theme = b.dataset.themeSet; MQ.saveLocal(); MQ.applyTheme();
       $$('[data-theme-set]', root).forEach(x => x.setAttribute('aria-pressed', String(x === b)));
     });
-    $('#fs-range', root).oninput = e => { MQ.setFontScale(+e.target.value / 100); $('#fs-val', root).textContent = e.target.value + '%'; };
-    $('#g-n', root).onchange = e => {
+    if ($('#fs-range', root)) $('#fs-range', root).oninput = e => { MQ.setFontScale(+e.target.value / 100); $('#fs-val', root).textContent = e.target.value + '%'; };
+    if ($('#g-n', root)) $('#g-n', root).onchange = e => {
       const n = Math.round(Number(e.target.value));
       if (!(n >= 1 && n <= 500)) { MQ.toast('Use um número entre 1 e 500.'); e.target.value = MQ.dailyGoal(); return; }
       e.target.value = n;
@@ -101,8 +130,8 @@
       MQ.local.filtroPadrao = b.dataset.fp; MQ.saveLocal(); if (wasDefault) MQ.bankFilter = MQ.newFilter();
       $$('[data-fp]', root).forEach(x => x.setAttribute('aria-pressed', String(x === b)));
     });
-    $('#d-export', root).onclick = () => { MQ.backupExport(); if (!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform())) MQ.toast('Backup exportado.'); };
-    $('#d-restore', root).onclick = MQ.backupRestore;
-    $('#d-csv', root).onclick = () => MQ.saveFile('pulse-respostas-' + new Date().toISOString().slice(0, 10) + '.csv', '﻿' + MQ.toCSV(answersCSV()), 'text/csv;charset=utf-8');
+    if ($('#d-export', root)) $('#d-export', root).onclick = () => { MQ.backupExport(); MQ.local.lastBackup = Date.now(); MQ.saveLocal(); if (!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform())) MQ.toast('Backup exportado.'); };
+    if ($('#d-restore', root)) $('#d-restore', root).onclick = MQ.backupRestore;
+    if ($('#d-csv', root)) $('#d-csv', root).onclick = () => MQ.saveFile('pulse-respostas-' + new Date().toISOString().slice(0, 10) + '.csv', '﻿' + MQ.toCSV(answersCSV()), 'text/csv;charset=utf-8');
   };
 })(window.MQ);
