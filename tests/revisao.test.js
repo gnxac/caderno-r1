@@ -7,7 +7,7 @@ const vm = require('vm');
 
 let t = 1000;
 const store = {};
-const ctx = { console, localStorage: { getItem: k => store[k] || null, setItem: (k, v) => { store[k] = v; } }, setTimeout: () => 0, clearTimeout: () => {} };
+const ctx = { console, localStorage: { getItem: k => store[k] || null, setItem: (k, v) => { store[k] = v; } }, setTimeout: () => 0, clearTimeout: () => {}, addEventListener: () => {}, document: { addEventListener: () => {} } };
 ctx.window = ctx;
 ctx.MQ = { uid: () => 'id' + (++t), now: () => ++t };
 vm.createContext(ctx);

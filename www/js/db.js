@@ -108,6 +108,38 @@
   window.addEventListener('pagehide', flush);
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flush(); });
   MQ.saveLocal = function () { return idbSet(KEY_LOCAL, MQ.local); };
+  /* Marca-texto (MQ.local.marks) como coleção para o backup: { qid: { id, qid, m, updatedAt } }.
+     shortcut: updatedAt = hora da exportação e marcação apagada não vira lápide; basta para levar ao servidor novo (PLANO-LARAVEL.md, etapa 0) */
+  MQ.marksForBackup = function () {
+    const lm = MQ.local.marks || {}, out = {}, now = Date.now();
+    Object.keys(lm).forEach(qid => {
+      const m = lm[qid];
+      if (m && Object.keys(m).some(k => m[k] && m[k].length)) out[qid] = { id: qid, qid, m, updatedAt: now, createdAt: now };
+    });
+    return out;
+  };
+  /* Volta a coleção "marks" de um backup para o marca-texto; a marcação que já existe aqui fica (as do arquivo não têm hora de edição real).
+     dry=true só conta. Devolve quantas questões ganharam marcação. */
+  MQ.marksFromBackup = function (marks, dry) {
+    if (!isColl(marks)) return 0;
+    const lm = MQ.local.marks || {}, clean = {};
+    const has = m => !!m && Object.keys(m).some(k => m[k] && m[k].length);
+    // só alvos conhecidos e trechos [início, fim, cor]: um arquivo malformado não pode quebrar o marker.js nem pôr classe CSS solta
+    const seg = g => Array.isArray(g) && g.length === 3 && Number.isInteger(g[0]) && Number.isInteger(g[1]) && g[0] >= 0 && g[1] > g[0] && /^[a-z]{1,12}$/.test(g[2]);
+    Object.keys(marks).forEach(id => {
+      const o = marks[id];
+      if (UNSAFE.has(id) || has(lm[id]) || !isColl(o) || o.deleted || !isColl(o.m)) return;
+      const m = {};
+      Object.keys(o.m).forEach(k => { if (/^(stem|[A-Z])$/.test(k) && Array.isArray(o.m[k])) { const s = o.m[k].filter(seg).map(g => g.slice()).sort((x, y) => x[0] - y[0]).filter((g, i, a) => !i || g[0] >= a[i - 1][1]); if (s.length) m[k] = s; } });
+      if (has(m)) clean[id] = m;
+    });
+    const ids = Object.keys(clean);
+    if (dry || !ids.length) return ids.length;
+    ids.forEach(id => { lm[id] = clean[id]; });
+    MQ.local.marks = lm;
+    MQ.saveLocal();
+    return ids.length;
+  };
   /* Apaga tudo deste navegador (troca de conta ou "sair e apagar"); mantém só o id do aparelho */
   MQ.resetData = async function () {
     clearTimeout(saveTimer);

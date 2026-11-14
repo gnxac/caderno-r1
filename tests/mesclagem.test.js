@@ -11,7 +11,8 @@ const store = {};
 const ctx = {
   console,
   localStorage: { getItem: k => store[k] || null, setItem: (k, v) => { store[k] = v; } },
-  setTimeout: () => 0, clearTimeout: () => {}
+  setTimeout: () => 0, clearTimeout: () => {},
+  addEventListener: () => {}, document: { addEventListener: () => {} }
 };
 ctx.window = ctx;
 ctx.MQ = { uid: () => 'id' + (++t), now: () => ++t };
@@ -67,5 +68,40 @@ assert.strictEqual(({}).poluido, undefined);
 assert.strictEqual(vm.runInContext('({}).poluido', ctx), undefined);
 assert.strictEqual(MQ.data.notes.q9, undefined);
 assert.strictEqual(MQ.data.notes.id, undefined); // o item "__proto__" não virou protótipo da coleção
+
+// 8. Marca-texto vai no backup como coleção "marks" e a mesclagem aceita (sem marcação vazia)
+fresh();
+MQ.local.marks = { q1: { stem: [[0, 5, 'yellow']] }, q2: { A: [[1, 3, 'red']], stem: [] }, q3: { stem: [] } };
+const marks = MQ.marksForBackup();
+assert.deepStrictEqual(Object.keys(marks).sort(), ['q1', 'q2']);
+assert.strictEqual(marks.q1.id, 'q1');
+assert.strictEqual(marks.q1.qid, 'q1');
+assert.deepStrictEqual(marks.q2.m.A, [[1, 3, 'red']]);
+assert.ok(marks.q1.updatedAt > 0);
+const backup = JSON.parse(JSON.stringify(Object.assign({}, MQ.data, { marks, media: {} })));
+fresh();
+assert.strictEqual(MQ.mergeData(backup), 2);
+assert.deepStrictEqual(MQ.get('marks', 'q1').m.stem, [[0, 5, 'yellow']]);
+assert.strictEqual(MQ.mergeData(backup), 0); // restaurar de novo não muda nada
+
+// 9. Restaurar devolve o marca-texto a MQ.local.marks; a marcação local fica; reimportar não conta de novo
+MQ.local.marks = { q2: { stem: [[2, 4, 'blue']] } };
+assert.strictEqual(MQ.marksFromBackup(marks, true), 1);
+assert.strictEqual(MQ.local.marks.q1, undefined); // dry não grava
+assert.strictEqual(MQ.marksFromBackup(marks), 1);
+assert.deepStrictEqual(MQ.local.marks.q1.stem, [[0, 5, 'yellow']]);
+assert.deepStrictEqual(MQ.local.marks.q2.stem, [[2, 4, 'blue']]);
+assert.strictEqual(MQ.marksFromBackup(marks), 0);
+assert.strictEqual(MQ.marksFromBackup(JSON.parse('{"__proto__":{"m":{}},"x":{"deleted":true,"m":{}},"y":5}')), 0);
+assert.strictEqual(MQ.marksFromBackup(undefined), 0);
+// arquivo malformado: só entram trechos válidos em alvos conhecidos; marcação local vazia não bloqueia
+MQ.local.marks = { q5: {} };
+assert.strictEqual(MQ.marksFromBackup({
+  q4: { m: { stem: 'abc', A: [5], B: [[0, 3, 'x hidden']], C: [[3, 1, 'red']] } },
+  q5: { m: { stem: [[5, 8, 'green'], [0, 2, 'red'], [1, 4, 'pink'], [1, 9, 'blue', 4]], zz: [[0, 1, 'red']], __proto__: [] } }
+}), 1);
+assert.strictEqual(MQ.local.marks.q4, undefined);
+assert.deepStrictEqual(Object.keys(MQ.local.marks.q5), ['stem']);
+assert.deepStrictEqual(MQ.local.marks.q5.stem, [[0, 2, 'red'], [5, 8, 'green']]); // em ordem, sem sobreposição
 
 console.log('mesclagem: ok');
